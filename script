@@ -78,7 +78,7 @@ function createCategory(cat, container) {
 }
 
 function loadReports() {
-  fetch('data/📊 Share Reports.json')
+  fetch('data/Share Reports.json')
     .then(res => res.json())
     .then(data => {
       const container = document.getElementById('reportContainer');
@@ -92,7 +92,7 @@ function loadReports() {
 }
 
 function loadGuide() {
-  fetch('data/🧩 Problem Solve Guide.json')
+  fetch('data/Problem Solve Guide.json')
     .then(res => res.json())
     .then(data => {
       const container = document.getElementById('guideContainer');
@@ -102,7 +102,7 @@ function loadGuide() {
 }
 
 function loadScripts() {
-  fetch('data/🧠 Tampermonkey Scripts.json')
+  fetch('data/Tampermonkey Scripts.json')
     .then(res => res.json())
     .then(data => {
       const container = document.getElementById('scriptContainer');
