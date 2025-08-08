@@ -1,33 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Report Control Center</title>
+  <meta charset="UTF-8" />
+  <title>Report Center with Admin and Emoji Parser</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
       background-color: #1e1e2f;
       color: #f0f0f0;
-      padding: 30px;
+      font-family: Arial, sans-serif;
+      padding: 40px;
     }
-
     h1 {
       color: #66d9ef;
-      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-
-    .admin-btn {
-      background: #ffaa00;
-      color: #000;
-      padding: 8px 14px;
+    button {
       border: none;
+      padding: 8px 12px;
       border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
-      margin-bottom: 20px;
-      margin-right: 10px;
+      margin-left: 8px;
     }
-
+    .admin-btn {
+      background: #ffaa00;
+      color: #000;
+    }
+    .logout-btn {
+      background: #ff4d4d;
+      color: white;
+    }
+    .container {
+      margin-top: 30px;
+    }
     .category {
       background: #2a2a40;
       padding: 20px;
@@ -35,54 +42,58 @@
       margin-bottom: 25px;
       position: relative;
     }
-
     .category h2 {
-      color: #8be9fd;
       margin-top: 0;
+      color: #66d9ef;
     }
-
+    .editable {
+      background: #1e1e2f;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 12px;
+      white-space: pre-wrap;
+    }
+    .editable[contenteditable="true"] {
+      outline: 2px dashed #66d9ef;
+      background: #1e1e3a;
+    }
     .copy-btn {
       position: absolute;
       top: 20px;
       right: 20px;
       background: #66d9ef;
       color: #000;
-      font-weight: bold;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
-      cursor: pointer;
     }
-
-    .editable {
-      background: #1e1e2f;
-      border: 1px solid #444;
-      border-radius: 6px;
-      padding: 10px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .editable[contenteditable="true"] {
-      outline: 2px dashed #66d9ef;
-      background: #1e1e3a;
-    }
-
     .hidden {
       display: none;
     }
   </style>
 </head>
 <body>
+  <h1>
+    📋 Report Center
+    <span>
+      <button class="admin-btn" onclick="toggleEmoji()">😎 Emojis: <span id="emojiState">ON</span></button>
+      <button class="admin-btn" onclick="requestAdmin()">🔐 Admin</button>
+      <button class="logout-btn hidden" id="logoutBtn" onclick="logoutAdmin()">🚪 Logout</button>
+    </span>
+  </h1>
 
-  <h1>📋 Amazon Report Control Center</h1>
-
-  <button class="admin-btn" onclick="requestAdmin()">🔐 Admin Login</button>
-  <button class="admin-btn hidden" id="logoutBtn" onclick="logoutAdmin()">🚪 Logout</button>
-
-  <div id="container"></div>
+  <div id="container" class="container"></div>
 
   <script>
+    const emojiMap = {
+      ":jigsaw:": "🧩",
+      ":gem:": "💎",
+      ":athletic_shoe:": "👟",
+      ":bar_chart:": "📊",
+      ":arrows_counterclockwise:": "🔄",
+      ":white_check_mark:": "✅",
+      ":large_green_square:": "🟩",
+      ":large_blue_square: "🟦",
+      ":warning:": "⚠️"
+    };
+
     const categories = [
       "Problem Solve",
       "HRV Sort",
@@ -95,16 +106,24 @@
       "IB Dock PS"
     ];
 
-    const isAdmin = localStorage.getItem("admin") === "true";
+    let isAdmin = localStorage.getItem("admin") === "true";
+    let emojiOn = localStorage.getItem("emoji") !== "false";
     const storedReports = JSON.parse(localStorage.getItem("reports") || "{}");
-    const container = document.getElementById("container");
 
-    if (isAdmin) {
-      document.getElementById("logoutBtn").classList.remove("hidden");
+    document.getElementById("emojiState").textContent = emojiOn ? "ON" : "OFF";
+    if (isAdmin) document.getElementById("logoutBtn").classList.remove("hidden");
+
+    function replaceShortcodes(text) {
+      for (const [code, emoji] of Object.entries(emojiMap)) {
+        text = text.split(code).join(emoji);
+      }
+      return text;
     }
 
+    const container = document.getElementById("container");
+
     categories.forEach(cat => {
-      const contentId = cat.replace(/\s+/g, '_');
+      const contentId = cat.replace(/\s+/g, "_");
       const div = document.createElement("div");
       div.className = "category";
 
@@ -115,22 +134,21 @@
       btn.className = "copy-btn";
       btn.textContent = "📋 Copy";
       btn.onclick = () => {
-        navigator.clipboard.writeText(text.innerText).then(() => {
-          alert("✅ Copied!");
-        });
+        navigator.clipboard.writeText(text.innerText).then(() => alert("✅ Copied!"));
       };
 
       const text = document.createElement("div");
-      text.id = contentId;
       text.className = "editable";
+      text.id = contentId;
       text.contentEditable = isAdmin;
-      text.innerText = storedReports[contentId] || `[ Enter ${cat} Report Here ]`;
+      let saved = storedReports[contentId] || `[Enter ${cat} Report Here]`;
+      text.innerText = emojiOn ? replaceShortcodes(saved) : saved;
 
       text.addEventListener("input", () => {
-        if (isAdmin) {
-          storedReports[contentId] = text.innerText;
-          localStorage.setItem("reports", JSON.stringify(storedReports));
-        }
+        if (!isAdmin) return;
+        const updated = text.innerText;
+        storedReports[contentId] = updated;
+        localStorage.setItem("reports", JSON.stringify(storedReports));
       });
 
       div.appendChild(h2);
@@ -139,8 +157,15 @@
       container.appendChild(div);
     });
 
+    function toggleEmoji() {
+      emojiOn = !emojiOn;
+      localStorage.setItem("emoji", emojiOn);
+      document.getElementById("emojiState").textContent = emojiOn ? "ON" : "OFF";
+      location.reload();
+    }
+
     function requestAdmin() {
-      const pwd = prompt("🔑 Enter admin password:");
+      const pwd = prompt("Enter admin password:");
       if (pwd === "Qjuflore1211503") {
         localStorage.setItem("admin", "true");
         location.reload();
