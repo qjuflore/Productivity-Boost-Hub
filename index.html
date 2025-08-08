@@ -17,8 +17,6 @@
       --button-bg: #00fff7;
       --button-text: #000;
       --button-glow: 0 0 10px #00fff7;
-      --admin-edit-bg: #222;
-      --admin-edit-text: #fff;
     }
 
     body {
@@ -194,20 +192,38 @@
       fetch('data/categories.json')
         .then(res => res.json())
         .then(data => {
-          document.getElementById('reportContainer').innerHTML = '';
+          const container = document.getElementById('reportContainer');
+          container.innerHTML = '';
           document.getElementById('error').innerText = '';
+
           data.forEach(cat => {
             const div = document.createElement('div');
             div.className = 'category';
-            const copyId = 'copy-btn-' + Math.random().toString(36).substr(2, 5);
-            div.innerHTML = `
-              <div class="category-header" onclick="toggleContent(this)">
-                <span>${cat.title}</span>
-                <button id="${copyId}" class="copy-btn" onclick="event.stopPropagation(); copyText(replaceEmojis(${JSON.stringify(cat.content)}), this)">📋 Copy</button>
-              </div>
-              <div class="category-content">${replaceEmojis(cat.content)}</div>
-            `;
-            document.getElementById('reportContainer').appendChild(div);
+
+            const header = document.createElement('div');
+            header.className = 'category-header';
+            header.onclick = () => toggleContent(header);
+
+            const title = document.createElement('span');
+            title.innerText = cat.title;
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-btn';
+            copyBtn.innerText = '📋 Copy';
+            copyBtn.onclick = (e) => {
+              e.stopPropagation();
+              copyText(replaceEmojis(cat.content), copyBtn);
+            };
+
+            const content = document.createElement('div');
+            content.className = 'category-content';
+            content.innerText = replaceEmojis(cat.content);
+
+            header.appendChild(title);
+            header.appendChild(copyBtn);
+            div.appendChild(header);
+            div.appendChild(content);
+            container.appendChild(div);
           });
         })
         .catch(err => {
