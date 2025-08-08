@@ -118,13 +118,24 @@ function loadScripts() {
         const title = document.createElement('span');
         title.innerText = `${script.name || 'Untitled'}${script.author ? ' | ' + script.author : ''}${script.version ? ' | v' + script.version : ''}`;
 
-        const copyBtn = document.createElement('button');
-        copyBtn.className = 'copy-btn';
-        copyBtn.innerText = '📋 Copy';
-        copyBtn.onclick = (e) => {
-          e.stopPropagation();
-          copyText(script.code, copyBtn);
-        };
+        // 📋 Copy button
+const copyBtn = document.createElement('button');
+copyBtn.className = 'copy-btn';
+copyBtn.innerText = '📋 Copy';
+copyBtn.onclick = (e) => {
+  e.stopPropagation();
+  copyText(script.code, copyBtn);
+};
+
+// 📥 Download button
+const downloadBtn = document.createElement('button');
+downloadBtn.className = 'copy-btn';
+downloadBtn.innerText = '📥 Download';
+downloadBtn.onclick = (e) => {
+  e.stopPropagation();
+  downloadScriptAsFile(script);
+};
+
 
         const content = document.createElement('div');
         content.className = 'category-content';
