@@ -137,6 +137,17 @@
       margin-bottom: 1rem;
       color: var(--accent);
       text-shadow: var(--text-glow);
+      cursor: pointer;
+    }
+
+    #countryStats {
+      display: none;
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      animation: fadeInUp 0.4s ease-out;
     }
   </style>
 </head>
@@ -148,7 +159,9 @@
     </div>
   </h1>
 
-  <div id="visitInfo">👁️ Total Visits: Loading...</div>
+  <div id="visitInfo" onclick="toggleCountryStats()">👁️ Total Visits: Loading...</div>
+  <div id="countryStats"></div>
+
   <div id="reportContainer"></div>
   <div id="error" class="error-msg"></div>
   <div class="footer">Created by qjuflore | Juan Flores</div>
@@ -167,6 +180,7 @@
     };
 
     let emojisOn = true;
+    let countryStatsVisible = false;
 
     function replaceEmojis(text) {
       if (!emojisOn) return text;
@@ -200,9 +214,7 @@
         toast.style.boxShadow = '0 0 10px #00fff7';
         toast.style.fontFamily = 'Orbitron';
         document.body.appendChild(toast);
-        setTimeout(() => {
-          toast.remove();
-        }, 3000);
+        setTimeout(() => toast.remove(), 3000);
 
         setTimeout(() => {
           btn.innerText = '📋 Copy';
@@ -249,20 +261,36 @@
             container.appendChild(div);
           });
         })
-        .catch(err => {
+        .catch(() => {
           document.getElementById('error').innerText = '⚠️ Error loading reports';
         });
     }
 
     function loadVisits() {
-      fetch("https://script.google.com/macros/s/YOUR_SCRIPT_ID_HERE/exec")
-        .then((res) => res.json())
-        .then((data) => {
+      fetch("https://script.google.com/macros/s/AKfycbzPCAcIctShEeFqQXH6GufRN1kCKvWpKY-jM3yBlm2BjpxjvPLC5dsHFhTZyT91wpc1/exec")
+        .then(res => res.json())
+        .then(data => {
           document.getElementById("visitInfo").innerText = `👁️ Total Visits: ${data.total}`;
+
+          let stats = '<strong>Visits by Country:</strong><br><ul>';
+          Object.entries(data).forEach(([key, value]) => {
+            if (key.startsWith('country_')) {
+              const country = key.replace('country_', '');
+              stats += `<li>${country}: ${value}</li>`;
+            }
+          });
+          stats += '</ul>';
+
+          document.getElementById("countryStats").innerHTML = stats;
         })
         .catch(() => {
           document.getElementById("visitInfo").innerText = "👁️ Visits Unavailable";
         });
+    }
+
+    function toggleCountryStats() {
+      countryStatsVisible = !countryStatsVisible;
+      document.getElementById("countryStats").style.display = countryStatsVisible ? 'block' : 'none';
     }
 
     loadVisits();
