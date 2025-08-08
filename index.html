@@ -99,16 +99,34 @@
       box-shadow: var(--button-glow);
     }
 
-    #password-container {
-      margin-top: 1rem;
+    #password-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
     }
 
-    input[type="password"] {
-      padding: 0.4rem;
-      border-radius: 4px;
+    #password-box {
+      background: #111;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 20px var(--accent);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #admin-password {
+      padding: 0.8rem;
+      border-radius: 8px;
       border: none;
+      margin-bottom: 1rem;
       font-size: 1rem;
-      margin-right: 0.5rem;
+      text-align: center;
     }
 
     .admin-edit {
@@ -139,17 +157,18 @@
     📝 Futuristic Report Center
     <div class="controls">
       <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
-      <button class="btn" onclick="toggleAdmin()">🔐 Admin</button>
+      <button class="btn" onclick="openPasswordModal()">🔐 Admin</button>
     </div>
   </h1>
 
-  <div id="password-container" style="display: none;">
-    <input type="password" id="admin-password" placeholder="Enter password">
-    <button class="btn" onclick="submitPassword()">Submit</button>
+  <div id="password-modal">
+    <div id="password-box">
+      <input type="password" id="admin-password" placeholder="Enter admin password" autofocus onkeydown="if(event.key==='Enter'){submitPassword()}" />
+      <button class="btn" onclick="submitPassword()">Submit</button>
+    </div>
   </div>
 
   <div id="admin-edit-panel" class="admin-edit"></div>
-
   <div id="reportContainer"></div>
 
   <script>
@@ -168,32 +187,48 @@
     const categories = [
       {
         title: 'Problem Solve',
-        content: `:jigsaw: P [   ] Problem Solve Report...`
+        content: ':jigsaw: P [   ] Problem Solve Report...'
       },
       {
         title: 'HRV Sort',
-        content: `:diamond: HRV Problem Solve & WIP Report...`
+        content: ':diamond: HRV Problem Solve & WIP Report...'
       },
       {
         title: 'Shoes Sort',
-        content: `:shoe: P1 Problem Solve Report...`
+        content: ':shoe: P1 Problem Solve Report...'
       },
       {
         title: 'IDRT',
-        content: `:chart: IDRT Report...`
+        content: ':chart: IDRT Report...'
       },
       {
         title: 'FUD',
-        content: `Training metrics & tool usage coming soon.`
+        content: 'Training metrics & tool usage coming soon.'
       },
       {
         title: 'IOL',
-        content: `Recon schedules and active problem solving summary.`
+        content: 'Recon schedules and active problem solving summary.'
       }
     ];
 
     let emojisOn = true;
     let isAdmin = false;
+
+    function openPasswordModal() {
+      document.getElementById('password-modal').style.display = 'flex';
+      setTimeout(() => document.getElementById('admin-password').focus(), 50);
+    }
+
+    function submitPassword() {
+      const pwd = document.getElementById('admin-password').value;
+      if (pwd === 'Qjuflore1211503') {
+        isAdmin = true;
+        document.getElementById('password-modal').style.display = 'none';
+        renderCategories();
+      } else {
+        alert('❌ Incorrect password');
+      }
+    }
 
     function replaceEmojis(text) {
       if (!emojisOn) return text;
@@ -228,34 +263,44 @@
       navigator.clipboard.writeText(text).then(() => alert('✅ Report copied!'));
     }
 
-    function toggleAdmin() {
-      document.getElementById('password-container').style.display = 'block';
-    }
-
-    function submitPassword() {
-      const pwd = document.getElementById('admin-password').value;
-      if (pwd === 'Qjuflore1211503') {
-        isAdmin = true;
-        document.getElementById('password-container').style.display = 'none';
-        alert('🔓 Admin mode activated');
-        renderCategories();
-      } else {
-        alert('❌ Incorrect password');
-      }
-    }
-
     function renderAdminPanel() {
       const adminPanel = document.getElementById('admin-edit-panel');
       adminPanel.innerHTML = '<h3>Edit Categories</h3>';
       categories.forEach((cat, idx) => {
+        const input = document.createElement('input');
+        input.value = cat.title;
+        input.style.width = '100%';
+        input.style.marginBottom = '4px';
+        input.oninput = e => cat.title = e.target.value;
+
         const textarea = document.createElement('textarea');
         textarea.value = cat.content;
-        textarea.oninput = (e) => {
-          categories[idx].content = e.target.value;
+        textarea.oninput = e => cat.content = e.target.value;
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.innerText = '🗑️ Delete';
+        deleteBtn.className = 'btn';
+        deleteBtn.style.margin = '0.5rem 0';
+        deleteBtn.onclick = () => {
+          categories.splice(idx, 1);
+          renderCategories();
         };
-        adminPanel.appendChild(document.createTextNode(cat.title));
+
+        adminPanel.appendChild(input);
         adminPanel.appendChild(textarea);
+        adminPanel.appendChild(deleteBtn);
+        adminPanel.appendChild(document.createElement('hr'));
       });
+
+      const addBtn = document.createElement('button');
+      addBtn.innerText = '➕ Add New Category';
+      addBtn.className = 'btn';
+      addBtn.onclick = () => {
+        categories.push({ title: 'New Category', content: '' });
+        renderCategories();
+      };
+
+      adminPanel.appendChild(addBtn);
       adminPanel.classList.add('visible');
     }
 
