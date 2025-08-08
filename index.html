@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🧠 Share Reports Easily</title>
+  <title>🧠 qjuflore Report Tools</title>
   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <style>
@@ -33,9 +33,6 @@
     h1 {
       font-size: 2.2rem;
       margin-bottom: 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
       color: var(--accent);
       text-shadow: var(--text-glow);
       animation: fadeInUp 1s ease-out;
@@ -46,9 +43,31 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    .tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .tab {
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: black;
+      box-shadow: var(--button-glow);
+    }
+
     .controls {
       display: flex;
       gap: 1rem;
+      flex-wrap: wrap;
     }
 
     .btn {
@@ -67,18 +86,20 @@
       transform: scale(1.05);
     }
 
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
     .category {
       background: var(--card-bg);
       margin-bottom: 1rem;
       border-radius: 12px;
       overflow: hidden;
       border: 1px solid var(--border);
-      animation: grow 0.5s ease-in-out;
-    }
-
-    @keyframes grow {
-      from { transform: scale(0.95); opacity: 0.5; }
-      to { transform: scale(1); opacity: 1; }
     }
 
     .category-header {
@@ -118,12 +139,6 @@
       color: white;
     }
 
-    .error-msg {
-      color: yellow;
-      font-size: 1.2rem;
-      margin-top: 2rem;
-    }
-
     .footer {
       margin-top: auto;
       text-align: center;
@@ -133,58 +148,76 @@
     }
 
     #visitInfo {
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-      color: var(--accent);
-      text-shadow: var(--text-glow);
+      margin-top: 1rem;
       cursor: pointer;
-    }
-
-    #countryStats {
-      display: none;
-      margin-bottom: 2rem;
-      padding: 1rem;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      animation: fadeInUp 0.4s ease-out;
+      font-size: 1.1rem;
     }
   </style>
 </head>
 <body>
-  <h1>🧠 Share Reports Easily
+  <h1>🧠 qjuflore Report Tools</h1>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showSection('reports')">📊 Share Reports</div>
+    <div class="tab" onclick="showSection('guide')">🧩 Problem Solve Guide</div>
+    <div class="tab" onclick="showSection('scripts')">🧠 Tampermonkey Scripts</div>
+  </div>
+
+  <div id="reports" class="section active">
     <div class="controls">
       <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
       <button class="btn" onclick="loadReports()">↻ Refresh</button>
     </div>
-  </h1>
+    <div id="visitInfo" onclick="toggleCountryStats()">👁️ Total Visits: Loading...</div>
+    <div id="countryStats"></div>
+    <div id="reportContainer"></div>
+    <div id="error" class="error-msg"></div>
+  </div>
 
-  <div id="visitInfo" onclick="toggleCountryStats()">👁️ Total Visits: Loading...</div>
-  <div id="countryStats"></div>
+  <div id="guide" class="section">
+    <input type="text" id="guideSearch" placeholder="🔍 Search guide..." style="margin-bottom: 1rem; padding: 0.5rem; width: 100%; border-radius: 10px; border: none;">
+    <div id="guideContainer">Coming soon...</div>
+  </div>
 
-  <div id="reportContainer"></div>
-  <div id="error" class="error-msg"></div>
+  <div id="scripts" class="section">
+    <input type="text" id="scriptSearch" placeholder="🔍 Search scripts..." style="margin-bottom: 1rem; padding: 0.5rem; width: 100%; border-radius: 10px; border: none;">
+    <div id="scriptContainer">Coming soon...</div>
+  </div>
+
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
   <script>
     const emojiMap = {
-      ':jigsaw:': '🧹', ':shoe:': '👟', ':clipboard:': '📋', ':diamond:': '💎', ':chart:': '📈',
-      ':green_square:': '🟩', ':blue_square:': '🟦', ':check_mark:': '✅', ':warning:': '⚠️'
+      ':jigsaw:': '🧩',
+      ':shoe:': '👟',
+      ':clipboard:': '📋',
+      ':diamond:': '💎',
+      ':chart:': '📊',
+      ':green_square:': '🟩',
+      ':blue_square:': '🟦',
+      ':check_mark:': '✅',
+      ':warning:': '⚠️'
     };
 
     let emojisOn = true;
-    let countryStatsVisible = false;
+
+    function replaceEmojis(text) {
+      if (!emojisOn) return text;
+      return text.replace(/:[a-zA-Z0-9_]+:/g, match => emojiMap[match] || match);
+    }
+
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      [...document.querySelectorAll('.tab')].find(t => t.textContent.includes(id === 'reports' ? 'Share' : id === 'guide' ? 'Guide' : 'Scripts')).classList.add('active');
+    }
 
     document.getElementById('emojiToggle').addEventListener('click', () => {
       emojisOn = !emojisOn;
       document.getElementById('emojiToggle').innerText = emojisOn ? '😎 Emojis: ON' : '😐 Emojis: OFF';
       loadReports();
     });
-
-    function replaceEmojis(text) {
-      if (!emojisOn) return text;
-      return text.replace(/:[a-zA-Z0-9_]+:/g, match => emojiMap[match] || match);
-    }
 
     function toggleContent(header) {
       const content = header.nextElementSibling;
@@ -195,19 +228,11 @@
       navigator.clipboard.writeText(content).then(() => {
         btn.innerText = '✅ Copied';
         btn.classList.add('copied');
-        const toast = document.createElement('div');
-        toast.innerText = '🔔 Copied! Remember to click "Apply formatting" in Slack.';
-        Object.assign(toast.style, {
-          position: 'fixed', bottom: '20px', right: '20px', background: '#111',
-          color: '#0ff', padding: '10px 15px', borderRadius: '10px',
-          boxShadow: '0 0 10px #00fff7', fontFamily: 'Orbitron'
-        });
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
         setTimeout(() => {
           btn.innerText = '📋 Copy';
           btn.classList.remove('copied');
         }, 1500);
+        showNotice("Click 'Apply formatting' in Slack after pasting.");
       });
     }
 
@@ -218,14 +243,18 @@
           const container = document.getElementById('reportContainer');
           container.innerHTML = '';
           document.getElementById('error').innerText = '';
+
           data.forEach(cat => {
             const div = document.createElement('div');
             div.className = 'category';
+
             const header = document.createElement('div');
             header.className = 'category-header';
             header.onclick = () => toggleContent(header);
+
             const title = document.createElement('span');
             title.innerText = cat.title;
+
             const copyBtn = document.createElement('button');
             copyBtn.className = 'copy-btn';
             copyBtn.innerText = '📋 Copy';
@@ -233,9 +262,11 @@
               e.stopPropagation();
               copyText(replaceEmojis(cat.content), copyBtn);
             };
+
             const content = document.createElement('div');
             content.className = 'category-content';
             content.innerText = replaceEmojis(cat.content);
+
             header.appendChild(title);
             header.appendChild(copyBtn);
             div.appendChild(header);
@@ -243,38 +274,51 @@
             container.appendChild(div);
           });
         })
-        .catch(() => {
+        .catch(err => {
           document.getElementById('error').innerText = '⚠️ Error loading reports';
         });
     }
 
-    function loadVisits() {
-      fetch("https://script.google.com/macros/s/AKfycbx-3KNUSuOuui-ZtV6vwgwr7KOP-rjayDXtmsH5TP2J5hZgUjk47YAn1GwrzoJ_mgXu/exec")
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById("visitInfo").innerText = `👁️ Total Visits: ${data.total}`;
-          let stats = '<strong>Visits by Country:</strong><br><ul>';
-          Object.entries(data).forEach(([key, value]) => {
-            if (key.startsWith('country_')) {
-              const country = key.replace('country_', '').toUpperCase();
-              stats += `<li>${country}: ${value}</li>`;
-            }
-          });
-          stats += '</ul>';
-          document.getElementById("countryStats").innerHTML = stats;
-        })
-        .catch(() => {
-          document.getElementById("visitInfo").innerText = "👁️ Visits Unavailable";
-        });
+    function showNotice(msg) {
+      const notice = document.createElement('div');
+      notice.innerText = msg;
+      notice.style.position = 'fixed';
+      notice.style.bottom = '20px';
+      notice.style.right = '20px';
+      notice.style.background = 'var(--accent)';
+      notice.style.color = 'black';
+      notice.style.padding = '0.7rem 1.2rem';
+      notice.style.borderRadius = '10px';
+      notice.style.boxShadow = '0 0 12px var(--accent)';
+      notice.style.zIndex = 9999;
+      document.body.appendChild(notice);
+      setTimeout(() => document.body.removeChild(notice), 3000);
     }
 
     function toggleCountryStats() {
-      countryStatsVisible = !countryStatsVisible;
-      document.getElementById("countryStats").style.display = countryStatsVisible ? 'block' : 'none';
+      const statsDiv = document.getElementById('countryStats');
+      statsDiv.classList.toggle('visible');
     }
 
-    loadVisits();
+    async function fetchVisitStats() {
+      try {
+        const res = await fetch("https://script.google.com/macros/s/AKfycbx-3KNUSuOuui-ZtV6vwgwr7KOP-rjayDXtmsH5TP2J5hZgUjk47YAn1GwrzoJ_mgXu/exec");
+        const data = await res.json();
+        document.getElementById("visitInfo").innerText = `👁️ Total Visits: ${data.total}`;
+
+        const countryStats = Object.entries(data)
+          .filter(([key]) => key.startsWith("country_"))
+          .map(([key, count]) => `${key.replace("country_", "").toUpperCase()}: ${count}`)
+          .join(" | ");
+
+        document.getElementById("countryStats").innerText = countryStats;
+      } catch {
+        document.getElementById("visitInfo").innerText = "👁️ Total Visits: Error";
+      }
+    }
+
     loadReports();
+    fetchVisitStats();
   </script>
 </body>
 </html>
