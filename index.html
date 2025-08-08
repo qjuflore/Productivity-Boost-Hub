@@ -132,13 +132,11 @@
       color: #aaa;
     }
 
-    .visit-counter {
-      font-size: 1.3rem;
-      color: var(--accent);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+    #visitInfo {
+      font-size: 1.2rem;
       margin-bottom: 1rem;
+      color: var(--accent);
+      text-shadow: var(--text-glow);
     }
   </style>
 </head>
@@ -150,11 +148,9 @@
     </div>
   </h1>
 
-  <div class="visit-counter" id="visitCounter">👁️ Total Visits: Loading...</div>
-
+  <div id="visitInfo">👁️ Total Visits: Loading...</div>
   <div id="reportContainer"></div>
   <div id="error" class="error-msg"></div>
-
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
   <script>
@@ -164,8 +160,8 @@
       ':clipboard:': '📋',
       ':diamond:': '💎',
       ':chart:': '📊',
-      ':green_square:': '🝿',
-      ':blue_square:': '🗾',
+      ':green_square:': '🟩',
+      ':blue_square:': '🟦',
       ':check_mark:': '✅',
       ':warning:': '⚠️'
     };
@@ -192,29 +188,27 @@
       navigator.clipboard.writeText(content).then(() => {
         btn.innerText = '✅ Copied';
         btn.classList.add('copied');
-        showNotification('Copied! When pasting in Slack, click “Apply Formatting” for best result.');
+        const toast = document.createElement('div');
+        toast.innerText = '🔔 Copied! Remember to click "Apply formatting" in Slack.';
+        toast.style.position = 'fixed';
+        toast.style.bottom = '20px';
+        toast.style.right = '20px';
+        toast.style.background = '#111';
+        toast.style.color = '#0ff';
+        toast.style.padding = '10px 15px';
+        toast.style.borderRadius = '10px';
+        toast.style.boxShadow = '0 0 10px #00fff7';
+        toast.style.fontFamily = 'Orbitron';
+        document.body.appendChild(toast);
+        setTimeout(() => {
+          toast.remove();
+        }, 3000);
+
         setTimeout(() => {
           btn.innerText = '📋 Copy';
           btn.classList.remove('copied');
         }, 1500);
       });
-    }
-
-    function showNotification(msg) {
-      const note = document.createElement('div');
-      note.style.position = 'fixed';
-      note.style.bottom = '30px';
-      note.style.right = '30px';
-      note.style.background = '#111';
-      note.style.color = '#0ff';
-      note.style.padding = '1rem 1.5rem';
-      note.style.borderRadius = '10px';
-      note.style.boxShadow = '0 0 10px #00fff7';
-      note.style.fontFamily = 'Orbitron';
-      note.style.zIndex = 9999;
-      note.innerText = msg;
-      document.body.appendChild(note);
-      setTimeout(() => note.remove(), 3000);
     }
 
     function loadReports() {
@@ -260,19 +254,19 @@
         });
     }
 
-    function loadVisitCounter() {
-      fetch('https://api.countapi.xyz/hit/report-copy-tool/visits')
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById('visitCounter').innerHTML = `👁️ Total Visits: ${data.value}`;
+    function loadVisits() {
+      fetch("https://script.google.com/macros/s/YOUR_SCRIPT_ID_HERE/exec")
+        .then((res) => res.json())
+        .then((data) => {
+          document.getElementById("visitInfo").innerText = `👁️ Total Visits: ${data.total}`;
         })
         .catch(() => {
-          document.getElementById('visitCounter').innerHTML = `👁️ Visits Unavailable`;
+          document.getElementById("visitInfo").innerText = "👁️ Visits Unavailable";
         });
     }
 
+    loadVisits();
     loadReports();
-    loadVisitCounter();
   </script>
 </body>
 </html>
