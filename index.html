@@ -90,7 +90,7 @@
       ":arrows_counterclockwise:": "🔄",
       ":white_check_mark:": "✅",
       ":large_green_square:": "🟩",
-      ":large_blue_square: "🟦",
+      ":large_blue_square:": "🟦",
       ":warning:": "⚠️"
     };
 
@@ -165,13 +165,30 @@
     }
 
     function requestAdmin() {
-      const pwd = prompt("Enter admin password:");
-      if (pwd === "Qjuflore1211503") {
-        localStorage.setItem("admin", "true");
-        location.reload();
-      } else {
-        alert("❌ Incorrect password.");
-      }
+      const input = document.createElement("input");
+      input.type = "password";
+      input.placeholder = "Enter admin password";
+      input.style.position = "fixed";
+      input.style.top = "50%";
+      input.style.left = "50%";
+      input.style.transform = "translate(-50%, -50%)";
+      input.style.padding = "10px";
+      input.style.fontSize = "16px";
+      input.style.zIndex = "1000";
+      document.body.appendChild(input);
+      input.focus();
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          if (input.value === "Qjuflore1211503") {
+            localStorage.setItem("admin", "true");
+            location.reload();
+          } else {
+            alert("❌ Incorrect password.");
+          }
+          document.body.removeChild(input);
+        }
+      });
     }
 
     function logoutAdmin() {
