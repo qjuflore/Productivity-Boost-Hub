@@ -1,0 +1,10 @@
+[
+  {
+    "title": "Damaged Item Workflow",
+    "content": "🧩 *Damaged/Unscannable Items*\n\n1. Complete IDRT to: `dz-P-DAMAGELAND`\n2. Move U-boats physically to Damageland\n3. Notify PA if volume exceeds 5 U-boats\n\n_Use this for items that cannot be scanned or are visibly damaged._"
+  },
+  {
+    "title": "Non-Con Sort Logic",
+    "content": "🧩 *Non-Con Items Sorting*\n\n1. Library Items → IDRT to: `dz-S-Cubiscan`\n   → Move to ISS\n\n2. Large Apparel → IDRT to: `IB Dock`\n   → Move to Decant\n\n_Ensure stickers are not missing and bin checks are done prior to movement._"
+  }
+]
