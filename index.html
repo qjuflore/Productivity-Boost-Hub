@@ -112,6 +112,12 @@
       cursor: pointer;
       font-size: 0.9rem;
       box-shadow: var(--button-glow);
+      transition: all 0.3s ease;
+    }
+
+    .copy-btn.copied {
+      background-color: #00c851;
+      color: white;
     }
 
     .error-msg {
@@ -173,8 +179,15 @@
       content.classList.toggle('visible');
     }
 
-    function copyText(content) {
-      navigator.clipboard.writeText(content).then(() => alert('✅ Report copied!'));
+    function copyText(content, btn) {
+      navigator.clipboard.writeText(content).then(() => {
+        btn.innerText = '✅ Copied';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerText = '📋 Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
     }
 
     function loadReports() {
@@ -186,10 +199,11 @@
           data.forEach(cat => {
             const div = document.createElement('div');
             div.className = 'category';
+            const copyId = 'copy-btn-' + Math.random().toString(36).substr(2, 5);
             div.innerHTML = `
               <div class="category-header" onclick="toggleContent(this)">
                 <span>${cat.title}</span>
-                <button class="copy-btn" onclick="event.stopPropagation(); copyText(replaceEmojis(${JSON.stringify(cat.content)}))">📋 Copy</button>
+                <button id="${copyId}" class="copy-btn" onclick="event.stopPropagation(); copyText(replaceEmojis(${JSON.stringify(cat.content)}), this)">📋 Copy</button>
               </div>
               <div class="category-content">${replaceEmojis(cat.content)}</div>
             `;
