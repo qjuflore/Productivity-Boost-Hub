@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Auto Coach Notes",
+    "description": "Inserts pre-formatted coaching notes into the feedback box with one click.",
+    "author": "qjuflore",
+    "version": "2025.08.08",
+    "code": "// ==UserScript==\n// @name         Auto Coach Notes\n// @match        https://coaching.example.com/*\n// ==/UserScript==\n\n(function() {\n  'use strict';\n  document.querySelector('#noteBox').value = 'Great job today! Reviewed login and stow quality.';\n})();"
+  },
+  {
+    "name": "HRV Sort Tracker",
+    "description": "Highlights HRV totes needing sort and logs their status.",
+    "author": "qjuflore",
+    "version": "2025.08.08",
+    "code": "// ==UserScript==\n// @name         HRV Sort Tracker\n// @match        https://hrv-dashboard.example.com/*\n// ==/UserScript==\n\n(function() {\n  'use strict';\n  console.log('Tracking HRV Sort...');\n})();"
+  }
+]
+
