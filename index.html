@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Futuristic Report Center</title>
+  <title>🧠 Compartir reportes fácilmente</title>
+  <link rel="icon" type="image/png" href="https://em-content.zobj.net/source/microsoft-teams/363/memo_1f4dd.png">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -20,6 +21,10 @@
       --admin-edit-text: #fff;
     }
 
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       padding: 2rem;
@@ -27,6 +32,7 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      overflow-x: hidden;
     }
 
     h1 {
@@ -37,6 +43,12 @@
       justify-content: space-between;
       color: var(--accent);
       text-shadow: var(--text-glow);
+      animation: pulse 3s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { text-shadow: 0 0 10px var(--accent); }
+      50% { text-shadow: 0 0 20px var(--accent); }
     }
 
     .controls {
@@ -53,11 +65,12 @@
       cursor: pointer;
       font-weight: bold;
       box-shadow: var(--button-glow);
-      transition: transform 0.2s ease;
+      transition: all 0.3s ease;
     }
 
     .btn:hover {
-      transform: scale(1.05);
+      transform: scale(1.08) rotate(-1deg);
+      box-shadow: 0 0 20px var(--accent);
     }
 
     .category {
@@ -66,6 +79,14 @@
       border-radius: 12px;
       overflow: hidden;
       border: 1px solid var(--border);
+      transform: scale(1);
+      transition: all 0.3s ease;
+      animation: fadeInUp 0.6s ease forwards;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .category-header {
@@ -87,6 +108,12 @@
 
     .visible {
       display: block;
+      animation: grow 0.3s ease-in-out;
+    }
+
+    @keyframes grow {
+      from { opacity: 0; transform: scaleY(0.8); }
+      to { opacity: 1; transform: scaleY(1); }
     }
 
     .copy-btn {
@@ -102,14 +129,13 @@
 </head>
 <body>
   <h1>
-    📝 Futuristic Report Center
+    🧠 Compartir reportes fácilmente
     <div class="controls">
       <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
-      <button class="btn" onclick="loadCategories()">🔁 Reload</button>
+      <button class="btn" onclick="location.reload()">🔁 Refresh</button>
     </div>
   </h1>
-
-  <div id="reportContainer"></div>
+  <div id="reportContainer">Cargando categorías...</div>
 
   <script>
     const emojiMap = {
@@ -129,22 +155,22 @@
     document.getElementById('emojiToggle').addEventListener('click', () => {
       emojisOn = !emojisOn;
       document.getElementById('emojiToggle').innerText = emojisOn ? '😎 Emojis: ON' : '😐 Emojis: OFF';
-      loadCategories();
+      loadAndRender();
     });
-
-    async function loadCategories() {
-      try {
-        const res = await fetch('data/categories.json');
-        const categories = await res.json();
-        renderCategories(categories);
-      } catch (e) {
-        document.getElementById('reportContainer').innerHTML = '<p style="color:red">Failed to load categories.json</p>';
-      }
-    }
 
     function replaceEmojis(text) {
       if (!emojisOn) return text;
       return text.replace(/:[a-zA-Z0-9_]+:/g, match => emojiMap[match] || match);
+    }
+
+    async function loadAndRender() {
+      try {
+        const res = await fetch('categories.json');
+        const categories = await res.json();
+        renderCategories(categories);
+      } catch (err) {
+        document.getElementById('reportContainer').innerText = '⚠️ Error loading reports';
+      }
     }
 
     function renderCategories(categories) {
@@ -154,9 +180,9 @@
         const div = document.createElement('div');
         div.className = 'category';
         div.innerHTML = `
-          <div class="category-header" onclick="toggleContent(this)">
+          <div class="category-header" onclick="this.nextElementSibling.classList.toggle('visible')">
             <span>${cat.title}</span>
-            <button class="copy-btn" onclick="event.stopPropagation(); copyReport(${index})">📋 Copy</button>
+            <button class="copy-btn" onclick="event.stopPropagation(); navigator.clipboard.writeText(${JSON.stringify(cat.content)}).then(() => alert('✅ Report copied!'))">📋 Copy</button>
           </div>
           <div class="category-content">${replaceEmojis(cat.content)}</div>
         `;
@@ -164,19 +190,7 @@
       });
     }
 
-    function toggleContent(header) {
-      const content = header.nextElementSibling;
-      content.classList.toggle('visible');
-    }
-
-    async function copyReport(index) {
-      const res = await fetch('data/categories.json');
-      const categories = await res.json();
-      const text = emojisOn ? replaceEmojis(categories[index].content) : categories[index].content;
-      navigator.clipboard.writeText(text).then(() => alert('✅ Report copied!'));
-    }
-
-    loadCategories();
+    loadAndRender();
   </script>
 </body>
 </html>
