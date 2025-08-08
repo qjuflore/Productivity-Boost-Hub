@@ -25,6 +25,7 @@
       font-weight: bold;
       cursor: pointer;
       margin-bottom: 20px;
+      margin-right: 10px;
     }
 
     .category {
@@ -77,11 +78,11 @@
   <h1>📋 Amazon Report Control Center</h1>
 
   <button class="admin-btn" onclick="requestAdmin()">🔐 Admin Login</button>
+  <button class="admin-btn hidden" id="logoutBtn" onclick="logoutAdmin()">🚪 Logout</button>
 
   <div id="container"></div>
 
   <script>
-    const isAdmin = localStorage.getItem("admin") === "true";
     const categories = [
       "Problem Solve",
       "HRV Sort",
@@ -94,8 +95,13 @@
       "IB Dock PS"
     ];
 
+    const isAdmin = localStorage.getItem("admin") === "true";
     const storedReports = JSON.parse(localStorage.getItem("reports") || "{}");
     const container = document.getElementById("container");
+
+    if (isAdmin) {
+      document.getElementById("logoutBtn").classList.remove("hidden");
+    }
 
     categories.forEach(cat => {
       const contentId = cat.replace(/\s+/g, '_');
@@ -141,6 +147,11 @@
       } else {
         alert("❌ Incorrect password.");
       }
+    }
+
+    function logoutAdmin() {
+      localStorage.removeItem("admin");
+      location.reload();
     }
   </script>
 </body>
