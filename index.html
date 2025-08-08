@@ -168,30 +168,23 @@
 
   <script>
     const emojiMap = {
-      ':jigsaw:': '🧩',
-      ':shoe:': '👟',
-      ':clipboard:': '📋',
-      ':diamond:': '💎',
-      ':chart:': '📊',
-      ':green_square:': '🟩',
-      ':blue_square:': '🟦',
-      ':check_mark': '✅',
-      ':warning:': '⚠️'
+      ':jigsaw:': '🧹', ':shoe:': '👟', ':clipboard:': '📋', ':diamond:': '💎', ':chart:': '📈',
+      ':green_square:': '🟩', ':blue_square:': '🟦', ':check_mark:': '✅', ':warning:': '⚠️'
     };
 
     let emojisOn = true;
     let countryStatsVisible = false;
-
-    function replaceEmojis(text) {
-      if (!emojisOn) return text;
-      return text.replace(/:[a-zA-Z0-9_]+:/g, match => emojiMap[match] || match);
-    }
 
     document.getElementById('emojiToggle').addEventListener('click', () => {
       emojisOn = !emojisOn;
       document.getElementById('emojiToggle').innerText = emojisOn ? '😎 Emojis: ON' : '😐 Emojis: OFF';
       loadReports();
     });
+
+    function replaceEmojis(text) {
+      if (!emojisOn) return text;
+      return text.replace(/:[a-zA-Z0-9_]+:/g, match => emojiMap[match] || match);
+    }
 
     function toggleContent(header) {
       const content = header.nextElementSibling;
@@ -204,18 +197,13 @@
         btn.classList.add('copied');
         const toast = document.createElement('div');
         toast.innerText = '🔔 Copied! Remember to click "Apply formatting" in Slack.';
-        toast.style.position = 'fixed';
-        toast.style.bottom = '20px';
-        toast.style.right = '20px';
-        toast.style.background = '#111';
-        toast.style.color = '#0ff';
-        toast.style.padding = '10px 15px';
-        toast.style.borderRadius = '10px';
-        toast.style.boxShadow = '0 0 10px #00fff7';
-        toast.style.fontFamily = 'Orbitron';
+        Object.assign(toast.style, {
+          position: 'fixed', bottom: '20px', right: '20px', background: '#111',
+          color: '#0ff', padding: '10px 15px', borderRadius: '10px',
+          boxShadow: '0 0 10px #00fff7', fontFamily: 'Orbitron'
+        });
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
-
         setTimeout(() => {
           btn.innerText = '📋 Copy';
           btn.classList.remove('copied');
@@ -230,18 +218,14 @@
           const container = document.getElementById('reportContainer');
           container.innerHTML = '';
           document.getElementById('error').innerText = '';
-
           data.forEach(cat => {
             const div = document.createElement('div');
             div.className = 'category';
-
             const header = document.createElement('div');
             header.className = 'category-header';
             header.onclick = () => toggleContent(header);
-
             const title = document.createElement('span');
             title.innerText = cat.title;
-
             const copyBtn = document.createElement('button');
             copyBtn.className = 'copy-btn';
             copyBtn.innerText = '📋 Copy';
@@ -249,11 +233,9 @@
               e.stopPropagation();
               copyText(replaceEmojis(cat.content), copyBtn);
             };
-
             const content = document.createElement('div');
             content.className = 'category-content';
             content.innerText = replaceEmojis(cat.content);
-
             header.appendChild(title);
             header.appendChild(copyBtn);
             div.appendChild(header);
@@ -267,20 +249,18 @@
     }
 
     function loadVisits() {
-      fetch("https://script.google.com/macros/s/AKfycbzNCl7y-uzNo0uamrmfgVzaedjQ941ar452-__eX9XNZCMfrk4PGffCShmLvo3ypq_D/exec")
+      fetch("https://script.google.com/macros/s/AKfycbx-3KNUSuOuui-ZtV6vwgwr7KOP-rjayDXtmsH5TP2J5hZgUjk47YAn1GwrzoJ_mgXu/exec")
         .then(res => res.json())
         .then(data => {
           document.getElementById("visitInfo").innerText = `👁️ Total Visits: ${data.total}`;
-
           let stats = '<strong>Visits by Country:</strong><br><ul>';
           Object.entries(data).forEach(([key, value]) => {
             if (key.startsWith('country_')) {
-              const country = key.replace('country_', '');
+              const country = key.replace('country_', '').toUpperCase();
               stats += `<li>${country}: ${value}</li>`;
             }
           });
           stats += '</ul>';
-
           document.getElementById("countryStats").innerHTML = stats;
         })
         .catch(() => {
