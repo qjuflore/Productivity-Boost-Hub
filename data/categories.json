@@ -1,26 +1,18 @@
 [
   {
     "title": "Problem Solve",
-    "content": ":jigsaw: P [   ] Problem Solve Report\n*(Enter the floor number in the first \u201c[   ]\u201d, then for each subsequent \u201c[   ]\u201d enter a quantity and specify \u201ctotes\u201d or \u201cU-boats\u201d)*\n1. Problem Solve: [   ] \n   – IDRT \u2192 problem-solve DZ\n2. Damaged/Unscannable Items: [   ] \n   – IDRT \u2192 dz-P-DAMAGELAND; U-boats to Damageland\n3. Shoes: [   ] *(only if shoe stow isn’t available on your current floor)* \n   – IDRT \u2192 dz-P-1A266 / dz-P-1B266 / dz-P-1C266 / dz-P-1D266 \n   – U-boats to chosen DZ\n4. Library Non-Con: [   ] \n   – IDRT \u2192 dz-S-Cubiscan; U-boats to ISS\n5. Large Apparel Non-Con: [   ] \n   – IDRT \u2192 IB Dock; U-boats to Decant\n6. ISS or Hazmat: [   ] \n   – IDRT \u2192 dz-P-ISS; U-boats to ISS\n7. Jewelry or HRV: [   ] \n   – IDRT \u2192 dz-P-2N327 / dz-P-2M327 / dz-P-2N364 / dz-P-2M364 \n   – U-boats to chosen DZ"
+    "content": "🧩 P [ ] Problem Solve Report\n*Enter the floor number in the first “[ ]”. For each subsequent “[ ]”, enter a quantity and specify “totes” or “U-boats”.*\n\n1. Problem Solve: [ ]  \n↳ IDRT → problem-solve DZ\n\n2. Damaged / Unscannable Items: [ ]  \n↳ IDRT → dz-P-DAMAGELAND; move U-boats to Damageland\n\n3. Shoes: [ ] *(Only if shoe stow isn’t available on your current floor)*  \n↳ IDRT → dz-P-1A266 / dz-P-1B266 / dz-P-1C266 / dz-P-1D266  \n↳ Move U-boats to chosen DZ\n\n4. Library Non-Con: [ ]  \n↳ IDRT → dz-S-Cubiscan; move U-boats to ISS\n\n5. Large Apparel Non-Con: [ ]  \n↳ IDRT → IB Dock; move U-boats to Decant\n\n6. ISS or Hazmat: [ ]  \n↳ IDRT → dz-P-ISS; move U-boats to ISS\n\n7. Jewelry or HRV: [ ]  \n↳ IDRT → dz-P-2N327 / dz-P-2M327 / dz-P-2N364 / dz-P-2M364  \n↳ Move U-boats to chosen DZ"
   },
   {
-    "title": "HRV Sort",
-    "content": "HRV Sort Status\n- Ready U-boats: [   ]\n- Pending Sort: [   ]\n- Injected Today: [   ]"
+    "title": "P1 Shoes Sort",
+    "content": "👟 P1 Problem Solve Report\n*For each “[ ]”, enter a number and specify “totes” or “U-boats”.*\n\nShoes Ready to Stow: [ ] U-boats  \nPending Sorting: [ ] U-boats\n\n1. Problem Solve: [ ]  \n↳ IDRT → problem-solve DZ\n\n2. Damaged / Unscannable Items: [ ]  \n↳ IDRT → dz-P-DAMAGELAND; move U-boats to Damageland\n\n3. Library Non-Con: [ ]  \n↳ IDRT → dz-S-Cubiscan; move U-boats to ISS\n\n4. Large Apparel Non-Con: [ ]  \n↳ IDRT → IB Dock; move U-boats to Decant\n\n5. ISS or Hazmat: [ ]  \n↳ IDRT → dz-P-ISS; move U-boats to ISS\n\n6. Jewelry or HRV: [ ]  \n↳ IDRT → dz-P-2N327 / dz-P-2M327 / dz-P-2N364 / dz-P-2M364  \n↳ Move U-boats to chosen DZ"
   },
   {
-    "title": "Shoes Sort",
-    "content": "Shoes Sort Summary\n- Sorted Shoes: [   ] totes\n- Pending Shoes: [   ] totes\n- Completed IDRT: [   ] totes"
+    "title": "HRV Report",
+    "content": "💎 HRV Problem Solve & WIP Report\n*For each “[ ]”, enter a number and specify “totes” or “U-boats”.*\n\n1. Ready to Inject: [ ]  \n↳ Move to Decant for reinjection; verify dz-P-LIBRARY routing\n\n2. Needing Sorting: [ ]\n\n3. Ready to Stow (Q330): [ ]\n\n4. Ready to Stow (Q364): [ ]"
   },
   {
-    "title": "IDRT",
-    "content": "IDRT Update\n- Completed Transfers: [   ]\n- Pending: [   ]\n- Delays Reported: [   ]"
-  },
-  {
-    "title": "FUD",
-    "content": "FUD Report\n- AA Productivity Verified: [   ]\n- Metric Tracking Enabled: [Yes/No]\n- Tool Installed on Stations: [   ]"
-  },
-  {
-    "title": "IOL",
-    "content": "IOL Process\n- Completed: [   ]\n- Escalations: [   ]\n- Follow-ups Required: [   ]"
+    "title": "IDRT Report",
+    "content": "📊 IDRT Report – FMC Hub & IB Rodeo\n*Metrics overview for inventory flow alignment.*\n\n🟩 FMC Hub  \nTotal Stow WIP: ( )  \n- Stow Mod Inventory: ( ) ⚠️ (Key Metric)  \n- dz-P: ( )  \n- dzg-VRET: ( )\n\n🔄 Transition to IB Rodeo\n\n🟦 IB Rodeo  \nTotal Pending Stow: ( ) ⚠️ (Key Metric)  \n- Conveyor: ( )  \n  (Transfers to Drop Zone Prime once queued & IDRT’d.)  \n- Drop Zone Prime: ( )  \n  (Keep aligned with FMC Hub Stow Mod inventory.)  \n- Currently Being Stowed: ( )  \n  (In progress across stowers.)\n\n✅ IDRT Items Completed  \n- Login: ( ) Total Units: ( )"
   }
 ]
