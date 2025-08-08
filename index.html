@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🧠 qjuflore Pro Tools</title>
+  <title>🚀 Productivity Boost</title>
   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <style>
@@ -68,6 +68,7 @@
       display: flex;
       gap: 1rem;
       flex-wrap: wrap;
+      margin-bottom: 1rem;
     }
 
     .btn {
@@ -155,21 +156,23 @@
   </style>
 </head>
 <body>
-  <h1>🧠 qjuflore Pro Tools</h1>
+  <h1>🚀 Productivity Boost</h1>
 
   <div class="tabs">
     <div class="tab active" onclick="showSection('reports')">📊 Share Reports</div>
-    <div class="tab" onclick="showSection('guide')">🧩 Problem Solve Guide</div>
+    <div class="tab" onclick="showSection('guide')">🪩 Problem Solve Guide</div>
     <div class="tab" onclick="showSection('scripts')">🧠 Tampermonkey Scripts</div>
   </div>
 
-  <div id="reports" class="section active">
-    <div class="controls">
-      <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
-      <button class="btn" onclick="loadReports()">↻ Refresh</button>
-    </div>
+  <div class="controls">
+    <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
+    <button class="btn" onclick="loadReports()">↻ Refresh</button>
     <div id="visitInfo" onclick="toggleCountryStats()">👁️ Total Visits: Loading...</div>
     <div id="countryStats"></div>
+  </div>
+
+  <div id="reports" class="section active">
+    <input type="text" id="reportSearch" placeholder="🔍 Search reports..." style="margin-bottom: 1rem; padding: 0.5rem; width: 100%; border-radius: 10px; border: none;">
     <div id="reportContainer"></div>
     <div id="error" class="error-msg"></div>
   </div>
@@ -187,138 +190,156 @@
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
   <script>
-    const emojiMap = {
-      ':jigsaw:': '🧩',
-      ':shoe:': '👟',
-      ':clipboard:': '📋',
-      ':diamond:': '💎',
-      ':chart:': '📊',
-      ':green_square:': '🟩',
-      ':blue_square:': '🟦',
-      ':check_mark:': '✅',
-      ':warning:': '⚠️'
-    };
+   <script>
+  const emojiMap = {
+    ':jigsaw:': '🧩',
+    ':shoe:': '👟',
+    ':clipboard:': '📋',
+    ':diamond:': '💎',
+    ':chart:': '📊',
+    ':green_square:': '🟩',
+    ':blue_square:': '🟦',
+    ':check_mark:': '✅',
+    ':warning:': '⚠️'
+  };
 
-    let emojisOn = true;
+  let emojisOn = true;
 
-    function replaceEmojis(text) {
-      if (!emojisOn) return text;
-      return text.replace(/:[a-zA-Z0-9_]+:/g, match => emojiMap[match] || match);
-    }
+  function replaceEmojis(text) {
+    if (!emojisOn) return text;
+    return text.replace(/:[a-zA-Z0-9_]+:/g, match => emojiMap[match] || match);
+  }
 
-    function showSection(id) {
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      [...document.querySelectorAll('.tab')].find(t => t.textContent.includes(id === 'reports' ? 'Share' : id === 'guide' ? 'Guide' : 'Scripts')).classList.add('active');
-    }
+  function showSection(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    [...document.querySelectorAll('.tab')].find(t => t.textContent.includes(id === 'reports' ? 'Share' : id === 'guide' ? 'Solve' : 'Tamper')).classList.add('active');
+  }
 
-    document.getElementById('emojiToggle').addEventListener('click', () => {
-      emojisOn = !emojisOn;
-      document.getElementById('emojiToggle').innerText = emojisOn ? '😎 Emojis: ON' : '😐 Emojis: OFF';
-      loadReports();
-    });
-
-    function toggleContent(header) {
-      const content = header.nextElementSibling;
-      content.classList.toggle('visible');
-    }
-
-    function copyText(content, btn) {
-      navigator.clipboard.writeText(content).then(() => {
-        btn.innerText = '✅ Copied';
-        btn.classList.add('copied');
-        setTimeout(() => {
-          btn.innerText = '📋 Copy';
-          btn.classList.remove('copied');
-        }, 1500);
-        showNotice("Click 'Apply formatting' in Slack after pasting.");
-      });
-    }
-
-    function loadReports() {
-      fetch('data/📊 Share Reports.json')
-        .then(res => res.json())
-        .then(data => {
-          const container = document.getElementById('reportContainer');
-          container.innerHTML = '';
-          document.getElementById('error').innerText = '';
-
-          data.forEach(cat => {
-            const div = document.createElement('div');
-            div.className = 'category';
-
-            const header = document.createElement('div');
-            header.className = 'category-header';
-            header.onclick = () => toggleContent(header);
-
-            const title = document.createElement('span');
-            title.innerText = cat.title;
-
-            const copyBtn = document.createElement('button');
-            copyBtn.className = 'copy-btn';
-            copyBtn.innerText = '📋 Copy';
-            copyBtn.onclick = (e) => {
-              e.stopPropagation();
-              copyText(replaceEmojis(cat.content), copyBtn);
-            };
-
-            const content = document.createElement('div');
-            content.className = 'category-content';
-            content.innerText = replaceEmojis(cat.content);
-
-            header.appendChild(title);
-            header.appendChild(copyBtn);
-            div.appendChild(header);
-            div.appendChild(content);
-            container.appendChild(div);
-          });
-        })
-        .catch(err => {
-          document.getElementById('error').innerText = '⚠️ Error loading reports';
-        });
-    }
-
-    function showNotice(msg) {
-      const notice = document.createElement('div');
-      notice.innerText = msg;
-      notice.style.position = 'fixed';
-      notice.style.bottom = '20px';
-      notice.style.right = '20px';
-      notice.style.background = 'var(--accent)';
-      notice.style.color = 'black';
-      notice.style.padding = '0.7rem 1.2rem';
-      notice.style.borderRadius = '10px';
-      notice.style.boxShadow = '0 0 12px var(--accent)';
-      notice.style.zIndex = 9999;
-      document.body.appendChild(notice);
-      setTimeout(() => document.body.removeChild(notice), 3000);
-    }
-
-    function toggleCountryStats() {
-      const statsDiv = document.getElementById('countryStats');
-      statsDiv.classList.toggle('visible');
-    }
-
-    async function fetchVisitStats() {
-      try {
-        const res = await fetch("https://script.google.com/macros/s/AKfycbx-3KNUSuOuui-ZtV6vwgwr7KOP-rjayDXtmsH5TP2J5hZgUjk47YAn1GwrzoJ_mgXu/exec");
-        const data = await res.json();
-        document.getElementById("visitInfo").innerText = `👁️ Total Visits: ${data.total}`;
-
-        const countryStats = Object.entries(data)
-          .filter(([key]) => key.startsWith("country_"))
-          .map(([key, count]) => `${key.replace("country_", "").toUpperCase()}: ${count}`)
-          .join(" | ");
-
-        document.getElementById("countryStats").innerText = countryStats;
-      } catch {
-        document.getElementById("visitInfo").innerText = "👁️ Total Visits: Error";
-      }
-    }
-
+  document.getElementById('emojiToggle').addEventListener('click', () => {
+    emojisOn = !emojisOn;
+    document.getElementById('emojiToggle').innerText = emojisOn ? '😎 Emojis: ON' : '😐 Emojis: OFF';
     loadReports();
-    fetchVisitStats();
+  });
+
+  function toggleContent(header) {
+    const content = header.nextElementSibling;
+    content.classList.toggle('visible');
+  }
+
+  function copyText(content, btn) {
+    navigator.clipboard.writeText(content).then(() => {
+      btn.innerText = '✅ Copied';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerText = '📋 Copy';
+        btn.classList.remove('copied');
+      }, 1500);
+      showNotice("Click 'Apply formatting' in Slack after pasting.");
+    });
+  }
+
+  function showNotice(msg) {
+    const notice = document.createElement('div');
+    notice.innerText = msg;
+    notice.style.position = 'fixed';
+    notice.style.bottom = '20px';
+    notice.style.right = '20px';
+    notice.style.background = 'var(--accent)';
+    notice.style.color = 'black';
+    notice.style.padding = '0.7rem 1.2rem';
+    notice.style.borderRadius = '10px';
+    notice.style.boxShadow = '0 0 12px var(--accent)';
+    notice.style.zIndex = 9999;
+    document.body.appendChild(notice);
+    setTimeout(() => document.body.removeChild(notice), 3000);
+  }
+
+  function toggleCountryStats() {
+    const statsDiv = document.getElementById('countryStats');
+    statsDiv.classList.toggle('visible');
+  }
+
+  async function fetchVisitStats() {
+    try {
+      const res = await fetch("https://script.google.com/macros/s/AKfycbx-3KNUSuOuui-ZtV6vwgwr7KOP-rjayDXtmsH5TP2J5hZgUjk47YAn1GwrzoJ_mgXu/exec");
+      const data = await res.json();
+      document.getElementById("visitInfo").innerText = `👁️ Total Visits: ${data.total}`;
+
+      const countryStats = Object.entries(data)
+        .filter(([key]) => key.startsWith("country_"))
+        .map(([key, count]) => `${key.replace("country_", "").toUpperCase()}: ${count}`)
+        .join(" | ");
+
+      document.getElementById("countryStats").innerText = countryStats;
+    } catch {
+      document.getElementById("visitInfo").innerText = "👁️ Total Visits: Error";
+    }
+  }
+
+  function loadReports() {
+    fetch('data/📊 Share Reports.json')
+      .then(res => res.json())
+      .then(data => {
+        const container = document.getElementById('reportContainer');
+        container.innerHTML = '';
+        document.getElementById('error').innerText = '';
+
+        data.forEach(cat => {
+          const div = document.createElement('div');
+          div.className = 'category';
+
+          const header = document.createElement('div');
+          header.className = 'category-header';
+          header.onclick = () => toggleContent(header);
+
+          const title = document.createElement('span');
+          title.innerText = cat.title;
+
+          const copyBtn = document.createElement('button');
+          copyBtn.className = 'copy-btn';
+          copyBtn.innerText = '📋 Copy';
+          copyBtn.onclick = (e) => {
+            e.stopPropagation();
+            copyText(replaceEmojis(cat.content), copyBtn);
+          };
+
+          const content = document.createElement('div');
+          content.className = 'category-content';
+          content.innerText = replaceEmojis(cat.content);
+
+          header.appendChild(title);
+          header.appendChild(copyBtn);
+          div.appendChild(header);
+          div.appendChild(content);
+          container.appendChild(div);
+        });
+
+        applyReportSearchFilter(); // Filter on initial load
+      })
+      .catch(err => {
+        document.getElementById('error').innerText = '⚠️ Error loading reports';
+      });
+  }
+
+  function applyReportSearchFilter() {
+    const query = document.getElementById('reportSearch').value.toLowerCase();
+    const categories = document.querySelectorAll('#reportContainer .category');
+
+    categories.forEach(cat => {
+      const title = cat.querySelector('.category-header span').innerText.toLowerCase();
+      const content = cat.querySelector('.category-content').innerText.toLowerCase();
+      cat.style.display = title.includes(query) || content.includes(query) ? '' : 'none';
+    });
+  }
+
+  document.getElementById('reportSearch').addEventListener('input', applyReportSearchFilter);
+
+  loadReports();
+  fetchVisitStats();
+</script>
+
   </script>
 </body>
 </html>
