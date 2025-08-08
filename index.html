@@ -118,28 +118,6 @@
       color: white;
     }
 
-    .notification {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #111;
-      color: #00fff7;
-      padding: 1rem 2rem;
-      border-radius: 12px;
-      box-shadow: 0 0 20px #00fff7;
-      font-size: 0.95rem;
-      z-index: 1000;
-      opacity: 0;
-      animation: fadeInOut 3s ease-out forwards;
-    }
-
-    @keyframes fadeInOut {
-      0% { opacity: 0; transform: translate(-50%, 20px); }
-      10%, 90% { opacity: 1; transform: translate(-50%, 0); }
-      100% { opacity: 0; transform: translate(-50%, 20px); }
-    }
-
     .error-msg {
       color: yellow;
       font-size: 1.2rem;
@@ -154,19 +132,13 @@
       color: #aaa;
     }
 
-    #visitCounter {
-      font-size: 1.2rem;
+    .visit-counter {
+      font-size: 1.3rem;
       color: var(--accent);
       display: flex;
       align-items: center;
-      margin-top: 1rem;
-      animation: pulse 1s infinite;
-    }
-
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.4; }
-      100% { opacity: 1; }
+      gap: 0.5rem;
+      margin-bottom: 1rem;
     }
   </style>
 </head>
@@ -178,11 +150,11 @@
     </div>
   </h1>
 
-  <div id="visitCounter">👁️ <span id="visitCountText" style="margin-left: 10px;">Loading...</span>
-  </div>
+  <div class="visit-counter" id="visitCounter">👁️ Total Visits: Loading...</div>
 
   <div id="reportContainer"></div>
   <div id="error" class="error-msg"></div>
+
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
   <script>
@@ -191,9 +163,9 @@
       ':shoe:': '👟',
       ':clipboard:': '📋',
       ':diamond:': '💎',
-      ':chart:': '📈',
-      ':green_square:': '🝺',
-      ':blue_square:': '🟦',
+      ':chart:': '📊',
+      ':green_square:': '🝿',
+      ':blue_square:': '🗾',
       ':check_mark:': '✅',
       ':warning:': '⚠️'
     };
@@ -216,24 +188,33 @@
       content.classList.toggle('visible');
     }
 
-    function showNotification(msg) {
-      const note = document.createElement('div');
-      note.className = 'notification';
-      note.innerText = msg;
-      document.body.appendChild(note);
-      setTimeout(() => document.body.removeChild(note), 3000);
-    }
-
     function copyText(content, btn) {
       navigator.clipboard.writeText(content).then(() => {
         btn.innerText = '✅ Copied';
         btn.classList.add('copied');
-        showNotification('Copied! Remember to click "Apply" when pasting into Slack to preserve formatting.');
+        showNotification('Copied! When pasting in Slack, click “Apply Formatting” for best result.');
         setTimeout(() => {
           btn.innerText = '📋 Copy';
           btn.classList.remove('copied');
         }, 1500);
       });
+    }
+
+    function showNotification(msg) {
+      const note = document.createElement('div');
+      note.style.position = 'fixed';
+      note.style.bottom = '30px';
+      note.style.right = '30px';
+      note.style.background = '#111';
+      note.style.color = '#0ff';
+      note.style.padding = '1rem 1.5rem';
+      note.style.borderRadius = '10px';
+      note.style.boxShadow = '0 0 10px #00fff7';
+      note.style.fontFamily = 'Orbitron';
+      note.style.zIndex = 9999;
+      note.innerText = msg;
+      document.body.appendChild(note);
+      setTimeout(() => note.remove(), 3000);
     }
 
     function loadReports() {
@@ -279,35 +260,19 @@
         });
     }
 
-    async function fetchVisits() {
-      const counterEl = document.getElementById('visitCountText');
-      let timeoutReached = false;
-
-      const timeout = setTimeout(() => {
-        timeoutReached = true;
-        counterEl.innerText = 'Visits Unavailable (Try again later)';
-        counterEl.style.animation = 'none';
-      }, 5000);
-
-      try {
-        const res = await fetch('https://api.countapi.xyz/hit/share-reports-easily/qjuflore');
-        clearTimeout(timeout);
-        if (!timeoutReached && res.ok) {
-          const data = await res.json();
-          counterEl.innerText = data.value.toLocaleString();
-          counterEl.style.animation = 'none';
-        }
-      } catch (err) {
-        clearTimeout(timeout);
-        if (!timeoutReached) {
-          counterEl.innerText = 'Visits Unavailable';
-          counterEl.style.animation = 'none';
-        }
-      }
+    function loadVisitCounter() {
+      fetch('https://api.countapi.xyz/hit/report-copy-tool/visits')
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('visitCounter').innerHTML = `👁️ Total Visits: ${data.value}`;
+        })
+        .catch(() => {
+          document.getElementById('visitCounter').innerHTML = `👁️ Visits Unavailable`;
+        });
     }
 
     loadReports();
-    fetchVisits();
+    loadVisitCounter();
   </script>
 </body>
 </html>
