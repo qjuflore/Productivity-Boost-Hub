@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,6 +19,7 @@
       --button-text: #000;
       --button-glow: 0 0 10px #00fff7;
     }
+
     body {
       margin: 0;
       padding: 2rem;
@@ -28,6 +30,7 @@
       display: flex;
       flex-direction: column;
     }
+
     h1 {
       font-size: 2.2rem;
       margin-bottom: 2rem;
@@ -38,14 +41,17 @@
       text-shadow: var(--text-glow);
       animation: fadeInUp 1s ease-out;
     }
+
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
     .controls {
       display: flex;
       gap: 1rem;
     }
+
     .btn {
       background: var(--button-bg);
       color: var(--button-text);
@@ -57,9 +63,11 @@
       box-shadow: var(--button-glow);
       transition: transform 0.2s ease;
     }
+
     .btn:hover {
       transform: scale(1.05);
     }
+
     .category {
       background: var(--card-bg);
       margin-bottom: 1rem;
@@ -68,10 +76,12 @@
       border: 1px solid var(--border);
       animation: grow 0.5s ease-in-out;
     }
+
     @keyframes grow {
       from { transform: scale(0.95); opacity: 0.5; }
       to { transform: scale(1); opacity: 1; }
     }
+
     .category-header {
       padding: 1rem;
       font-size: 1.2rem;
@@ -81,15 +91,18 @@
       align-items: center;
       background-color: rgba(255, 255, 255, 0.07);
     }
+
     .category-content {
       display: none;
       padding: 1rem;
       white-space: pre-wrap;
       border-top: 1px solid var(--border);
     }
+
     .visible {
       display: block;
     }
+
     .copy-btn {
       background: var(--button-bg);
       color: var(--button-text);
@@ -100,32 +113,32 @@
       box-shadow: var(--button-glow);
       transition: all 0.3s ease;
     }
+
     .copy-btn.copied {
       background-color: #00c851;
       color: white;
     }
-    .copy-alert {
-      font-size: 0.75rem;
-      color: yellow;
-      margin-top: 0.3rem;
-      animation: blink 1s ease-in-out;
-    }
-    @keyframes blink {
-      0% { opacity: 0; }
-      50% { opacity: 1; }
-      100% { opacity: 0; }
-    }
+
     .error-msg {
       color: yellow;
       font-size: 1.2rem;
       margin-top: 2rem;
     }
+
     .footer {
       margin-top: auto;
       text-align: center;
       font-size: 0.9rem;
       padding: 1rem;
       color: #aaa;
+    }
+
+    .visit-counter {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 1.1rem;
+      color: #00fff7;
+      text-shadow: 0 0 5px #00fff7;
     }
   </style>
 </head>
@@ -139,7 +152,7 @@
 
   <div id="reportContainer"></div>
   <div id="error" class="error-msg"></div>
-
+  <div class="visit-counter" id="visitCounter">👁️ Total Visits: Loading...</div>
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
   <script>
@@ -149,8 +162,8 @@
       ':clipboard:': '📋',
       ':diamond:': '💎',
       ':chart:': '📊',
-      ':green_square:': '🝾',
-      ':blue_square:': '🟐',
+      ':green_square:': '🟩',
+      ':blue_square:': '🟦',
       ':check_mark:': '✅',
       ':warning:': '⚠️'
     };
@@ -177,15 +190,11 @@
       navigator.clipboard.writeText(content).then(() => {
         btn.innerText = '✅ Copied';
         btn.classList.add('copied');
-        const alert = document.createElement('div');
-        alert.className = 'copy-alert';
-        alert.innerText = "Tip: Click 'Apply' in Slack to keep formatting";
-        btn.parentElement.appendChild(alert);
         setTimeout(() => {
           btn.innerText = '📋 Copy';
           btn.classList.remove('copied');
-          alert.remove();
-        }, 3000);
+          alert('If you’re pasting in Slack, be sure to click “Apply” to keep formatting!');
+        }, 1500);
       });
     }
 
@@ -232,7 +241,19 @@
         });
     }
 
+    function loadVisitCounter() {
+      fetch('https://api.countapi.xyz/hit/qjuflore/report-tool-visits')
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('visitCounter').innerText = `👁️ Total Visits: ${data.value.toLocaleString()}`;
+        })
+        .catch(err => {
+          document.getElementById('visitCounter').innerText = `👁️ Total Visits: Unavailable`;
+        });
+    }
+
     loadReports();
+    loadVisitCounter();
   </script>
 </body>
 </html>
