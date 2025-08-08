@@ -21,7 +21,9 @@ function showSection(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  [...document.querySelectorAll('.tab')].find(t => t.textContent.includes(id === 'reports' ? 'Share' : id === 'guide' ? 'Guide' : 'Scripts')).classList.add('active');
+  [...document.querySelectorAll('.tab')].find(t => t.textContent.includes(
+    id === 'reports' ? 'Share' : id === 'guide' ? 'Guide' : 'Scripts'
+  )).classList.add('active');
 }
 
 document.getElementById('emojiToggle').addEventListener('click', () => {
