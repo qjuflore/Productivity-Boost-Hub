@@ -116,7 +116,7 @@ function loadScripts() {
         header.onclick = () => toggleContent(header);
 
         const title = document.createElement('span');
-        title.innerText = `${script.name} | ${script.author} | v${script.version}`;
+        title.innerText = `${script.name || 'Untitled'}${script.author ? ' | ' + script.author : ''}${script.version ? ' | v' + script.version : ''}`;
 
         const copyBtn = document.createElement('button');
         copyBtn.className = 'copy-btn';
