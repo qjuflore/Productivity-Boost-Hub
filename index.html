@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🧠 Compartir reportes fácilmente</title>
-  <link rel="icon" type="image/png" href="https://em-content.zobj.net/source/microsoft-teams/363/memo_1f4dd.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🧠 Share Reports Easily</title>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -21,10 +21,6 @@
       --admin-edit-text: #fff;
     }
 
-    * {
-      box-sizing: border-box;
-    }
-
     body {
       margin: 0;
       padding: 2rem;
@@ -32,23 +28,22 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      overflow-x: hidden;
     }
 
     h1 {
-      font-size: 2rem;
+      font-size: 2.2rem;
       margin-bottom: 2rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
       color: var(--accent);
       text-shadow: var(--text-glow);
-      animation: pulse 3s infinite ease-in-out;
+      animation: fadeInUp 1s ease-out;
     }
 
-    @keyframes pulse {
-      0%, 100% { text-shadow: 0 0 10px var(--accent); }
-      50% { text-shadow: 0 0 20px var(--accent); }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .controls {
@@ -65,12 +60,11 @@
       cursor: pointer;
       font-weight: bold;
       box-shadow: var(--button-glow);
-      transition: all 0.3s ease;
+      transition: transform 0.2s ease;
     }
 
     .btn:hover {
-      transform: scale(1.08) rotate(-1deg);
-      box-shadow: 0 0 20px var(--accent);
+      transform: scale(1.05);
     }
 
     .category {
@@ -79,14 +73,12 @@
       border-radius: 12px;
       overflow: hidden;
       border: 1px solid var(--border);
-      transform: scale(1);
-      transition: all 0.3s ease;
-      animation: fadeInUp 0.6s ease forwards;
+      animation: grow 0.5s ease-in-out;
     }
 
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes grow {
+      from { transform: scale(0.95); opacity: 0.5; }
+      to { transform: scale(1); opacity: 1; }
     }
 
     .category-header {
@@ -108,12 +100,6 @@
 
     .visible {
       display: block;
-      animation: grow 0.3s ease-in-out;
-    }
-
-    @keyframes grow {
-      from { opacity: 0; transform: scaleY(0.8); }
-      to { opacity: 1; transform: scaleY(1); }
     }
 
     .copy-btn {
@@ -125,17 +111,24 @@
       font-size: 0.9rem;
       box-shadow: var(--button-glow);
     }
+
+    .error-msg {
+      color: yellow;
+      font-size: 1.2rem;
+      margin-top: 2rem;
+    }
   </style>
 </head>
 <body>
-  <h1>
-    🧠 Compartir reportes fácilmente
+  <h1>🧠 Share Reports Easily
     <div class="controls">
       <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
-      <button class="btn" onclick="location.reload()">🔁 Refresh</button>
+      <button class="btn" onclick="loadReports()">↻ Refresh</button>
     </div>
   </h1>
-  <div id="reportContainer">Cargando categorías...</div>
+
+  <div id="reportContainer"></div>
+  <div id="error" class="error-msg"></div>
 
   <script>
     const emojiMap = {
@@ -152,45 +145,51 @@
 
     let emojisOn = true;
 
-    document.getElementById('emojiToggle').addEventListener('click', () => {
-      emojisOn = !emojisOn;
-      document.getElementById('emojiToggle').innerText = emojisOn ? '😎 Emojis: ON' : '😐 Emojis: OFF';
-      loadAndRender();
-    });
-
     function replaceEmojis(text) {
       if (!emojisOn) return text;
       return text.replace(/:[a-zA-Z0-9_]+:/g, match => emojiMap[match] || match);
     }
 
-    async function loadAndRender() {
-      try {
-        const res = await fetch('categories.json');
-        const categories = await res.json();
-        renderCategories(categories);
-      } catch (err) {
-        document.getElementById('reportContainer').innerText = '⚠️ Error loading reports';
-      }
+    document.getElementById('emojiToggle').addEventListener('click', () => {
+      emojisOn = !emojisOn;
+      document.getElementById('emojiToggle').innerText = emojisOn ? '😎 Emojis: ON' : '😐 Emojis: OFF';
+      loadReports();
+    });
+
+    function toggleContent(header) {
+      const content = header.nextElementSibling;
+      content.classList.toggle('visible');
     }
 
-    function renderCategories(categories) {
-      const container = document.getElementById('reportContainer');
-      container.innerHTML = '';
-      categories.forEach((cat, index) => {
-        const div = document.createElement('div');
-        div.className = 'category';
-        div.innerHTML = `
-          <div class="category-header" onclick="this.nextElementSibling.classList.toggle('visible')">
-            <span>${cat.title}</span>
-            <button class="copy-btn" onclick="event.stopPropagation(); navigator.clipboard.writeText(${JSON.stringify(cat.content)}).then(() => alert('✅ Report copied!'))">📋 Copy</button>
-          </div>
-          <div class="category-content">${replaceEmojis(cat.content)}</div>
-        `;
-        container.appendChild(div);
-      });
+    function copyText(content) {
+      navigator.clipboard.writeText(content).then(() => alert('✅ Report copied!'));
     }
 
-    loadAndRender();
+    function loadReports() {
+      fetch('categories.json')
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('reportContainer').innerHTML = '';
+          document.getElementById('error').innerText = '';
+          data.forEach(cat => {
+            const div = document.createElement('div');
+            div.className = 'category';
+            div.innerHTML = `
+              <div class="category-header" onclick="toggleContent(this)">
+                <span>${cat.title}</span>
+                <button class="copy-btn" onclick="event.stopPropagation(); copyText(replaceEmojis(${JSON.stringify(cat.content)}))">📋 Copy</button>
+              </div>
+              <div class="category-content">${replaceEmojis(cat.content)}</div>
+            `;
+            document.getElementById('reportContainer').appendChild(div);
+          });
+        })
+        .catch(err => {
+          document.getElementById('error').innerText = '⚠️ Error loading reports';
+        });
+    }
+
+    loadReports();
   </script>
 </body>
 </html>
