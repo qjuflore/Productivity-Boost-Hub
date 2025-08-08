@@ -17,8 +17,6 @@
       --button-bg: #00fff7;
       --button-text: #000;
       --button-glow: 0 0 10px #00fff7;
-      --admin-edit-bg: #222;
-      --admin-edit-text: #fff;
     }
 
     body {
@@ -56,15 +54,16 @@
       color: var(--button-text);
       padding: 0.5rem 1rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       cursor: pointer;
       font-weight: bold;
       box-shadow: var(--button-glow);
-      transition: transform 0.2s ease;
+      transition: all 0.2s ease;
     }
 
     .btn:hover {
       transform: scale(1.05);
+      filter: brightness(1.2);
     }
 
     .category {
@@ -166,7 +165,7 @@
     }
 
     function loadReports() {
-      fetch('categories.json')
+      fetch('data/categories.json') // 🔥 corrected path
         .then(res => res.json())
         .then(data => {
           document.getElementById('reportContainer').innerHTML = '';
