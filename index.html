@@ -37,20 +37,29 @@
     }
     .category {
       background: #2a2a40;
-      padding: 20px;
+      padding: 0;
       border-radius: 10px;
       margin-bottom: 25px;
-      position: relative;
+      overflow: hidden;
+    }
+    .category-header {
+      padding: 20px;
+      cursor: pointer;
+      background: #333;
+      border-bottom: 1px solid #444;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .category h2 {
-      margin-top: 0;
+      margin: 0;
       color: #66d9ef;
     }
     .editable {
       background: #1e1e2f;
-      border: 1px solid #444;
-      border-radius: 6px;
-      padding: 12px;
+      border: none;
+      padding: 20px;
+      display: none;
       white-space: pre-wrap;
     }
     .editable[contenteditable="true"] {
@@ -58,9 +67,6 @@
       background: #1e1e3a;
     }
     .copy-btn {
-      position: absolute;
-      top: 20px;
-      right: 20px;
       background: #66d9ef;
       color: #000;
     }
@@ -124,8 +130,12 @@
 
     categories.forEach(cat => {
       const contentId = cat.replace(/\s+/g, "_");
-      const div = document.createElement("div");
-      div.className = "category";
+
+      const section = document.createElement("div");
+      section.className = "category";
+
+      const header = document.createElement("div");
+      header.className = "category-header";
 
       const h2 = document.createElement("h2");
       h2.textContent = cat;
@@ -133,9 +143,10 @@
       const btn = document.createElement("button");
       btn.className = "copy-btn";
       btn.textContent = "📋 Copy";
-      btn.onclick = () => {
-        navigator.clipboard.writeText(text.innerText).then(() => alert("✅ Copied!"));
-      };
+
+      header.appendChild(h2);
+      header.appendChild(btn);
+      section.appendChild(header);
 
       const text = document.createElement("div");
       text.className = "editable";
@@ -143,6 +154,16 @@
       text.contentEditable = isAdmin;
       let saved = storedReports[contentId] || `[Enter ${cat} Report Here]`;
       text.innerText = emojiOn ? replaceShortcodes(saved) : saved;
+      section.appendChild(text);
+
+      btn.onclick = () => {
+        navigator.clipboard.writeText(text.innerText).then(() => alert("✅ Copied!"));
+      };
+
+      header.onclick = () => {
+        const isVisible = text.style.display === "block";
+        text.style.display = isVisible ? "none" : "block";
+      };
 
       text.addEventListener("input", () => {
         if (!isAdmin) return;
@@ -151,10 +172,7 @@
         localStorage.setItem("reports", JSON.stringify(storedReports));
       });
 
-      div.appendChild(h2);
-      div.appendChild(btn);
-      div.appendChild(text);
-      container.appendChild(div);
+      container.appendChild(section);
     });
 
     function toggleEmoji() {
