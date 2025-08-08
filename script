@@ -84,6 +84,8 @@ function createCategory(cat, container) {
 
   header.appendChild(title);
   header.appendChild(copyBtn);
+  header.appendChild(downloadBtn);
+
   div.appendChild(header);
   div.appendChild(content);
   container.appendChild(div);
