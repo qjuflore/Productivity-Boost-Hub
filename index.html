@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,8 +13,10 @@
       --border: rgba(255, 255, 255, 0.1);
       --accent: #00fff7;
       --text: #e0f7fa;
+      --text-glow: 0 0 5px #00fff7;
       --button-bg: #00fff7;
       --button-text: #000;
+      --button-glow: 0 0 10px #00fff7;
     }
 
     body {
@@ -24,9 +25,9 @@
       font-family: 'Orbitron', sans-serif;
       background: var(--bg);
       color: var(--text);
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
     }
 
     h1 {
@@ -36,7 +37,13 @@
       align-items: center;
       justify-content: space-between;
       color: var(--accent);
-      text-shadow: 0 0 5px var(--accent);
+      text-shadow: var(--text-glow);
+      animation: fadeInUp 1s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .controls {
@@ -52,7 +59,7 @@
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
-      box-shadow: 0 0 10px var(--button-bg);
+      box-shadow: var(--button-glow);
       transition: transform 0.2s ease;
     }
 
@@ -64,7 +71,14 @@
       background: var(--card-bg);
       margin-bottom: 1rem;
       border-radius: 12px;
+      overflow: hidden;
       border: 1px solid var(--border);
+      animation: grow 0.5s ease-in-out;
+    }
+
+    @keyframes grow {
+      from { transform: scale(0.95); opacity: 0.5; }
+      to { transform: scale(1); opacity: 1; }
     }
 
     .category-header {
@@ -95,7 +109,8 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 0.9rem;
-      box-shadow: 0 0 10px var(--button-bg);
+      box-shadow: var(--button-glow);
+      transition: all 0.3s ease;
     }
 
     .copy-btn.copied {
@@ -103,37 +118,55 @@
       color: white;
     }
 
-    .visit-counter, .footer {
-      margin-top: 2rem;
-      text-align: center;
-      font-size: 1.1rem;
-      color: var(--accent);
-    }
-
-    #countryModal {
+    .notification {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      display: none;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #countryModalContent {
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
       background: #111;
-      padding: 2rem;
-      border-radius: 10px;
-      color: #fff;
-      max-height: 80%;
-      overflow-y: auto;
-      text-align: left;
+      color: #00fff7;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 20px #00fff7;
+      font-size: 0.95rem;
+      z-index: 1000;
+      opacity: 0;
+      animation: fadeInOut 3s ease-out forwards;
     }
 
-    #countryModalContent h2 {
-      margin-top: 0;
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translate(-50%, 20px); }
+      10%, 90% { opacity: 1; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, 20px); }
+    }
+
+    .error-msg {
+      color: yellow;
+      font-size: 1.2rem;
+      margin-top: 2rem;
+    }
+
+    .footer {
+      margin-top: auto;
+      text-align: center;
+      font-size: 0.9rem;
+      padding: 1rem;
+      color: #aaa;
+    }
+
+    #visitCounter {
+      font-size: 1.2rem;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      margin-top: 1rem;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
     }
   </style>
 </head>
@@ -142,21 +175,15 @@
     <div class="controls">
       <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
       <button class="btn" onclick="loadReports()">↻ Refresh</button>
-      <button class="btn" onclick="showCountryModal()">🌍 Countries</button>
     </div>
   </h1>
 
-  <div id="reportContainer"></div>
-  <div class="visit-counter" id="visitCounter">👁️ Total Visits: Loading...</div>
-  <div class="footer">Created by qjuflore | Juan Flores</div>
-
-  <div id="countryModal">
-    <div id="countryModalContent">
-      <h2>🌍 Visits by Country</h2>
-      <ul id="countryList"></ul>
-      <button class="btn" onclick="closeCountryModal()">Close</button>
-    </div>
+  <div id="visitCounter">👁️ <span id="visitCountText" style="margin-left: 10px;">Loading...</span>
   </div>
+
+  <div id="reportContainer"></div>
+  <div id="error" class="error-msg"></div>
+  <div class="footer">Created by qjuflore | Juan Flores</div>
 
   <script>
     const emojiMap = {
@@ -164,8 +191,8 @@
       ':shoe:': '👟',
       ':clipboard:': '📋',
       ':diamond:': '💎',
-      ':chart:': '📊',
-      ':green_square:': '🟩',
+      ':chart:': '📈',
+      ':green_square:': '🝺',
       ':blue_square:': '🟦',
       ':check_mark:': '✅',
       ':warning:': '⚠️'
@@ -189,14 +216,22 @@
       content.classList.toggle('visible');
     }
 
+    function showNotification(msg) {
+      const note = document.createElement('div');
+      note.className = 'notification';
+      note.innerText = msg;
+      document.body.appendChild(note);
+      setTimeout(() => document.body.removeChild(note), 3000);
+    }
+
     function copyText(content, btn) {
       navigator.clipboard.writeText(content).then(() => {
         btn.innerText = '✅ Copied';
         btn.classList.add('copied');
+        showNotification('Copied! Remember to click "Apply" when pasting into Slack to preserve formatting.');
         setTimeout(() => {
           btn.innerText = '📋 Copy';
           btn.classList.remove('copied');
-          alert('Click "Apply" in Slack when pasting to keep formatting.');
         }, 1500);
       });
     }
@@ -207,6 +242,8 @@
         .then(data => {
           const container = document.getElementById('reportContainer');
           container.innerHTML = '';
+          document.getElementById('error').innerText = '';
+
           data.forEach(cat => {
             const div = document.createElement('div');
             div.className = 'category';
@@ -236,49 +273,41 @@
             div.appendChild(content);
             container.appendChild(div);
           });
+        })
+        .catch(err => {
+          document.getElementById('error').innerText = '⚠️ Error loading reports';
         });
     }
 
-    function loadVisitCounter() {
-      fetch('https://api.countapi.xyz/hit/qjuflore/report-tool-visits')
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById('visitCounter').innerText = `👁️ Total Visits: ${data.value.toLocaleString()}`;
-        });
-    }
+    async function fetchVisits() {
+      const counterEl = document.getElementById('visitCountText');
+      let timeoutReached = false;
 
-    function trackCountry() {
-      fetch("https://ipapi.co/json")
-        .then(res => res.json())
-        .then(data => {
-          const code = data.country_code;
-          fetch(`https://api.countapi.xyz/hit/qjuflore/report-tool-country-${code}`);
-        });
-    }
+      const timeout = setTimeout(() => {
+        timeoutReached = true;
+        counterEl.innerText = 'Visits Unavailable (Try again later)';
+        counterEl.style.animation = 'none';
+      }, 5000);
 
-    function showCountryModal() {
-      document.getElementById('countryModal').style.display = 'flex';
-      const countries = ['US','MX','CO','PE','BR','AR','CL','VE','ES','FR'];
-      const list = document.getElementById('countryList');
-      list.innerHTML = '';
-      countries.forEach(code => {
-        fetch(`https://api.countapi.xyz/get/qjuflore/report-tool-country-${code}`)
-          .then(res => res.json())
-          .then(data => {
-            const li = document.createElement('li');
-            li.innerText = `${code}: ${data.value.toLocaleString()}`;
-            list.appendChild(li);
-          });
-      });
-    }
-
-    function closeCountryModal() {
-      document.getElementById('countryModal').style.display = 'none';
+      try {
+        const res = await fetch('https://api.countapi.xyz/hit/share-reports-easily/qjuflore');
+        clearTimeout(timeout);
+        if (!timeoutReached && res.ok) {
+          const data = await res.json();
+          counterEl.innerText = data.value.toLocaleString();
+          counterEl.style.animation = 'none';
+        }
+      } catch (err) {
+        clearTimeout(timeout);
+        if (!timeoutReached) {
+          counterEl.innerText = 'Visits Unavailable';
+          counterEl.style.animation = 'none';
+        }
+      }
     }
 
     loadReports();
-    loadVisitCounter();
-    trackCountry();
+    fetchVisits();
   </script>
 </body>
 </html>
