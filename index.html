@@ -1,231 +1,205 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🚀 Advanced Report Center</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Futuristic Report Center</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+
     body {
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-      color: #e0e0e0;
-      font-family: 'Orbitron', sans-serif;
       margin: 0;
-      padding: 40px;
-    }
-    h1 {
-      font-size: 2rem;
-      color: #00ffe7;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      text-shadow: 0 0 5px #00ffe7;
-    }
-    button {
-      border: none;
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
+      padding: 0;
       font-family: 'Orbitron', sans-serif;
-      transition: background 0.3s;
+      background: linear-gradient(135deg, #0a0f1f, #1e2b3f);
+      color: #e0f7fa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    .admin-btn {
-      background: #00ffe7;
+
+    h1 {
+      color: #18ffff;
+      text-shadow: 0 0 8px #18ffff;
+      margin: 30px 0;
+      font-size: 2.2em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 20px;
+      position: absolute;
+      top: 20px;
+      right: 30px;
+    }
+
+    .btn {
+      background: #00e5ff;
       color: #000;
-      box-shadow: 0 0 10px #00ffe7;
+      font-weight: bold;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 0 8px #00e5ff;
+      transition: all 0.3s ease;
     }
-    .logout-btn {
-      background: #ff3c3c;
-      color: white;
-      box-shadow: 0 0 10px #ff3c3c;
+    .btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 12px #00e5ff, 0 0 24px #00e5ff88;
     }
-    .container {
-      margin-top: 30px;
+
+    .accordion {
+      width: 90%;
+      max-width: 1000px;
     }
+
     .category {
       background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid #00e5ff33;
       border-radius: 15px;
-      margin-bottom: 25px;
+      margin: 15px 0;
       overflow: hidden;
+      transition: all 0.3s ease;
     }
+
     .category-header {
-      padding: 20px;
+      padding: 16px 30px;
+      font-size: 1.2em;
+      background: rgba(0, 229, 255, 0.1);
+      color: #00e5ff;
+      font-weight: bold;
       cursor: pointer;
-      background: rgba(255, 255, 255, 0.08);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      transition: background 0.3s;
     }
-    .category h2 {
-      margin: 0;
-      color: #00ffe7;
-      text-shadow: 0 0 5px #00ffe7;
+    .category-header:hover {
+      background: rgba(0, 229, 255, 0.15);
     }
-    .editable {
+
+    .category-content {
       display: none;
-      padding: 20px;
+      padding: 20px 30px;
+      font-size: 0.95em;
+      line-height: 1.6;
       white-space: pre-wrap;
-      color: #e0e0e0;
     }
-    .editable[contenteditable="true"] {
-      outline: 2px dashed #00ffe7;
-      background: rgba(0, 0, 0, 0.3);
-    }
+
     .copy-btn {
-      background: #00bcd4;
+      background: #00e5ff;
       color: #000;
-      box-shadow: 0 0 5px #00bcd4;
+      border: none;
+      border-radius: 10px;
+      padding: 6px 14px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 6px #00e5ff;
+      transition: all 0.3s ease;
     }
+    .copy-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px #00e5ff, 0 0 16px #00e5ff88;
+    }
+
     .hidden {
       display: none;
+    }
+
+    input[type="password"] {
+      background: #1e2b3f;
+      border: 1px solid #00e5ff99;
+      padding: 10px;
+      border-radius: 8px;
+      color: #e0f7fa;
+      font-family: 'Orbitron', sans-serif;
+      margin-top: 10px;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.4s ease forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
-  <h1>
-    📋 Futuristic Report Center
-    <span>
-      <button class="admin-btn" onclick="toggleEmoji()">😎 Emojis: <span id="emojiState">ON</span></button>
-      <button class="admin-btn" onclick="requestAdmin()">🔐 Admin</button>
-      <button class="logout-btn hidden" id="logoutBtn" onclick="logoutAdmin()">🚪 Logout</button>
-    </span>
-  </h1>
-
-  <div id="container" class="container"></div>
+  <h1>📋 Futuristic Report Center</h1>
+  <div class="controls">
+    <button class="btn" id="toggleEmojis">😎 Emojis: ON</button>
+    <button class="btn" id="adminBtn">🔒 Admin</button>
+  </div>
+  <div class="accordion" id="reportContainer">
+    <!-- Reports inserted dynamically -->
+  </div>
 
   <script>
-    const emojiMap = {
-      ":jigsaw:": "🧩",
-      ":gem:": "💎",
-      ":athletic_shoe:": "👟",
-      ":bar_chart:": "📊",
-      ":arrows_counterclockwise:": "🔄",
-      ":white_check_mark:": "✅",
-      ":large_green_square:": "🟩",
-      ":large_blue_square:": "🟦",
-      ":warning:": "⚠️"
-    };
-
-    const categories = [
-      "Problem Solve",
-      "HRV Sort",
-      "Shoes Sort",
-      "IDRT",
-      "FUD",
-      "IOL",
-      "Recon",
-      "Damageland",
-      "IB Dock PS"
+    const reports = [
+      {
+        title: "Problem Solve",
+        content: `:jigsaw: P [   ] Problem Solve Report\n*(Enter the floor number in the first “[   ]”, then for each subsequent “[   ]” enter a quantity and specify “totes” or “U-boats”)*\n1. Problem Solve: [   ]\n   – IDRT → problem-solve DZ\n2. Damaged/Unscannable Items: [   ]\n   – IDRT → dz-P-DAMAGELAND; U-boats to Damageland\n3. Shoes: [   ] *(only if shoe stow isn’t available on your current floor)*\n   – IDRT → dz-P-1A266 / dz-P-1B266 / dz-P-1C266 / dz-P-1D266\n   – U-boats to chosen DZ\n4. Library Non-Con: [   ]\n   – IDRT → dz-S-Cubiscan; U-boats to ISS\n5. Large Apparel Non-Con: [   ]\n   – IDRT → IB Dock; U-boats to Decant\n6. ISS or Hazmat: [   ]\n   – IDRT → dz-P-ISS; U-boats to ISS\n7. Jewelry or HRV: [   ]\n   – IDRT → dz-P-2N327 / dz-P-2M327 / dz-P-2N364 / dz-P-2M364\n   – U-boats to chosen DZ`
+      },
+      {
+        title: "HRV Sort",
+        content: `💎 HRV Problem Solve & WIP Report\n*(For each “[   ]” enter a number and specify “totes” or “U-boats”)*\n1. Ready to Inject: [   ]\n   – Decant for reinjection; verify dz-P-LIBRARY routing\n2. Needing Sorting: [   ]\n3. Ready to Stow (Q330): [   ]\n4. Ready to Stow (Q364): [   ]`
+      },
+      {
+        title: "Shoes Sort",
+        content: `👟 P1 Problem Solve Report\n*(For each “[   ]” enter a number and specify “totes” or “U-boats”)*\nShoes Ready to Stow: [   ] U-boats\nPending Sorting: [   ] U-boats\n1. Problem Solve: [   ]\n   – IDRT → problem-solve DZ\n2. Damaged/Unscannable Items: [   ]\n   – IDRT → dz-P-DAMAGELAND; U-boats to Damageland\n4. Library Non-Con: [   ]\n   – IDRT → dz-S-Cubiscan; U-boats to ISS\n5. Large Apparel Non-Con: [   ]\n   – IDRT → IB Dock; U-boats to Decant\n6. ISS or Hazmat: [   ]\n   – IDRT → dz-P-ISS; U-boats to ISS\n7. Jewelry or HRV: [   ]\n   – IDRT → dz-P-2N327 / dz-P-2M327 / dz-P-2N364 / dz-P-2M364\n   – U-boats to chosen DZ`
+      },
+      {
+        title: "IDRT",
+        content: `📊 IDRT Report – FMC Hub & IB Rodeo Report\n🟩 FMC Hub\nTotal Stow WIP: ()\n- Stow Mod Inventory: () ⚠️ (Key Metric)\n- dz-P: ()\n- dzg-VRET: ()\n\n🔄 Transition to IB Rodeo\n🟦 IB Rodeo\nTotal Pending Stow: () ⚠️ (Key Metric)\n- Conveyor: ()\n  (Transfers to Drop Zone Prime once queued & IDRT’d.)\n- Drop Zone Prime: ()\n  (Keep aligned with FMC Hub Stow Mod inventory.)\n- Currently Being Stowed: ()\n  (In progress across stowers.)\n✅ IDRT Items Completed\n- Login: ()  total units: ()`
+      }
     ];
 
-    let isAdmin = localStorage.getItem("admin") === "true";
-    let emojiOn = localStorage.getItem("emoji") !== "false";
-    const storedReports = JSON.parse(localStorage.getItem("reports") || "{}");
+    const container = document.getElementById('reportContainer');
 
-    document.getElementById("emojiState").textContent = emojiOn ? "ON" : "OFF";
-    if (isAdmin) document.getElementById("logoutBtn").classList.remove("hidden");
-
-    function replaceShortcodes(text) {
-      for (const [code, emoji] of Object.entries(emojiMap)) {
-        text = text.split(code).join(emoji);
-      }
-      return text;
-    }
-
-    const container = document.getElementById("container");
-
-    categories.forEach(cat => {
-      const contentId = cat.replace(/\s+/g, "_");
-
-      const section = document.createElement("div");
-      section.className = "category";
-
-      const header = document.createElement("div");
-      header.className = "category-header";
-
-      const h2 = document.createElement("h2");
-      h2.textContent = cat;
-
-      const btn = document.createElement("button");
-      btn.className = "copy-btn";
-      btn.textContent = "📋 Copy";
-
-      header.appendChild(h2);
-      header.appendChild(btn);
-      section.appendChild(header);
-
-      const text = document.createElement("div");
-      text.className = "editable";
-      text.id = contentId;
-      text.contentEditable = isAdmin;
-      let saved = storedReports[contentId] || `[Enter ${cat} Report Here]`;
-      text.innerText = emojiOn ? replaceShortcodes(saved) : saved;
-      section.appendChild(text);
-
-      btn.onclick = () => {
-        navigator.clipboard.writeText(text.innerText).then(() => alert("✅ Copied!"));
-      };
-
-      header.onclick = () => {
-        const isVisible = text.style.display === "block";
-        text.style.display = isVisible ? "none" : "block";
-      };
-
-      text.addEventListener("input", () => {
-        if (!isAdmin) return;
-        const updated = text.innerText;
-        storedReports[contentId] = updated;
-        localStorage.setItem("reports", JSON.stringify(storedReports));
-      });
-
-      container.appendChild(section);
+    reports.forEach((rep, i) => {
+      const div = document.createElement('div');
+      div.className = 'category';
+      div.innerHTML = `
+        <div class="category-header">${rep.title}
+          <button class="copy-btn" onclick="copyReport(${i})">📋 Copy</button>
+        </div>
+        <div class="category-content" id="rep${i}">${rep.content}</div>
+      `;
+      container.appendChild(div);
     });
 
-    function toggleEmoji() {
-      emojiOn = !emojiOn;
-      localStorage.setItem("emoji", emojiOn);
-      document.getElementById("emojiState").textContent = emojiOn ? "ON" : "OFF";
-      location.reload();
-    }
-
-    function requestAdmin() {
-      const input = document.createElement("input");
-      input.type = "password";
-      input.placeholder = "Enter admin password";
-      input.style.position = "fixed";
-      input.style.top = "50%";
-      input.style.left = "50%";
-      input.style.transform = "translate(-50%, -50%)";
-      input.style.padding = "10px";
-      input.style.fontSize = "16px";
-      input.style.zIndex = "1000";
-      input.style.background = "#111";
-      input.style.color = "#00ffe7";
-      input.style.border = "2px solid #00ffe7";
-      document.body.appendChild(input);
-      input.focus();
-
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          if (input.value === "Qjuflore1211503") {
-            localStorage.setItem("admin", "true");
-            location.reload();
-          } else {
-            alert("❌ Incorrect password.");
-          }
-          document.body.removeChild(input);
-        }
+    document.querySelectorAll('.category-header').forEach((el, i) => {
+      el.addEventListener('click', () => {
+        const content = document.getElementById(`rep${i}`);
+        content.style.display = content.style.display === 'block' ? 'none' : 'block';
+        content.classList.add('fade-in');
       });
+    });
+
+    function copyReport(i) {
+      const text = document.getElementById(`rep${i}`).innerText;
+      navigator.clipboard.writeText(text).then(() => alert("✅ Copied!"));
     }
 
-    function logoutAdmin() {
-      localStorage.removeItem("admin");
-      location.reload();
-    }
+    document.getElementById('toggleEmojis').addEventListener('click', () => {
+      const btn = document.getElementById('toggleEmojis');
+      const on = btn.textContent.includes('ON');
+      btn.textContent = on ? '😎 Emojis: OFF' : '😎 Emojis: ON';
+    });
+
+    document.getElementById('adminBtn').addEventListener('click', () => {
+      const pass = prompt("Enter Admin Password:", "");
+      if (pass === 'Qjuflore1211503') {
+        alert("🔓 Admin Mode Activated");
+        // You can add admin features here
+      } else {
+        alert("❌ Incorrect Password");
+      }
+    });
   </script>
 </body>
 </html>
