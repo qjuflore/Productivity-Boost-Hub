@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Amazon Report Center</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1e1e2f;
+      color: #f0f0f0;
+      padding: 40px;
+    }
+    h2 {
+      margin-top: 40px;
+      color: #66d9ef;
+    }
+    .report {
+      background: #2a2a40;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 30px;
+      position: relative;
+    }
+    button.copy-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: #66d9ef;
+      border: none;
+      color: #000;
+      padding: 6px 12px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📋 Amazon Reports – One-Click Copy</h1>
+
+  <div class="report">
+    <button class="copy-btn" onclick="copyToClipboard('report1')">📋 Copy</button>
+    <pre id="report1">🧩 P [   ] Problem Solve Report  
+*(Enter the floor number in the first "[   ]", then for each subsequent "[   ]" enter a quantity and specify "totes" or "U-boats")*
+
+1. Problem Solve: [   ]  
+   – IDRT → problem-solve DZ
+
+2. Damaged/Unscannable Items: [   ]  
+   – IDRT → dz-P-DAMAGELAND; U-boats to Damageland
+
+3. Shoes: [   ] *(only if shoe stow isn’t available on your current floor)*  
+   – IDRT → dz-P-1A266 / dz-P-1B266 / dz-P-1C266 / dz-P-1D266  
+   – U-boats to chosen DZ
+
+4. Library Non-Con: [   ]  
+   – IDRT → dz-S-Cubiscan; U-boats to ISS
+
+5. Large Apparel Non-Con: [   ]  
+   – IDRT → IB Dock; U-boats to Decant
+
+6. ISS or Hazmat: [   ]  
+   – IDRT → dz-P-ISS; U-boats to ISS
+
+7. Jewelry or HRV: [   ]  
+   – IDRT → dz-P-2N327 / dz-P-2M327 / dz-P-2N364 / dz-P-2M364  
+   – U-boats to chosen DZ</pre>
+  </div>
+
+  <div class="report">
+    <button class="copy-btn" onclick="copyToClipboard('report2')">📋 Copy</button>
+    <pre id="report2">👟 P1 Problem Solve Report  
+*(For each "[   ]" enter a number and specify "totes" or "U-boats")*
+
+Shoes Ready to Stow: [   ] U-boats  
+Pending Sorting:       [   ] U-boats  
+
+1. Problem Solve: [   ]  
+   – IDRT → problem-solve DZ
+
+2. Damaged/Unscannable Items: [   ]  
+   – IDRT → dz-P-DAMAGELAND; U-boats to Damageland
+
+4. Library Non-Con: [   ]  
+   – IDRT → dz-S-Cubiscan;      U-boats to ISS
+
+5. Large Apparel Non-Con: [   ]  
+   – IDRT → IB Dock;             U-boats to Decant
+
+6. ISS or Hazmat: [   ]  
+   – IDRT → dz-P-ISS;           U-boats to ISS
+
+7. Jewelry or HRV: [   ]  
+   – IDRT → dz-P-2N327 / dz-P-2M327 / dz-P-2N364 / dz-P-2M364  
+   – U-boats to chosen DZ</pre>
+  </div>
+
+  <div class="report">
+    <button class="copy-btn" onclick="copyToClipboard('report3')">📋 Copy</button>
+    <pre id="report3">💎 HRV Problem Solve & WIP Report  
+*(For each "[   ]" enter a number and specify "totes" or "U-boats")*
+
+1. Ready to Inject:    [   ]  
+   – Decant for reinjection; verify dz-P-LIBRARY routing
+
+2. Needing Sorting:    [   ]
+
+3. Ready to Stow (Q330): [   ]
+
+4. Ready to Stow (Q364): [   ]</pre>
+  </div>
+
+  <div class="report">
+    <button class="copy-btn" onclick="copyToClipboard('report4')">📋 Copy</button>
+    <pre id="report4">📊 IDRT Report – FMC Hub & IB Rodeo Report 
+🟩 FMC Hub 
+Total Stow WIP:        () 
+- Stow Mod Inventory: () ⚠️ (Key Metric) 
+- dz-P:               () 
+- dzg-VRET:           () 
+
+🔄 Transition to IB Rodeo 
+🟦 IB Rodeo 
+Total Pending Stow:   () ⚠️ (Key Metric) 
+- Conveyor:           () 
+  (Transfers to Drop Zone Prime once queued & IDRT’d.) 
+- Drop Zone Prime:    () 
+  (Keep aligned with FMC Hub Stow Mod inventory.) 
+- Currently Being Stowed: () 
+  (In progress across stowers.) 
+
+✅ IDRT Items Completed 
+- Login: ()  total units: ()</pre>
+  </div>
+
+  <script>
+    function copyToClipboard(id) {
+      const el = document.getElementById(id);
+      const text = el.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        alert("✅ Report copied to clipboard!");
+      });
+    }
+  </script>
+
+</body>
+</html>
