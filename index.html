@@ -2,73 +2,83 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Report Center with Admin and Emoji Parser</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🚀 Advanced Report Center</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
-      background-color: #1e1e2f;
-      color: #f0f0f0;
-      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #e0e0e0;
+      font-family: 'Orbitron', sans-serif;
+      margin: 0;
       padding: 40px;
     }
     h1 {
-      color: #66d9ef;
+      font-size: 2rem;
+      color: #00ffe7;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      text-shadow: 0 0 5px #00ffe7;
     }
     button {
       border: none;
-      padding: 8px 12px;
-      border-radius: 6px;
+      padding: 10px 16px;
+      border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
-      margin-left: 8px;
+      font-family: 'Orbitron', sans-serif;
+      transition: background 0.3s;
     }
     .admin-btn {
-      background: #ffaa00;
+      background: #00ffe7;
       color: #000;
+      box-shadow: 0 0 10px #00ffe7;
     }
     .logout-btn {
-      background: #ff4d4d;
+      background: #ff3c3c;
       color: white;
+      box-shadow: 0 0 10px #ff3c3c;
     }
     .container {
       margin-top: 30px;
     }
     .category {
-      background: #2a2a40;
-      padding: 0;
-      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
       margin-bottom: 25px;
       overflow: hidden;
     }
     .category-header {
       padding: 20px;
       cursor: pointer;
-      background: #333;
-      border-bottom: 1px solid #444;
+      background: rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     .category h2 {
       margin: 0;
-      color: #66d9ef;
+      color: #00ffe7;
+      text-shadow: 0 0 5px #00ffe7;
     }
     .editable {
-      background: #1e1e2f;
-      border: none;
-      padding: 20px;
       display: none;
+      padding: 20px;
       white-space: pre-wrap;
+      color: #e0e0e0;
     }
     .editable[contenteditable="true"] {
-      outline: 2px dashed #66d9ef;
-      background: #1e1e3a;
+      outline: 2px dashed #00ffe7;
+      background: rgba(0, 0, 0, 0.3);
     }
     .copy-btn {
-      background: #66d9ef;
+      background: #00bcd4;
       color: #000;
+      box-shadow: 0 0 5px #00bcd4;
     }
     .hidden {
       display: none;
@@ -77,7 +87,7 @@
 </head>
 <body>
   <h1>
-    📋 Report Center
+    📋 Futuristic Report Center
     <span>
       <button class="admin-btn" onclick="toggleEmoji()">😎 Emojis: <span id="emojiState">ON</span></button>
       <button class="admin-btn" onclick="requestAdmin()">🔐 Admin</button>
@@ -193,6 +203,9 @@
       input.style.padding = "10px";
       input.style.fontSize = "16px";
       input.style.zIndex = "1000";
+      input.style.background = "#111";
+      input.style.color = "#00ffe7";
+      input.style.border = "2px solid #00ffe7";
       document.body.appendChild(input);
       input.focus();
 
