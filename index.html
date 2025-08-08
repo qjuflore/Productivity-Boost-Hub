@@ -16,6 +16,8 @@
       --button-bg: #00fff7;
       --button-text: #000;
       --button-glow: 0 0 10px #00fff7;
+      --admin-edit-bg: #222;
+      --admin-edit-text: #fff;
     }
 
     body {
@@ -98,7 +100,6 @@
     }
 
     #password-container {
-      display: none;
       margin-top: 1rem;
     }
 
@@ -108,6 +109,28 @@
       border: none;
       font-size: 1rem;
       margin-right: 0.5rem;
+    }
+
+    .admin-edit {
+      display: none;
+      margin-top: 1rem;
+      background: var(--admin-edit-bg);
+      color: var(--admin-edit-text);
+      padding: 1rem;
+      border-radius: 8px;
+    }
+
+    .admin-edit.visible {
+      display: block;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      font-family: monospace;
+      padding: 10px;
+      border-radius: 6px;
+      resize: vertical;
     }
   </style>
 </head>
@@ -120,10 +143,12 @@
     </div>
   </h1>
 
-  <div id="password-container">
+  <div id="password-container" style="display: none;">
     <input type="password" id="admin-password" placeholder="Enter password">
     <button class="btn" onclick="submitPassword()">Submit</button>
   </div>
+
+  <div id="admin-edit-panel" class="admin-edit"></div>
 
   <div id="reportContainer"></div>
 
@@ -143,19 +168,19 @@
     const categories = [
       {
         title: 'Problem Solve',
-        content: `:jigsaw: P [   ] Problem Solve Report\n*(Enter the floor number in the first “[   ]”, then for each subsequent “[   ]” enter a quantity and specify “totes” or “U-boats”)*\n1. Problem Solve: [   ]\n   – IDRT → problem-solve DZ\n2. Damaged/Unscannable Items: [   ]\n   – IDRT → dz-P-DAMAGELAND; U-boats to Damageland\n3. Shoes: [   ] *(only if shoe stow isn’t available on your current floor)*\n   – IDRT → dz-P-1A266 / dz-P-1B266 / dz-P-1C266 / dz-P-1D266\n   – U-boats to chosen DZ\n4. Library Non-Con: [   ]\n   – IDRT → dz-S-Cubiscan; U-boats to ISS\n5. Large Apparel Non-Con: [   ]\n   – IDRT → IB Dock; U-boats to Decant\n6. ISS or Hazmat: [   ]\n   – IDRT → dz-P-ISS; U-boats to ISS\n7. Jewelry or HRV: [   ]\n   – IDRT → dz-P-2N327 / dz-P-2M327 / dz-P-2N364 / dz-P-2M364\n   – U-boats to chosen DZ`
+        content: `:jigsaw: P [   ] Problem Solve Report...`
       },
       {
         title: 'HRV Sort',
-        content: `:diamond: HRV Problem Solve & WIP Report\n*(For each “[   ]” enter a number and specify “totes” or “U-boats”)*\n1. Ready to Inject: [   ]\n   – Decant for reinjection; verify dz-P-LIBRARY routing\n2. Needing Sorting: [   ]\n3. Ready to Stow (Q330): [   ]\n4. Ready to Stow (Q364): [   ]`
+        content: `:diamond: HRV Problem Solve & WIP Report...`
       },
       {
         title: 'Shoes Sort',
-        content: `:shoe: P1 Problem Solve Report\nShoes Ready to Stow: [   ] U-boats\nPending Sorting: [   ] U-boats`
+        content: `:shoe: P1 Problem Solve Report...`
       },
       {
         title: 'IDRT',
-        content: `:chart: IDRT Report – FMC Hub & IB Rodeo Report\n:green_square: FMC Hub\nTotal Stow WIP: ()\n- Stow Mod Inventory: () :warning:\n- dz-P: ()\n- dzg-VRET: ()\n:blue_square: IB Rodeo\nTotal Pending Stow: () :warning:\n- Conveyor: ()\n- Drop Zone Prime: ()\n- Currently Being Stowed: ()\n:check_mark: IDRT Items Completed\n- Login: () total units: ()`
+        content: `:chart: IDRT Report...`
       },
       {
         title: 'FUD',
@@ -190,6 +215,7 @@
         `;
         container.appendChild(div);
       });
+      if (isAdmin) renderAdminPanel();
     }
 
     function toggleContent(header) {
@@ -210,12 +236,27 @@
       const pwd = document.getElementById('admin-password').value;
       if (pwd === 'Qjuflore1211503') {
         isAdmin = true;
-        alert('🔓 Admin mode activated');
         document.getElementById('password-container').style.display = 'none';
-        // Potential admin features go here
+        alert('🔓 Admin mode activated');
+        renderCategories();
       } else {
         alert('❌ Incorrect password');
       }
+    }
+
+    function renderAdminPanel() {
+      const adminPanel = document.getElementById('admin-edit-panel');
+      adminPanel.innerHTML = '<h3>Edit Categories</h3>';
+      categories.forEach((cat, idx) => {
+        const textarea = document.createElement('textarea');
+        textarea.value = cat.content;
+        textarea.oninput = (e) => {
+          categories[idx].content = e.target.value;
+        };
+        adminPanel.appendChild(document.createTextNode(cat.title));
+        adminPanel.appendChild(textarea);
+      });
+      adminPanel.classList.add('visible');
     }
 
     document.getElementById('emojiToggle').addEventListener('click', () => {
