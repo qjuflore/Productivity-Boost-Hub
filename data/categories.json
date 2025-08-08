@@ -1,0 +1,26 @@
+[
+  {
+    "title": "Problem Solve",
+    "content": ":jigsaw: P [   ] Problem Solve Report\n*(Enter the floor number in the first “[   ]”, then for each subsequent “[   ]” enter a quantity and specify “totes” or “U-boats”)*\n1. Problem Solve: [   ]\n   – IDRT → problem-solve DZ\n2. Damaged/Unscannable Items: [   ]\n   – IDRT → dz-P-DAMAGELAND; U-boats to Damageland\n3. Shoes: [   ] *(only if shoe stow isn’t available on your current floor)*\n   – IDRT → dz-P-1A266 / dz-P-1B266 / dz-P-1C266 / dz-P-1D266\n   – U-boats to chosen DZ\n4. Library Non-Con: [   ]\n   – IDRT → dz-S-Cubiscan; U-boats to ISS\n5. Large Apparel Non-Con: [   ]\n   – IDRT → IB Dock; U-boats to Decant\n6. ISS or Hazmat: [   ]\n   – IDRT → dz-P-ISS; U-boats to ISS\n7. Jewelry or HRV: [   ]\n   – IDRT → dz-P-2N327 / dz-P-2M327 / dz-P-2N364 / dz-P-2M364\n   – U-boats to chosen DZ"
+  },
+  {
+    "title": "HRV Sort",
+    "content": ":diamond: HRV Problem Solve & WIP Report\n– Uboats Ready to Inject: [  ]\n– Uboats Needing Sorting: [  ]\n– Uboats Ready to Stow (Q330): [  ]\n– Uboats Ready to Stow (Q364): [  ]"
+  },
+  {
+    "title": "Shoes Sort",
+    "content": ":shoe: P1 Problem Solve Report\nShoes Ready to Stow: [   ] U-boats\nPending Sorting: [   ] U-boats"
+  },
+  {
+    "title": "IDRT",
+    "content": ":chart: IDRT Report\nTotal Processed: [   ]\nPending Transfers: [   ]"
+  },
+  {
+    "title": "FUD",
+    "content": "Training metrics & tool usage coming soon."
+  },
+  {
+    "title": "IOL",
+    "content": "Recon schedules and active problem solving summary."
+  }
+]
