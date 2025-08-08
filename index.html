@@ -17,6 +17,8 @@
       --button-bg: #00fff7;
       --button-text: #000;
       --button-glow: 0 0 10px #00fff7;
+      --admin-edit-bg: #222;
+      --admin-edit-text: #fff;
     }
 
     body {
@@ -26,6 +28,8 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
     h1 {
@@ -54,16 +58,15 @@
       color: var(--button-text);
       padding: 0.5rem 1rem;
       border: none;
-      border-radius: 12px;
+      border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
       box-shadow: var(--button-glow);
-      transition: all 0.2s ease;
+      transition: transform 0.2s ease;
     }
 
     .btn:hover {
       transform: scale(1.05);
-      filter: brightness(1.2);
     }
 
     .category {
@@ -116,6 +119,14 @@
       font-size: 1.2rem;
       margin-top: 2rem;
     }
+
+    .footer {
+      margin-top: auto;
+      text-align: center;
+      font-size: 0.9rem;
+      padding: 1rem;
+      color: #aaa;
+    }
   </style>
 </head>
 <body>
@@ -128,6 +139,8 @@
 
   <div id="reportContainer"></div>
   <div id="error" class="error-msg"></div>
+
+  <div class="footer">Created by qjuflore | Juan Flores</div>
 
   <script>
     const emojiMap = {
@@ -165,7 +178,7 @@
     }
 
     function loadReports() {
-      fetch('data/categories.json') // 🔥 corrected path
+      fetch('data/categories.json')
         .then(res => res.json())
         .then(data => {
           document.getElementById('reportContainer').innerHTML = '';
