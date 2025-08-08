@@ -1,8 +1,7 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Report Control Center</title>
   <style>
     body {
@@ -11,228 +10,138 @@
       color: #f0f0f0;
       padding: 30px;
     }
+
     h1 {
       color: #66d9ef;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      margin-bottom: 20px;
     }
+
     .admin-btn {
-      background: #ffae00;
+      background: #ffaa00;
       color: #000;
       padding: 8px 14px;
       border: none;
       border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
-    }
-    .category {
-      margin-top: 40px;
-      border-left: 4px solid #66d9ef;
-      padding-left: 10px;
-    }
-    .category h2 {
-      margin-bottom: 10px;
-      color: #00e0ff;
-    }
-    .report {
-      background: #2a2a40;
-      border-radius: 8px;
-      padding: 16px;
       margin-bottom: 20px;
+    }
+
+    .category {
+      background: #2a2a40;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 25px;
       position: relative;
     }
-    .copy-btn, .edit-btn, .delete-btn {
+
+    .category h2 {
+      color: #8be9fd;
+      margin-top: 0;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
       background: #66d9ef;
-      color: black;
+      color: #000;
       font-weight: bold;
       border: none;
-      border-radius: 4px;
-      padding: 6px 10px;
-      margin-left: 5px;
+      padding: 6px 12px;
+      border-radius: 6px;
       cursor: pointer;
     }
-    .delete-btn {
-      background: #ff4d4d;
-      color: white;
-    }
-    .edit-btn {
-      background: #ffd000;
-    }
-    pre {
+
+    .editable {
+      background: #1e1e2f;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 10px;
       white-space: pre-wrap;
       word-break: break-word;
     }
+
+    .editable[contenteditable="true"] {
+      outline: 2px dashed #66d9ef;
+      background: #1e1e3a;
+    }
+
     .hidden {
       display: none;
-    }
-    #adminPanel {
-      background: #121220;
-      border: 1px solid #66d9ef;
-      padding: 20px;
-      border-radius: 8px;
-      margin-top: 30px;
-    }
-    textarea {
-      width: 100%;
-      height: 120px;
-      background: #1e1e2f;
-      color: #fff;
-      border: 1px solid #66d9ef;
-      border-radius: 6px;
-      padding: 10px;
-      margin-top: 10px;
-      margin-bottom: 10px;
-    }
-    select, input[type="text"] {
-      background: #1e1e2f;
-      color: white;
-      border: 1px solid #66d9ef;
-      padding: 5px;
-      border-radius: 4px;
-      margin-right: 10px;
     }
   </style>
 </head>
 <body>
 
-<h1>
-  📋 Report Center
-  <button class="admin-btn" onclick="enableAdmin()">Modo Admin</button>
-</h1>
+  <h1>📋 Amazon Report Control Center</h1>
 
-<div id="categories"></div>
+  <button class="admin-btn" onclick="requestAdmin()">🔐 Admin Login</button>
 
-<div id="adminPanel" class="hidden">
-  <h2>➕ Agregar nuevo reporte</h2>
-  <form onsubmit="addReport(event)">
-    <label>Categoría:</label>
-    <select id="newCategory"></select>
-    <br><br>
-    <label>Título:</label>
-    <input type="text" id="newTitle" required />
-    <br><br>
-    <label>Contenido:</label>
-    <textarea id="newContent" required></textarea>
-    <br>
-    <button type="submit" class="copy-btn">Agregar</button>
-  </form>
-  <br>
-  <button onclick="copyAllHTML()" class="edit-btn">📋 Copiar HTML actualizado</button>
-</div>
+  <div id="container"></div>
 
-<script>
-const categories = {
-  "Problem Solve": [],
-  "HRV Sort": [],
-  "Shoes Sort": [],
-  "IDRT": [],
-  "FUD": [],
-  "IOL": [],
-  "Recon": [],
-  "Damageland": [],
-  "IB Dock PS": []
-};
+  <script>
+    const isAdmin = localStorage.getItem("admin") === "true";
+    const categories = [
+      "Problem Solve",
+      "HRV Sort",
+      "Shoes Sort",
+      "IDRT",
+      "FUD",
+      "IOL",
+      "Recon",
+      "Damageland",
+      "IB Dock PS"
+    ];
 
-let adminMode = false;
+    const storedReports = JSON.parse(localStorage.getItem("reports") || "{}");
+    const container = document.getElementById("container");
 
-function render() {
-  const container = document.getElementById("categories");
-  container.innerHTML = "";
-  for (const [category, reports] of Object.entries(categories)) {
-    const section = document.createElement("div");
-    section.className = "category";
-    section.innerHTML = `<h2>${category}</h2>`;
-    for (let i = 0; i < reports.length; i++) {
-      const rep = reports[i];
-      const id = category.replace(/\s+/g, '') + i;
-      const reportDiv = document.createElement("div");
-      reportDiv.className = "report";
-      reportDiv.innerHTML = \`
-        <button class="copy-btn" onclick="copyToClipboard('r\${id}')">📋 Copy</button>
-        \${adminMode ? '<button class="edit-btn" onclick="editReport(\'\${category}\', '+i+')">✏️ Editar</button>' : ''}
-        \${adminMode ? '<button class="delete-btn" onclick="deleteReport(\'\${category}\', '+i+')">🗑️ Eliminar</button>' : ''}
-        <pre id="r\${id}">\${rep.title}\n\n\${rep.content}</pre>\`;
-      section.appendChild(reportDiv);
+    categories.forEach(cat => {
+      const contentId = cat.replace(/\s+/g, '_');
+      const div = document.createElement("div");
+      div.className = "category";
+
+      const h2 = document.createElement("h2");
+      h2.textContent = cat;
+
+      const btn = document.createElement("button");
+      btn.className = "copy-btn";
+      btn.textContent = "📋 Copy";
+      btn.onclick = () => {
+        navigator.clipboard.writeText(text.innerText).then(() => {
+          alert("✅ Copied!");
+        });
+      };
+
+      const text = document.createElement("div");
+      text.id = contentId;
+      text.className = "editable";
+      text.contentEditable = isAdmin;
+      text.innerText = storedReports[contentId] || `[ Enter ${cat} Report Here ]`;
+
+      text.addEventListener("input", () => {
+        if (isAdmin) {
+          storedReports[contentId] = text.innerText;
+          localStorage.setItem("reports", JSON.stringify(storedReports));
+        }
+      });
+
+      div.appendChild(h2);
+      div.appendChild(btn);
+      div.appendChild(text);
+      container.appendChild(div);
+    });
+
+    function requestAdmin() {
+      const pwd = prompt("🔑 Enter admin password:");
+      if (pwd === "Qjuflore1211503") {
+        localStorage.setItem("admin", "true");
+        location.reload();
+      } else {
+        alert("❌ Incorrect password.");
+      }
     }
-    container.appendChild(section);
-  }
-}
-
-function enableAdmin() {
-  const pass = prompt("Contraseña de administrador:");
-  if (pass === "Qjuflore1211503") {
-    adminMode = true;
-    document.getElementById("adminPanel").classList.remove("hidden");
-    render();
-    populateCategorySelect();
-    alert("✅ Modo Admin activado.");
-  } else {
-    alert("❌ Contraseña incorrecta");
-  }
-}
-
-function copyToClipboard(id) {
-  const el = document.getElementById(id);
-  navigator.clipboard.writeText(el.innerText).then(() => {
-    alert("✅ Copiado");
-  });
-}
-
-function populateCategorySelect() {
-  const select = document.getElementById("newCategory");
-  select.innerHTML = "";
-  for (const cat of Object.keys(categories)) {
-    const opt = document.createElement("option");
-    opt.value = cat;
-    opt.textContent = cat;
-    select.appendChild(opt);
-  }
-}
-
-function addReport(e) {
-  e.preventDefault();
-  const cat = document.getElementById("newCategory").value;
-  const title = document.getElementById("newTitle").value;
-  const content = document.getElementById("newContent").value;
-  categories[cat].push({ title, content });
-  render();
-  e.target.reset();
-}
-
-function deleteReport(category, index) {
-  if (confirm("¿Eliminar este reporte?")) {
-    categories[category].splice(index, 1);
-    render();
-  }
-}
-
-function editReport(category, index) {
-  const current = categories[category][index];
-  const newTitle = prompt("Editar título:", current.title);
-  const newContent = prompt("Editar contenido:", current.content);
-  if (newTitle !== null && newContent !== null) {
-    categories[category][index] = { title: newTitle, content: newContent };
-    render();
-  }
-}
-
-function copyAllHTML() {
-  let fullHTML = "<!DOCTYPE html>\n<html><head><meta charset='UTF-8'></head><body>";
-  for (const [category, reports] of Object.entries(categories)) {
-    fullHTML += `<h2>\${category}</h2>`;
-    for (const rep of reports) {
-      fullHTML += `<pre>\${rep.title}\n\n\${rep.content}</pre>`;
-    }
-  }
-  fullHTML += "</body></html>";
-  navigator.clipboard.writeText(fullHTML).then(() => {
-    alert("📋 HTML copiado al portapapeles");
-  });
-}
-
-render();
-</script>
-
+  </script>
 </body>
 </html>
