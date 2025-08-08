@@ -1,14 +1,15 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Amazon Report Center</title>
+  <meta charset="UTF-8" />
+  <title>Report Control Center</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #1e1e2f;
+      background-color: #1e1e2f;
       color: #f0f0f0;
-      padding: 40px;
+      padding: 30px;
     }
     h1 {
       color: #66d9ef;
@@ -19,158 +20,219 @@
     .admin-btn {
       background: #ffae00;
       color: #000;
+      padding: 8px 14px;
       border: none;
-      padding: 8px 16px;
-      border-radius: 5px;
+      border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
+    }
+    .category {
+      margin-top: 40px;
+      border-left: 4px solid #66d9ef;
+      padding-left: 10px;
+    }
+    .category h2 {
+      margin-bottom: 10px;
+      color: #00e0ff;
     }
     .report {
       background: #2a2a40;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 30px;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
       position: relative;
     }
-    button.copy-btn {
-      position: absolute;
-      top: 15px;
-      right: 15px;
+    .copy-btn, .edit-btn, .delete-btn {
       background: #66d9ef;
-      border: none;
-      color: #000;
-      padding: 6px 12px;
+      color: black;
       font-weight: bold;
-      border-radius: 5px;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 10px;
+      margin-left: 5px;
       cursor: pointer;
+    }
+    .delete-btn {
+      background: #ff4d4d;
+      color: white;
+    }
+    .edit-btn {
+      background: #ffd000;
     }
     pre {
       white-space: pre-wrap;
       word-break: break-word;
     }
+    .hidden {
+      display: none;
+    }
+    #adminPanel {
+      background: #121220;
+      border: 1px solid #66d9ef;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 30px;
+    }
+    textarea {
+      width: 100%;
+      height: 120px;
+      background: #1e1e2f;
+      color: #fff;
+      border: 1px solid #66d9ef;
+      border-radius: 6px;
+      padding: 10px;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+    select, input[type="text"] {
+      background: #1e1e2f;
+      color: white;
+      border: 1px solid #66d9ef;
+      padding: 5px;
+      border-radius: 4px;
+      margin-right: 10px;
+    }
   </style>
 </head>
 <body>
 
-  <h1>
-    📋 Amazon Reports – One-Click Copy
-    <button class="admin-btn" onclick="activateAdmin()">Modo Admin</button>
-  </h1>
+<h1>
+  📋 Report Center
+  <button class="admin-btn" onclick="enableAdmin()">Modo Admin</button>
+</h1>
 
-  <div class="report">
-    <button class="copy-btn" onclick="copyToClipboard('report1')">📋 Copy</button>
-    <pre id="report1">🧩 P [   ] Problem Solve Report  
-*(Enter the floor number in the first "[   ]", then for each subsequent "[   ]" enter a quantity and specify "totes" or "U-boats")*
+<div id="categories"></div>
 
-1. Problem Solve: [   ]  
-   – IDRT → problem-solve DZ
+<div id="adminPanel" class="hidden">
+  <h2>➕ Agregar nuevo reporte</h2>
+  <form onsubmit="addReport(event)">
+    <label>Categoría:</label>
+    <select id="newCategory"></select>
+    <br><br>
+    <label>Título:</label>
+    <input type="text" id="newTitle" required />
+    <br><br>
+    <label>Contenido:</label>
+    <textarea id="newContent" required></textarea>
+    <br>
+    <button type="submit" class="copy-btn">Agregar</button>
+  </form>
+  <br>
+  <button onclick="copyAllHTML()" class="edit-btn">📋 Copiar HTML actualizado</button>
+</div>
 
-2. Damaged/Unscannable Items: [   ]  
-   – IDRT → dz-P-DAMAGELAND; U-boats to Damageland
+<script>
+const categories = {
+  "Problem Solve": [],
+  "HRV Sort": [],
+  "Shoes Sort": [],
+  "IDRT": [],
+  "FUD": [],
+  "IOL": [],
+  "Recon": [],
+  "Damageland": [],
+  "IB Dock PS": []
+};
 
-3. Shoes: [   ] *(only if shoe stow isn’t available on your current floor)*  
-   – IDRT → dz-P-1A266 / dz-P-1B266 / dz-P-1C266 / dz-P-1D266  
-   – U-boats to chosen DZ
+let adminMode = false;
 
-4. Library Non-Con: [   ]  
-   – IDRT → dz-S-Cubiscan; U-boats to ISS
-
-5. Large Apparel Non-Con: [   ]  
-   – IDRT → IB Dock; U-boats to Decant
-
-6. ISS or Hazmat: [   ]  
-   – IDRT → dz-P-ISS; U-boats to ISS
-
-7. Jewelry or HRV: [   ]  
-   – IDRT → dz-P-2N327 / dz-P-2M327 / dz-P-2N364 / dz-P-2M364  
-   – U-boats to chosen DZ</pre>
-  </div>
-
-  <div class="report">
-    <button class="copy-btn" onclick="copyToClipboard('report2')">📋 Copy</button>
-    <pre id="report2">👟 P1 Problem Solve Report  
-*(For each "[   ]" enter a number and specify "totes" or "U-boats")*
-
-Shoes Ready to Stow: [   ] U-boats  
-Pending Sorting:       [   ] U-boats  
-
-1. Problem Solve: [   ]  
-   – IDRT → problem-solve DZ
-
-2. Damaged/Unscannable Items: [   ]  
-   – IDRT → dz-P-DAMAGELAND; U-boats to Damageland
-
-4. Library Non-Con: [   ]  
-   – IDRT → dz-S-Cubiscan;      U-boats to ISS
-
-5. Large Apparel Non-Con: [   ]  
-   – IDRT → IB Dock;             U-boats to Decant
-
-6. ISS or Hazmat: [   ]  
-   – IDRT → dz-P-ISS;           U-boats to ISS
-
-7. Jewelry or HRV: [   ]  
-   – IDRT → dz-P-2N327 / dz-P-2M327 / dz-P-2N364 / dz-P-2M364  
-   – U-boats to chosen DZ</pre>
-  </div>
-
-  <div class="report">
-    <button class="copy-btn" onclick="copyToClipboard('report3')">📋 Copy</button>
-    <pre id="report3">💎 HRV Problem Solve & WIP Report  
-*(For each "[   ]" enter a number and specify "totes" or "U-boats")*
-
-1. Ready to Inject:    [   ]  
-   – Decant for reinjection; verify dz-P-LIBRARY routing
-
-2. Needing Sorting:    [   ]
-
-3. Ready to Stow (Q330): [   ]
-
-4. Ready to Stow (Q364): [   ]</pre>
-  </div>
-
-  <div class="report">
-    <button class="copy-btn" onclick="copyToClipboard('report4')">📋 Copy</button>
-    <pre id="report4">📊 IDRT Report – FMC Hub & IB Rodeo Report 
-🟩 FMC Hub 
-Total Stow WIP:        () 
-- Stow Mod Inventory: () ⚠️ (Key Metric) 
-- dz-P:               () 
-- dzg-VRET:           () 
-
-🔄 Transition to IB Rodeo 
-🟦 IB Rodeo 
-Total Pending Stow:   () ⚠️ (Key Metric) 
-- Conveyor:           () 
-  (Transfers to Drop Zone Prime once queued & IDRT’d.) 
-- Drop Zone Prime:    () 
-  (Keep aligned with FMC Hub Stow Mod inventory.) 
-- Currently Being Stowed: () 
-  (In progress across stowers.) 
-
-✅ IDRT Items Completed 
-- Login: ()  total units: ()</pre>
-  </div>
-
-  <script>
-    function copyToClipboard(id) {
-      const el = document.getElementById(id);
-      const text = el.innerText;
-      navigator.clipboard.writeText(text).then(() => {
-        alert("✅ Report copied to clipboard!");
-      });
+function render() {
+  const container = document.getElementById("categories");
+  container.innerHTML = "";
+  for (const [category, reports] of Object.entries(categories)) {
+    const section = document.createElement("div");
+    section.className = "category";
+    section.innerHTML = `<h2>${category}</h2>`;
+    for (let i = 0; i < reports.length; i++) {
+      const rep = reports[i];
+      const id = category.replace(/\s+/g, '') + i;
+      const reportDiv = document.createElement("div");
+      reportDiv.className = "report";
+      reportDiv.innerHTML = \`
+        <button class="copy-btn" onclick="copyToClipboard('r\${id}')">📋 Copy</button>
+        \${adminMode ? '<button class="edit-btn" onclick="editReport(\'\${category}\', '+i+')">✏️ Editar</button>' : ''}
+        \${adminMode ? '<button class="delete-btn" onclick="deleteReport(\'\${category}\', '+i+')">🗑️ Eliminar</button>' : ''}
+        <pre id="r\${id}">\${rep.title}\n\n\${rep.content}</pre>\`;
+      section.appendChild(reportDiv);
     }
+    container.appendChild(section);
+  }
+}
 
-    function activateAdmin() {
-      const password = prompt("Enter admin password:");
-      if (password === "Qjuflore1211503") {
-        alert("✅ Admin mode activated. You can now add/edit reports.");
-        // Placeholder: future admin panel or edit mode toggle
-      } else {
-        alert("❌ Incorrect password");
-      }
+function enableAdmin() {
+  const pass = prompt("Contraseña de administrador:");
+  if (pass === "Qjuflore1211503") {
+    adminMode = true;
+    document.getElementById("adminPanel").classList.remove("hidden");
+    render();
+    populateCategorySelect();
+    alert("✅ Modo Admin activado.");
+  } else {
+    alert("❌ Contraseña incorrecta");
+  }
+}
+
+function copyToClipboard(id) {
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.innerText).then(() => {
+    alert("✅ Copiado");
+  });
+}
+
+function populateCategorySelect() {
+  const select = document.getElementById("newCategory");
+  select.innerHTML = "";
+  for (const cat of Object.keys(categories)) {
+    const opt = document.createElement("option");
+    opt.value = cat;
+    opt.textContent = cat;
+    select.appendChild(opt);
+  }
+}
+
+function addReport(e) {
+  e.preventDefault();
+  const cat = document.getElementById("newCategory").value;
+  const title = document.getElementById("newTitle").value;
+  const content = document.getElementById("newContent").value;
+  categories[cat].push({ title, content });
+  render();
+  e.target.reset();
+}
+
+function deleteReport(category, index) {
+  if (confirm("¿Eliminar este reporte?")) {
+    categories[category].splice(index, 1);
+    render();
+  }
+}
+
+function editReport(category, index) {
+  const current = categories[category][index];
+  const newTitle = prompt("Editar título:", current.title);
+  const newContent = prompt("Editar contenido:", current.content);
+  if (newTitle !== null && newContent !== null) {
+    categories[category][index] = { title: newTitle, content: newContent };
+    render();
+  }
+}
+
+function copyAllHTML() {
+  let fullHTML = "<!DOCTYPE html>\n<html><head><meta charset='UTF-8'></head><body>";
+  for (const [category, reports] of Object.entries(categories)) {
+    fullHTML += `<h2>\${category}</h2>`;
+    for (const rep of reports) {
+      fullHTML += `<pre>\${rep.title}\n\n\${rep.content}</pre>`;
     }
-  </script>
+  }
+  fullHTML += "</body></html>";
+  navigator.clipboard.writeText(fullHTML).then(() => {
+    alert("📋 HTML copiado al portapapeles");
+  });
+}
+
+render();
+</script>
 
 </body>
 </html>
