@@ -46,6 +46,7 @@ function copyText(content, btn) {
     showNotice("Click 'Apply formatting' in Slack after pasting.");
   });
 }
+
 function downloadScriptAsFile(script) {
   const blob = new Blob([script.code], { type: 'text/javascript' });
   const url = URL.createObjectURL(blob);
@@ -84,8 +85,6 @@ function createCategory(cat, container) {
 
   header.appendChild(title);
   header.appendChild(copyBtn);
-  header.appendChild(downloadBtn);
-
   div.appendChild(header);
   div.appendChild(content);
   container.appendChild(div);
@@ -132,24 +131,21 @@ function loadScripts() {
         const title = document.createElement('span');
         title.innerText = `${script.name || 'Untitled'}${script.author ? ' | ' + script.author : ''}${script.version ? ' | v' + script.version : ''}`;
 
-        // 📋 Copy button
-const copyBtn = document.createElement('button');
-copyBtn.className = 'copy-btn';
-copyBtn.innerText = '📋 Copy';
-copyBtn.onclick = (e) => {
-  e.stopPropagation();
-  copyText(script.code, copyBtn);
-};
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-btn';
+        copyBtn.innerText = '📋 Copy';
+        copyBtn.onclick = (e) => {
+          e.stopPropagation();
+          copyText(script.code, copyBtn);
+        };
 
-// 📥 Download button
-const downloadBtn = document.createElement('button');
-downloadBtn.className = 'copy-btn';
-downloadBtn.innerText = '📥 Download';
-downloadBtn.onclick = (e) => {
-  e.stopPropagation();
-  downloadScriptAsFile(script);
-};
-
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'copy-btn';
+        downloadBtn.innerText = '📥 Download';
+        downloadBtn.onclick = (e) => {
+          e.stopPropagation();
+          downloadScriptAsFile(script);
+        };
 
         const content = document.createElement('div');
         content.className = 'category-content';
@@ -157,6 +153,7 @@ downloadBtn.onclick = (e) => {
 
         header.appendChild(title);
         header.appendChild(copyBtn);
+        header.appendChild(downloadBtn);
         div.appendChild(header);
         div.appendChild(content);
         container.appendChild(div);
