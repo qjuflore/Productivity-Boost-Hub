@@ -14,10 +14,8 @@
       --border: rgba(255, 255, 255, 0.1);
       --accent: #00fff7;
       --text: #e0f7fa;
-      --text-glow: 0 0 5px #00fff7;
       --button-bg: #00fff7;
       --button-text: #000;
-      --button-glow: 0 0 10px #00fff7;
     }
 
     body {
@@ -26,9 +24,9 @@
       font-family: 'Orbitron', sans-serif;
       background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
       display: flex;
       flex-direction: column;
+      min-height: 100vh;
     }
 
     h1 {
@@ -38,13 +36,7 @@
       align-items: center;
       justify-content: space-between;
       color: var(--accent);
-      text-shadow: var(--text-glow);
-      animation: fadeInUp 1s ease-out;
-    }
-
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      text-shadow: 0 0 5px var(--accent);
     }
 
     .controls {
@@ -60,7 +52,7 @@
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
-      box-shadow: var(--button-glow);
+      box-shadow: 0 0 10px var(--button-bg);
       transition: transform 0.2s ease;
     }
 
@@ -72,14 +64,7 @@
       background: var(--card-bg);
       margin-bottom: 1rem;
       border-radius: 12px;
-      overflow: hidden;
       border: 1px solid var(--border);
-      animation: grow 0.5s ease-in-out;
-    }
-
-    @keyframes grow {
-      from { transform: scale(0.95); opacity: 0.5; }
-      to { transform: scale(1); opacity: 1; }
     }
 
     .category-header {
@@ -110,8 +95,7 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 0.9rem;
-      box-shadow: var(--button-glow);
-      transition: all 0.3s ease;
+      box-shadow: 0 0 10px var(--button-bg);
     }
 
     .copy-btn.copied {
@@ -119,26 +103,37 @@
       color: white;
     }
 
-    .error-msg {
-      color: yellow;
-      font-size: 1.2rem;
-      margin-top: 2rem;
-    }
-
-    .footer {
-      margin-top: auto;
-      text-align: center;
-      font-size: 0.9rem;
-      padding: 1rem;
-      color: #aaa;
-    }
-
-    .visit-counter {
+    .visit-counter, .footer {
       margin-top: 2rem;
       text-align: center;
       font-size: 1.1rem;
-      color: #00fff7;
-      text-shadow: 0 0 5px #00fff7;
+      color: var(--accent);
+    }
+
+    #countryModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #countryModalContent {
+      background: #111;
+      padding: 2rem;
+      border-radius: 10px;
+      color: #fff;
+      max-height: 80%;
+      overflow-y: auto;
+      text-align: left;
+    }
+
+    #countryModalContent h2 {
+      margin-top: 0;
     }
   </style>
 </head>
@@ -147,13 +142,21 @@
     <div class="controls">
       <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
       <button class="btn" onclick="loadReports()">↻ Refresh</button>
+      <button class="btn" onclick="showCountryModal()">🌍 Countries</button>
     </div>
   </h1>
 
   <div id="reportContainer"></div>
-  <div id="error" class="error-msg"></div>
   <div class="visit-counter" id="visitCounter">👁️ Total Visits: Loading...</div>
   <div class="footer">Created by qjuflore | Juan Flores</div>
+
+  <div id="countryModal">
+    <div id="countryModalContent">
+      <h2>🌍 Visits by Country</h2>
+      <ul id="countryList"></ul>
+      <button class="btn" onclick="closeCountryModal()">Close</button>
+    </div>
+  </div>
 
   <script>
     const emojiMap = {
@@ -193,7 +196,7 @@
         setTimeout(() => {
           btn.innerText = '📋 Copy';
           btn.classList.remove('copied');
-          alert('If you’re pasting in Slack, be sure to click “Apply” to keep formatting!');
+          alert('Click "Apply" in Slack when pasting to keep formatting.');
         }, 1500);
       });
     }
@@ -204,8 +207,6 @@
         .then(data => {
           const container = document.getElementById('reportContainer');
           container.innerHTML = '';
-          document.getElementById('error').innerText = '';
-
           data.forEach(cat => {
             const div = document.createElement('div');
             div.className = 'category';
@@ -235,25 +236,49 @@
             div.appendChild(content);
             container.appendChild(div);
           });
-        })
-        .catch(err => {
-          document.getElementById('error').innerText = '⚠️ Error loading reports';
         });
     }
 
     function loadVisitCounter() {
       fetch('https://api.countapi.xyz/hit/qjuflore/report-tool-visits')
-        .then(response => response.json())
+        .then(res => res.json())
         .then(data => {
           document.getElementById('visitCounter').innerText = `👁️ Total Visits: ${data.value.toLocaleString()}`;
-        })
-        .catch(err => {
-          document.getElementById('visitCounter').innerText = `👁️ Total Visits: Unavailable`;
         });
+    }
+
+    function trackCountry() {
+      fetch("https://ipapi.co/json")
+        .then(res => res.json())
+        .then(data => {
+          const code = data.country_code;
+          fetch(`https://api.countapi.xyz/hit/qjuflore/report-tool-country-${code}`);
+        });
+    }
+
+    function showCountryModal() {
+      document.getElementById('countryModal').style.display = 'flex';
+      const countries = ['US','MX','CO','PE','BR','AR','CL','VE','ES','FR'];
+      const list = document.getElementById('countryList');
+      list.innerHTML = '';
+      countries.forEach(code => {
+        fetch(`https://api.countapi.xyz/get/qjuflore/report-tool-country-${code}`)
+          .then(res => res.json())
+          .then(data => {
+            const li = document.createElement('li');
+            li.innerText = `${code}: ${data.value.toLocaleString()}`;
+            list.appendChild(li);
+          });
+      });
+    }
+
+    function closeCountryModal() {
+      document.getElementById('countryModal').style.display = 'none';
     }
 
     loadReports();
     loadVisitCounter();
+    trackCountry();
   </script>
 </body>
 </html>
