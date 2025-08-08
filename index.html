@@ -175,7 +175,7 @@
       ':chart:': '📊',
       ':green_square:': '🟩',
       ':blue_square:': '🟦',
-      ':check_mark:': '✅',
+      ':check_mark': '✅',
       ':warning:': '⚠️'
     };
 
@@ -267,7 +267,7 @@
     }
 
     function loadVisits() {
-      fetch("https://script.google.com/macros/s/AKfycbzPCAcIctShEeFqQXH6GufRN1kCKvWpKY-jM3yBlm2BjpxjvPLC5dsHFhTZyT91wpc1/exec")
+      fetch("https://script.google.com/macros/s/AKfycbzNCl7y-uzNo0uamrmfgVzaedjQ941ar452-__eX9XNZCMfrk4PGffCShmLvo3ypq_D/exec")
         .then(res => res.json())
         .then(data => {
           document.getElementById("visitInfo").innerText = `👁️ Total Visits: ${data.total}`;
