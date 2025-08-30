@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Inbound Flow Planner (Standalone, VTO/Coaching)</title>
+  <style>
+    :root{
+      --bg1:#0b1220; --bg2:#0a0a0a; --bg3:#000;
+      --card:rgba(255,255,255,0.05); --border:rgba(255,255,255,0.10);
+      --muted:rgba(255,255,255,0.70); --muted2:rgba(255,255,255,0.60);
+      --text:#fff;
+      --ok:#86efac; --warn:#fcd34d; --bad:#fda4af;
+      --pill-ok:rgba(16,185,129,0.2); --pill-warn:rgba(245,158,11,0.2); --pill-bad:rgba(244,63,94,0.2);
+      --pill-muted:rgba(255,255,255,0.10);
+      --focus:rgba(255,255,255,0.40);
+    }
+    html,body{height:100%;margin:0}
+    body{
+      color:var(--text);
+      background: radial-gradient(1200px 800px at 20% 0%, var(--bg1) 0%, var(--bg2) 50%, var(--bg3) 100%);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    .wrap{max-width:1200px;margin:0 auto;padding:24px}
+    h1{font-size:32px;margin:0 0 4px 0}
+    .sub{color:var(--muted);font-size:14px;margin-top:0}
+    .row{display:grid;grid-template-columns:1fr;gap:16px}
+    @media (min-width: 900px){ .row{grid-template-columns:1fr 1fr;} }
+    .grid-4{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (min-width: 900px){ .grid-4{grid-template-columns:repeat(4,1fr);} }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.35);
+      padding:16px 18px;
+    }
+    .card h3{margin:0 0 12px 0;font-size:18px}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+    .btn{border:1px solid var(--border);background:var(--pill-muted);color:#fff;padding:10px 14px;border-radius:12px;cursor:pointer}
+    .btn:hover{filter:brightness(1.1)}
+    .btn.primary{background:#fff;color:#000;font-weight:600}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    input[type="number"]{
+      width:100%;padding:10px;border-radius:12px;border:1px solid var(--border);
+      background:rgba(255,255,255,0.10);color:#fff;outline:none;
+    }
+    input[type="number"]:focus{box-shadow:0 0 0 3px var(--focus)}
+    input[type="range"]{width:100%}
+    .flex{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .pill{padding:6px 10px;border-radius:999px;font-size:12px;display:inline-block}
+    .pill.muted{background:var(--pill-muted)}
+    .pill.ok{background:var(--pill-ok);color:var(--ok)}
+    .pill.warn{background:var(--pill-warn);color:var(--warn)}
+    .pill.bad{background:var(--pill-bad);color:var(--bad)}
+    .stat{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px}
+    .stat .lbl{font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em}
+    .stat .val{font-size:22px;font-weight:600}
+    .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+    @media (min-width: 900px){ .stats{grid-template-columns:repeat(4,1fr)} }
+    .small{font-size:12px;color:var(--muted)}
+    .mt8{margin-top:8px} .mt12{margin-top:12px} .mt16{margin-top:16px} .mt24{margin-top:24px}
+    .right{display:flex;align-items:center;gap:8px}
+    textarea.plan{width:100%;height:160px;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;border-radius:12px;padding:10px}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div>
+        <h1>Inbound Flow Planner</h1>
+        <p class="sub">Plan decanters vs stowers, trailer injection, and EOS WIP — built for Flow (<b>BFL2</b>).</p>
+      </div>
+      <div class="right">
+        <button class="btn" id="resetBtn">Reset</button>
+        <button class="btn primary" id="copyBtn">Copy Plan</button>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="lbl">Stow Capacity (u/hr)</div><div class="val" id="stowCapEff">—</div></div>
+      <div class="stat"><div class="lbl">Inbound Feed (u/hr)</div><div class="val" id="totalFeed">—</div></div>
+      <div class="stat"><div class="lbl" id="bbLabel">Build/Burn (u/hr)</div><div class="val" id="buildBurn">—</div></div>
+      <div class="stat"><div class="lbl">Projected EOS WIP</div><div class="val" id="projectedEOS">—</div></div>
+    </div>
+
+    <div class="row">
+      <div class="card">
+        <h3>Stow (Consumption)</h3>
+        <div class="row">
+          <div>
+            <label>Stowers Headcount</label>
+            <input type="range" data-key="stowHC" min="0" max="300" step="1">
+            <input type="number" data-key="stowHC" min="0" max="300" step="1">
+          </div>
+          <div>
+            <label>Rate per Stower (UPH)</label>
+            <input type="range" data-key="stowRate" min="40" max="600" step="5">
+            <input type="number" data-key="stowRate" min="40" max="600" step="5">
+          </div>
+        </div>
+        <div class="flex mt12 small">
+          <span class="pill muted">Base Capacity: <span id="stowCapBase">—</span> u/hr</span>
+          <span class="pill ok">Effective: <span id="stowCap">—</span> u/hr</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Decant (Supply)</h3>
+        <div class="row">
+          <div>
+            <label>Decanters Headcount</label>
+            <input type="range" data-key="decHC" min="0" max="300" step="1">
+            <input type="number" data-key="decHC" min="0" max="300" step="1">
+          </div>
+          <div>
+            <label>Rate per Decanter (UPH)</label>
+            <input type="range" data-key="decRate" min="40" max="800" step="5">
+            <input type="number" data-key="decRate" min="40" max="800" step="5">
+          </div>
+        </div>
+        <div class="flex mt12 small">
+          <span class="pill muted">Base Feed: <span id="decFeedBase">—</span> u/hr</span>
+          <span class="pill ok">Effective: <span id="decFeed">—</span> u/hr</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mt16">
+      <div class="card">
+        <h3>Injection (Trailer Totes)</h3>
+        <div class="row">
+          <div>
+            <label>Total Totes (trailer)</label>
+            <input type="range" data-key="totes" min="0" max="4000" step="10">
+            <input type="number" data-key="totes" min="0" max="4000" step="10">
+          </div>
+          <div>
+            <label>Units in Totes (trailer)</label>
+            <input type="range" data-key="toteUnits" min="0" max="300000" step="100">
+            <input type="number" data-key="toteUnits" min="0" max="300000" step="100">
+          </div>
+          <div>
+            <label class="small">Density (auto)</label>
+            <div class="card" style="padding:12px">
+              <div style="font-size:22px;font-weight:600"><span id="density">—</span> <span class="small">u/tote</span></div>
+              <div class="small">Computed as Units ÷ Totes</div>
+            </div>
+          </div>
+        </div>
+        <div class="row mt12">
+          <div>
+            <label>Planned Injection Pace (totes/hr)</label>
+            <input type="range" data-key="totesPerHr" min="0" max="600" step="5">
+            <input type="number" data-key="totesPerHr" min="0" max="600" step="5">
+          </div>
+          <div class="card" style="padding:12px">
+            <div class="small">Avg Feed Across Remaining Window</div>
+            <div style="font-size:22px;font-weight:600"><span id="injAvg">—</span> <span class="small">u/hr</span></div>
+            <div class="small mt8" id="injNote"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Targets & Time</h3>
+        <div class="row">
+          <div>
+            <label>Hours Remaining in Shift</label>
+            <input type="range" data-key="hoursLeft" min="0.5" max="12" step="0.5">
+            <input type="number" data-key="hoursLeft" min="0.5" max="12" step="0.5">
+          </div>
+          <div>
+            <label>Current Pending Stow (WIP Now)</label>
+            <input type="range" data-key="wipNow" min="0" max="400000" step="100">
+            <input type="number" data-key="wipNow" min="0" max="400000" step="100">
+          </div>
+          <div>
+            <label>Target EOS WIP</label>
+            <input type="range" data-key="wipTarget" min="0" max="400000" step="100">
+            <input type="number" data-key="wipTarget" min="0" max="400000" step="100">
+          </div>
+        </div>
+        <div class="flex mt12 small">
+          <span class="pill muted">Required Feed to Hit Target: <span id="reqFeed">—</span> u/hr</span>
+          <span class="pill muted">If Injection Fixed ⇒ Need ≈ <span id="reqDecHC">—</span> Decanters (Δ <span id="deltaDec">—</span>)</span>
+          <span class="pill muted">If Decanters Fixed ⇒ Need ≈ <span id="reqTotes">—</span> totes/hr</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt16">
+      <h3>Adjustments — VTO, Labor Share, Coaching (Effective Inputs)</h3>
+      <div class="row">
+        <div>
+          <label>VTO Stowers (%)</label>
+          <input type="range" data-key="vtoStowPct" min="0" max="60" step="1">
+          <input type="number" data-key="vtoStowPct" min="0" max="60" step="1">
+        </div>
+        <div>
+          <label>VTO Decanters (%)</label>
+          <input type="range" data-key="vtoDecPct" min="0" max="60" step="1">
+          <input type="number" data-key="vtoDecPct" min="0" max="60" step="1">
+        </div>
+        <div>
+          <label>VTO starts in (hr)</label>
+          <input type="range" data-key="vtoStartHr" min="0" max="12" step="0.5">
+          <input type="number" data-key="vtoStartHr" min="0" max="12" step="0.5">
+        </div>
+      </div>
+      <div class="row mt12">
+        <div>
+          <label>Labor Share Δ Stowers</label>
+          <input type="range" data-key="stowDelta" min="-100" max="100" step="1">
+          <input type="number" data-key="stowDelta" min="-100" max="100" step="1">
+        </div>
+        <div>
+          <label>Labor Share Δ Decanters</label>
+          <input type="range" data-key="decDelta" min="-100" max="100" step="1">
+          <input type="number" data-key="decDelta" min="-100" max="100" step="1">
+        </div>
+      </div>
+      <div class="row mt12">
+        <div>
+          <label>Stow Rate Improvement (%)</label>
+          <input type="range" data-key="stowRateAdjPct" min="0" max="30" step="1">
+          <input type="number" data-key="stowRateAdjPct" min="0" max="30" step="1">
+        </div>
+        <div>
+          <label>Decant Rate Improvement (%)</label>
+          <input type="range" data-key="decRateAdjPct" min="0" max="30" step="1">
+          <input type="number" data-key="decRateAdjPct" min="0" max="30" step="1">
+        </div>
+      </div>
+      <div class="flex mt12 small">
+        <span class="pill muted">Effective Stowers: <span id="stowEff">—</span></span>
+        <span class="pill muted">Effective Decanters: <span id="decEff">—</span></span>
+        <span class="pill muted">Max VTO Stow tol.: ≈<span id="vtoStowMax">—</span>%</span>
+        <span class="pill muted">Max VTO Dec tol.: ≈<span id="vtoDecMax">—</span>%</span>
+      </div>
+    </div>
+
+    <div class="card mt16">
+      <h3>Calculation Details (Audit)</h3>
+      <div class="row">
+        <div class="card">
+          <div class="small" style="font-weight:600">Stow</div>
+          <ul class="small">
+            <li>Base: HC <span id="stowHCBase">—</span> × Rate <span id="stowRateBase">—</span> ⇒ <span id="stowCapBase2">—</span> u/hr</li>
+            <li>Effective: HC <span id="stowHCAvg2">—</span> × Rate <span id="stowRateEff2">—</span> ⇒ <span id="stowCap2">—</span> u/hr</li>
+            <li>Req. StowCap to hit target: <span id="reqStowCap">—</span> u/hr ⇒ ~<span id="reqStowHC">—</span> stowers @ <span id="stowRateEff3">—</span> UPH</li>
+            <li>Or keep HC ⇒ need rate ≈ <span id="reqStowRate">—</span> UPH</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="small" style="font-weight:600">Supply</div>
+          <ul class="small">
+            <li>Decant feed: HC <span id="decHCAvg2">—</span> × Rate <span id="decRateEff2">—</span> ⇒ <span id="decFeed2">—</span> u/hr</li>
+            <li>Injection density: <span id="density2">—</span> u/tote</li>
+            <li>Injection plan: <span id="totesPerHr2">—</span> totes/hr ⇒ raw <span id="injRaw">—</span> u/hr; averaged <span id="injAvg2">—</span> u/hr</li>
+            <li id="injFinishLine">Trailer continuous within window</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="small" style="font-weight:600">Balance</div>
+          <ul class="small">
+            <li>Total feed: <span id="totalFeed2">—</span> u/hr</li>
+            <li>Build/Burn: <span id="buildBurn2">—</span> u/hr</li>
+            <li>Projected EOS: <span id="projectedEOS2">—</span> (Δ <span id="eosDelta">—</span>)</li>
+            <li>Required feed to hit target: <span id="reqFeed2">—</span> u/hr</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="small" style="font-weight:600">What-ifs</div>
+          <ul class="small">
+            <li>Decanters needed (injection fixed): ~<span id="reqDecHC2">—</span> (Δ <span id="deltaDec2">—</span>)</li>
+            <li>Injection needed (decant fixed): ~<span id="reqTotes2">—</span> totes/hr</li>
+            <li>Zero-build injection pace: ~<span id="totesZero">—</span> totes/hr</li>
+            <li>Target-burn injection pace: ~<span id="totesTargetBurn">—</span> totes/hr</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt16">
+      <div class="header" style="margin:0 0 8px 0">
+        <h3>Planner Guidance</h3>
+        <span class="pill muted" id="targetStatus">—</span>
+      </div>
+      <div class="row">
+        <div class="card">
+          <div class="small" style="font-weight:600">Plan A — Keep Injection, Solve Decanters</div>
+          <div style="font-size:22px;font-weight:600">Need ≈ <span id="reqDecHC3">—</span> decanters</div>
+          <div class="small mt8">Δ vs now: <span id="deltaDec3">—</span></div>
+        </div>
+        <div class="card">
+          <div class="small" style="font-weight:600">Plan B — Keep Decanters, Solve Injection</div>
+          <div style="font-size:22px;font-weight:600">Need ≈ <span id="reqTotes3">—</span> totes/hr</div>
+          <div class="small mt8">Zero-build ≈ <span id="totesZero2">—</span> | Target-burn ≈ <span id="totesTargetBurn2">—</span></div>
+        </div>
+        <div class="card">
+          <div class="small" style="font-weight:600">Plan C — Keep Both, See Outcome</div>
+          <div style="font-size:22px;font-weight:600">EOS <span id="eos3">—</span></div>
+          <div class="small mt8">Δ vs target: <span id="eosDelta2">—</span></div>
+        </div>
+        <div class="card">
+          <div class="small" style="font-weight:600">Plan D — Apply VTO / Labor Share</div>
+          <div style="font-size:22px;font-weight:600">Max VTO stow ≈ <span id="vtoStowMax2">—</span>% | dec ≈ <span id="vtoDecMax2">—</span>%</div>
+          <div class="small mt8">Need stowers ~<span id="reqStowHC2">—</span> (Δ <span id="deltaStow">—</span>); or keep HC and target rate ≈ <span id="reqStowRate2">—</span> UPH</div>
+        </div>
+        <div class="card">
+          <div class="small" style="font-weight:600">Plan E — Rate Coaching (Improve Only)</div>
+          <div style="font-size:22px;font-weight:600">Target rate ≈ <span id="reqStowRate3">—</span> UPH</div>
+          <div class="small mt8">Current eff. rate: <span id="stowRateEff4">—</span>; adjust with improvement slider</div>
+        </div>
+        <div class="card">
+          <div class="small" style="font-weight:600">Plan F — Injection Burst</div>
+          <div style="font-size:22px;font-weight:600">Run <span id="totesTargetBurn3">—</span> totes/hr</div>
+          <div class="small mt8">If limited, use zero-build pace <span id="totesZero3">—</span> totes/hr</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt16 hidden" id="copyBox">
+      <h3>Plan (copied fallback)</h3>
+      <textarea class="plan" id="planText"></textarea>
+    </div>
+
+    <p class="small mt16" style="text-align:center;opacity:.65">Built for Flow excellence — <b>BFL2</b>.</p>
+  </div>
+
+  <script>
+    // ------------ Utils ------------
+    const fmt = (n, digits=0) => !isFinite(n) ? '—' : Number(n).toLocaleString(undefined,{maximumFractionDigits:digits});
+    const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+    const $ = (id) => document.getElementById(id);
+
+    // ------------ State (persisted) ------------
+    const LS = 'ifp_qjuflore_standalone_v2025_08_28_vto_coach';
+    const defaults = {
+      stowHC:60, stowRate:120, decHC:12, decRate:200,
+      wipNow:50000, wipTarget:30000, hoursLeft:6,
+      totes:800, toteUnits:64000, totesPerHr:100,
+      vtoStowPct:0, vtoDecPct:0, vtoStartHr:0,
+      stowDelta:0, decDelta:0,
+      stowRateAdjPct:0, decRateAdjPct:0
+    };
+    let state = {...defaults, ...(JSON.parse(localStorage.getItem(LS)||'{}'))};
+    function save(){ localStorage.setItem(LS, JSON.stringify(state)); }
+
+    // ------------ Compute Engine ------------
+    function computePlan(s) {
+      const density = s.totes>0 ? s.toteUnits/s.totes : 0;
+
+      // VTO time-weighting
+      const vtoFrac = s.hoursLeft>0 ? Math.max(0, Math.min(1, (s.hoursLeft - Math.max(0, s.vtoStartHr))/s.hoursLeft)) : 0;
+
+      // Labor share baseline, then VTO average effect
+      const stowHCBase = Math.max(0, s.stowHC + s.stowDelta);
+      const decHCBase  = Math.max(0, s.decHC + s.decDelta);
+
+      const stowHCAvg = stowHCBase * (1 - vtoFrac * Math.max(0, s.vtoStowPct)/100);
+      const decHCAvg  = decHCBase  * (1 - vtoFrac * Math.max(0, s.vtoDecPct)/100);
+
+      // Coaching improvements only (>=0)
+      const stowRateEff = s.stowRate * (1 + Math.max(0, s.stowRateAdjPct)/100);
+      const decRateEff  = s.decRate  * (1 + Math.max(0, s.decRateAdjPct)/100);
+
+      // Base refs
+      const stowCapBase = s.stowHC*s.stowRate;
+      const decFeedBase = s.decHC*s.decRate;
+
+      // Effective
+      const stowCap = stowHCAvg * stowRateEff;
+      const decFeed = decHCAvg  * decRateEff;
+
+      // Injection averaged (cap if trailer ends early)
+      const injRaw = s.totesPerHr * density;
+      const injAvg = s.hoursLeft>0 ? Math.min(injRaw, s.toteUnits/s.hoursLeft) : 0;
+      const injFinishesIn = injRaw>0 ? s.toteUnits/injRaw : Infinity;
+      const injEarly = injFinishesIn < s.hoursLeft;
+
+      const totalFeed = decFeed + injAvg;
+      const buildBurnPerHr = totalFeed - stowCap;
+      const projectedEOS = s.wipNow + buildBurnPerHr * s.hoursLeft;
+
+      const reqFeedPerHr = s.hoursLeft>0 ? (s.wipTarget - s.wipNow)/s.hoursLeft + stowCap : 0;
+      const reqStowCap   = s.hoursLeft>0 ? totalFeed - (s.wipTarget - s.wipNow)/s.hoursLeft : stowCap;
+
+      const reqDecHC = decRateEff>0 ? Math.max(0, Math.ceil((reqFeedPerHr - injAvg)/decRateEff)) : 0;
+      const reqTotesPerHr = density>0 ? Math.max(0, (reqFeedPerHr - decFeed)/density) : 0;
+      const reqStowHC = stowRateEff>0 ? Math.max(0, Math.ceil(reqStowCap/stowRateEff)) : 0;
+      const reqStowRate = stowHCAvg>0 ? Math.max(0, reqStowCap/stowHCAvg) : 0;
+
+      const deltaDecHC = Math.max(0, reqDecHC - decHCAvg);
+      const deltaStowHC = Math.max(0, reqStowHC - stowHCAvg);
+
+      // Max VTO tolerance (separate)
+      const vtoStowMaxPct = (()=>{
+        if (s.hoursLeft<=0 || stowRateEff<=0 || stowHCBase<=0 || vtoFrac<=0) return 100;
+        const rhs = (reqStowCap / stowRateEff) / stowHCBase;
+        const p = (1 - rhs) * (1 / vtoFrac) * 100;
+        return clamp(isFinite(p)?p:0, 0, 100);
+      })();
+      const vtoDecMaxPct = (()=>{
+        if (s.hoursLeft<=0 || decRateEff<=0 || decHCBase<=0 || vtoFrac<=0) return 100;
+        const rhs = (reqFeedPerHr - injAvg) / (decRateEff * decHCBase);
+        const p = (1 - rhs) * (1 / vtoFrac) * 100;
+        return clamp(isFinite(p)?p:0, 0, 100);
+      })();
+
+      const eosDelta = projectedEOS - s.wipTarget;
+
+      const totesZero = density>0 ? Math.max(0, (stowCap - decFeed)/density) : 0;
+      const totesTargetBurn = density>0 && s.hoursLeft>0 ? Math.max(0, ((stowCap - decFeed) - (s.wipTarget - s.wipNow)/s.hoursLeft)/density) : 0;
+
+      return { density, stowHCAvg, decHCAvg, stowRateEff, decRateEff,
+        stowCapBase, decFeedBase, stowCap, decFeed,
+        injRaw, injAvg, injFinishesIn, injEarly,
+        totalFeed, buildBurnPerHr, projectedEOS,
+        reqFeedPerHr, reqStowCap, reqDecHC, reqTotesPerHr, reqStowHC, reqStowRate,
+        deltaDecHC, deltaStowHC, vtoStowMaxPct, vtoDecMaxPct, eosDelta, totesZero, totesTargetBurn,
+        vtoStartHr: s.vtoStartHr };
+    }
+
+    // ------------ Wiring inputs ------------
+    function syncInputs() {
+      document.querySelectorAll('input[type="range"], input[type="number"]').forEach(inp => {
+        const key = inp.getAttribute('data-key');
+        if (!key) return;
+        inp.value = state[key];
+        inp.addEventListener('input', e => {
+          let val = Number(e.target.value);
+          // enforce non-negative coaching
+          if (key==='stowRateAdjPct' || key==='decRateAdjPct') val = Math.max(0, val);
+          state[key] = val;
+          document.querySelectorAll(`[data-key="${key}"]`).forEach(x => { if (x!==inp) x.value = val; });
+          save();
+          render();
+        });
+      });
+    }
+
+    // ------------ Render ------------
+    function render(){
+      const p = computePlan(state);
+      // Stats
+      $('stowCapEff').innerText = fmt(p.stowCap);
+      $('totalFeed').innerText = fmt(p.totalFeed);
+      const bb = (p.buildBurnPerHr>=0?'+':'') + fmt(p.buildBurnPerHr);
+      $('buildBurn').innerText = bb;
+      $('projectedEOS').innerText = fmt(p.projectedEOS);
+      $('bbLabel').innerText = p.buildBurnPerHr >= 0 ? 'Building (u/hr)' : 'Burning (u/hr)';
+      // Stow/Decant base & eff
+      $('stowCapBase').innerText = fmt(p.stowCapBase);
+      $('stowCap').innerText = fmt(p.stowCap);
+      $('decFeedBase').innerText = fmt(p.decFeedBase);
+      $('decFeed').innerText = fmt(p.decFeed);
+      // Density & Injection
+      $('density').innerText = fmt(p.density,1);
+      $('injAvg').innerText = fmt(p.injAvg);
+      $('injNote').innerText = p.injEarly ? `Trailer finishes in ≈ ${fmt(p.injFinishesIn,1)}h; average is capped by units ÷ hoursLeft.` : `Continuous at ${fmt(p.injRaw)} u/hr if run the whole window.`;
+      // Targets & Time
+      $('reqFeed').innerText = fmt(p.reqFeedPerHr);
+      $('reqDecHC').innerText = fmt(p.reqDecHC);
+      $('deltaDec').innerText = fmt(p.deltaDecHC);
+      $('reqTotes').innerText = fmt(p.reqTotesPerHr);
+      // Adjustments
+      $('stowEff').innerText = fmt(p.stowHCAvg);
+      $('decEff').innerText = fmt(p.decHCAvg);
+      $('vtoStowMax').innerText = fmt(p.vtoStowMaxPct,1);
+      $('vtoDecMax').innerText = fmt(p.vtoDecMaxPct,1);
+
+      // Audit panel
+      $('stowHCBase').innerText = fmt(state.stowHC);
+      $('stowRateBase').innerText = fmt(state.stowRate);
+      $('stowCapBase2').innerText = fmt(p.stowCapBase);
+      $('stowHCAvg2').innerText = fmt(p.stowHCAvg);
+      $('stowRateEff2').innerText = fmt(p.stowRateEff);
+      $('stowCap2').innerText = fmt(p.stowCap);
+      $('reqStowCap').innerText = fmt(p.reqStowCap);
+      $('reqStowHC').innerText = fmt(p.reqStowHC);
+      $('stowRateEff3').innerText = fmt(p.stowRateEff);
+      $('reqStowRate').innerText = fmt(p.reqStowRate,1);
+
+      $('decHCAvg2').innerText = fmt(p.decHCAvg);
+      $('decRateEff2').innerText = fmt(p.decRateEff);
+      $('decFeed2').innerText = fmt(p.decFeed);
+      $('density2').innerText = fmt(p.density,1);
+      $('totesPerHr2').innerText = fmt(state.totesPerHr);
+      $('injRaw').innerText = fmt(p.injRaw);
+      $('injAvg2').innerText = fmt(p.injAvg);
+      $('injFinishLine').innerText = p.injEarly ? `Trailer finishes in ≈ ${fmt(p.injFinishesIn,1)}h` : `Trailer continuous within window`;
+
+      $('totalFeed2').innerText = fmt(p.totalFeed);
+      $('buildBurn2').innerText = (p.buildBurnPerHr>=0?'+':'') + fmt(p.buildBurnPerHr);
+      $('projectedEOS2').innerText = fmt(p.projectedEOS);
+      $('eosDelta').innerText = (p.eosDelta>=0?'+':'') + fmt(p.eosDelta);
+      $('reqFeed2').innerText = fmt(p.reqFeedPerHr);
+
+      $('reqDecHC2').innerText = fmt(p.reqDecHC);
+      $('deltaDec2').innerText = fmt(p.deltaDecHC);
+      $('reqTotes2').innerText = fmt(p.reqTotesPerHr);
+      $('totesZero').innerText = fmt(p.totesZero);
+      $('totesTargetBurn').innerText = fmt(p.totesTargetBurn);
+
+      // Guidance
+      $('targetStatus').innerText = p.eosDelta>0 ? 'Over target' : (p.eosDelta<0 ? 'Under target' : 'On target');
+      $('reqDecHC3').innerText = fmt(p.reqDecHC);
+      $('deltaDec3').innerText = fmt(p.deltaDecHC);
+      $('reqTotes3').innerText = fmt(p.reqTotesPerHr);
+      $('totesZero2').innerText = fmt(p.totesZero);
+      $('totesTargetBurn2').innerText = fmt(p.totesTargetBurn);
+      $('eos3').innerText = fmt(p.projectedEOS);
+      $('eosDelta2').innerText = (p.eosDelta>=0?'+':'') + fmt(p.eosDelta);
+      $('vtoStowMax2').innerText = fmt(p.vtoStowMaxPct,1);
+      $('vtoDecMax2').innerText = fmt(p.vtoDecMaxPct,1);
+      $('reqStowHC2').innerText = fmt(p.reqStowHC);
+      $('deltaStow').innerText = fmt(p.deltaStowHC);
+      $('reqStowRate2').innerText = fmt(p.reqStowRate,1);
+      $('reqStowRate3').innerText = fmt(p.reqStowRate,1);
+      $('stowRateEff4').innerText = fmt(p.stowRateEff);
+      $('totesTargetBurn3').innerText = fmt(p.totesTargetBurn);
+      $('totesZero3').innerText = fmt(p.totesZero);
+    }
+
+    // Copy Plan
+    async function copyPlan(){
+      const p = computePlan(state);
+      const lines = [
+        '@here Inbound Flow Plan — qjuflore',
+        `Stow (base): ${fmt(state.stowHC)} HC × ${fmt(state.stowRate)} UPH = ${fmt(p.stowCapBase)} u/hr`,
+        `Stow (effective): ${fmt(p.stowCap)} u/hr (VTO stow ${fmt(state.vtoStowPct)}%${state.vtoStartHr?` from +${fmt(state.vtoStartHr,1)}h`:''}; ΔHC ${fmt(state.stowDelta)}; rate +${fmt(state.stowRateAdjPct)}%)`,
+        `Decant (base): ${fmt(state.decHC)} HC × ${fmt(state.decRate)} UPH = ${fmt(p.decFeedBase)} u/hr`,
+        `Decant (effective): ${fmt(p.decFeed)} u/hr (VTO dec ${fmt(state.vtoDecPct)}%${state.vtoStartHr?` from +${fmt(state.vtoStartHr,1)}h`:''}; ΔHC ${fmt(state.decDelta)}; rate +${fmt(state.decRateAdjPct)}%)`,
+        `Injection: ${fmt(state.totes)} totes; ${fmt(state.toteUnits)} units (≈${fmt(p.density,1)} u/tote)`,
+        `Plan: ${fmt(state.totesPerHr)} totes/hr ⇒ avg ${fmt(p.injAvg)} u/hr${p.injEarly ? ` (finishes in ~${fmt(p.injFinishesIn,1)}h)` : ''}`,
+        `Total inbound feed: ${fmt(p.totalFeed)} u/hr`,
+        `Build/Burn: ${(p.buildBurnPerHr>=0?'+':'')+fmt(p.buildBurnPerHr)} u/hr`,
+        `WIP Now: ${fmt(state.wipNow)} ⇒ EOS target: ${fmt(state.wipTarget)} | Projected EOS: ${fmt(p.projectedEOS)} (Δ ${(p.eosDelta>=0?'+':'')+fmt(p.eosDelta)})`,
+        `Reverse-solve feed → need ${fmt(p.reqFeedPerHr)} u/hr`,
+        ` • If injection fixed: need ~${fmt(p.reqDecHC)} decanters (Δ ${fmt(p.deltaDecHC)})`,
+        ` • If decanters fixed: need ~${fmt(p.reqTotesPerHr)} totes/hr`,
+        `Reverse-solve stow → need ${fmt(p.reqStowCap)} u/hr ⇒ ~${fmt(p.reqStowHC)} stowers @ ${fmt(p.stowRateEff)} UPH (Δ ${fmt(p.deltaStowHC)})`,
+        `VTO tolerance now → stow ≤ ~${fmt(p.vtoStowMaxPct,1)}% | dec ≤ ~${fmt(p.vtoDecMaxPct,1)}%`,
+      ];
+      const txt = lines.join('\n');
+      try{
+        await navigator.clipboard.writeText(txt);
+        alert('Plan copied to clipboard! ✅');
+      }catch(err){
+        // Fallback
+        document.getElementById('copyBox').classList.remove('hidden');
+        document.getElementById('planText').value = txt;
+        document.getElementById('planText').focus();
+        document.getElementById('planText').select();
+      }
+    }
+
+    // Self-tests in console
+    (function tests(){
+      const base = {stowHC:60,stowRate:120,decHC:12,decRate:200,wipNow:50000,wipTarget:30000,hoursLeft:6,totes:800,toteUnits:64000,totesPerHr:100,vtoStowPct:0,vtoDecPct:0,vtoStartHr:0,stowDelta:0,decDelta:0,stowRateAdjPct:0,decRateAdjPct:0};
+      const out = computePlan(base);
+      console.assert(out.stowCap===7200,'stowCap should be 7200');
+      console.assert(out.decFeed===2400,'dec feed 2400');
+      const out2 = computePlan({...base, vtoStowPct:10});
+      console.assert(Math.abs(out2.stowHCAvg-54)<1e-6,'10% VTO stow → stowHCAvg 54');
+      const out3 = computePlan({...base, vtoStowPct:50, vtoStartHr:3});
+      console.assert(Math.abs(out3.stowHCAvg - 60*0.75) < 1e-6, 'Delayed VTO time-weighted');
+      const out4 = computePlan({...base, stowRateAdjPct:-10});
+      console.assert(out4.stowRateEff >= base.stowRate, 'Coaching never reduces rate');
+    })();
+
+    // Init
+    function attachHandlers(){
+      document.querySelectorAll('input[type="range"], input[type="number"]').forEach(inp => {});
+      syncInputs();
+      document.getElementById('resetBtn').addEventListener('click',()=>{
+        state = {...defaults}; save(); syncInputs(); render();
+      });
+      document.getElementById('copyBtn').addEventListener('click',copyPlan);
+    }
+    attachHandlers();
+    render();
+  </script>
+</body>
+</html>
