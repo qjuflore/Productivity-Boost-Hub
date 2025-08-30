@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Trailer Plan Analyzer — BFL2 (EN v19.5)</title>
+  <title>Trailer Plan Analyzer — BFL2 (EN v19.6)</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root{
@@ -348,9 +348,10 @@
   <div id="toasts" aria-live="polite"></div>
 
 <script>
+/* ========= Config ========= */
 const REQUIRED = [
   "VRID","Transship Status","Load Config","Trailer Location",
-  "Severity","Status Info","Actual / Expected Arrival Time",
+  "Severity","Status Info","Attributes","Actual / Expected Arrival Time",
   "Priority Score",
   "Single ASIN Pallets","Mixed ASIN Pallets","FL Cases","FL Totes","Palletized Totes",
   "Apparel","Shoes","Library","Library Deep","HRV",
@@ -368,11 +369,12 @@ const TOTALS_COLUMNS = [
   "Units in FL Totes","Units in Palletized Totes","Units in Palletized Single ASIN Cases","Units in Palletized Mixed ASIN Cases",
   "Total Units"
 ];
-const NON_NUMERIC = ["VRID","Transship Status","Load Config","Trailer Location","Severity","Status Info","Actual / Expected Arrival Time"];
+const NON_NUMERIC = ["VRID","Transship Status","Load Config","Trailer Location","Severity","Status Info","Attributes","Actual / Expected Arrival Time"];
 const NUMERIC = REQUIRED.filter(c => !NON_NUMERIC.includes(c));
 const normalize = s => String(s||"").trim().toLowerCase().replace(/[_%-]/g," ").replace(/\s+/g," ");
 const up = s => String(s||"").trim().toUpperCase();
 
+/* Rename MISSING → ARRIVAL_SCHEDULED */
 function toStatusLabel(raw){
   const s=String(raw||"").trim();
   if(!s) return "ARRIVAL_SCHEDULED";
@@ -382,6 +384,7 @@ function toStatusLabel(raw){
 }
 function statusKey(raw){ return up(toStatusLabel(raw)); }
 
+/* ========= CSV parsing helpers ========= */
 function guessDelimiter(text){
   const line = (text.match(/^[^\r\n]+/)||[""])[0];
   const counts = {",":(line.match(/,/g)||[]).length,"\t":(line.match(/\t/g)||[]).length,";":(line.match(/;/g)||[]).length};
@@ -406,18 +409,22 @@ function arrayToCSV(rows){
   }).join(",")).join("\n");
 }
 
+/* ========= Formatting ========= */
 function toNum(v){ if(v==null) return 0; let s=String(v).replace(/,/g,"").replace(/%/g,"").trim(); if(s==="") return 0; const x=Number(s); return isFinite(x)?x:0; }
 function fmtNumber(n){const f=Number(n); return isFinite(f)? f.toLocaleString(undefined,{maximumFractionDigits:0}) : ""; }
 function fmtScore(n){const f=Number(n); return isFinite(f)? f.toLocaleString(undefined,{maximumFractionDigits:2}) : ""; }
 function fmtPercent(n){const f=Number(n); return isFinite(f)? f.toLocaleString(undefined,{maximumFractionDigits:2})+"%" : ""; }
 function parseWhen(s){ const t=Date.parse(String(s||"").replaceAll("  "," ")); return isNaN(t)? null : t; }
 
+/* ========= Header mapping ========= */
 function mapHeaders(headers){
   const map = {}, normToReal = {}; headers.forEach(h => normToReal[normalize(h)] = h);
   const arrivalSyns = ["actual / expected arrival time","arrival time","expected arrival","actual arrival","eta","ata","scheduled arrival","appt time","appointment time"];
+  const attrSyns = ["attributes","attribute","issues","flags","problems","problem flags","notes","comments","yms attributes","status attributes"];
   for(const syn of arrivalSyns){ const k=Object.keys(normToReal).find(x=>x.includes(syn)); if(k){ map["Actual / Expected Arrival Time"]=normToReal[k]; break; } }
+  for(const syn of attrSyns){ const k=Object.keys(normToReal).find(x=>x.includes(syn)); if(k){ map["Attributes"]=normToReal[k]; break; } }
   REQUIRED.forEach(label => {
-    if(label==="Actual / Expected Arrival Time" && map[label]) return;
+    if((label==="Actual / Expected Arrival Time" && map[label]) || (label==="Attributes" && map[label])) return;
     const n=normalize(label);
     if(normToReal[n]) map[label]=normToReal[n];
     else{ const hit=Object.keys(normToReal).find(k=>k.includes(n)); if(hit) map[label]=normToReal[hit]; }
@@ -433,7 +440,60 @@ function detectPercentColumn(values,label){
   return nonEmpty>0 && (withPct/nonEmpty)>=0.30;
 }
 
-// ===== State =====
+/* ========= Attributes detector & Severity sync ========= */
+function computeAttributesAndAlert(row){
+  // Base text to analyze
+  const rawAttr = String(row["Attributes"]||"").trim();
+  const info = String(row["Status Info"]||"");
+  const sevRaw = String(row["Severity"]||"");
+  const text = (rawAttr + " | " + info).toLowerCase();
+
+  // Quick classifiers
+  const has = (re) => re.test(text);
+
+  const critical = [
+    /red\b|critical|engine|axle|brake|air\s*line|no\s*brakes|leak|fuel|fire|hazmat|rollover|accident|collision|frame|reefer\s*(fail|down)/i,
+    /seal\s*(broken|tamper)/i
+  ];
+  const warning = [
+    /yellow\b|other\b|hold|yard\s*hold|dock\s*hold|maintenance|late|delay|resched|no\s*show/i,
+    /paper|docs|paperwork|bol|missing\s*doc/i,
+    /tire|flat|light|door|damage|broken|dent|leak|wet|mold|roof|floor|hole/i,
+    /lock|key|no\s*key|security/i
+  ];
+
+  let issueTags = [];
+
+  // Tag extraction
+  if(/paper|docs|paperwork|bol/i.test(text)) issueTags.push("Paperwork");
+  if(/seal/i.test(text)) issueTags.push("Seal/Security");
+  if(/hold|maintenance|yard\s*hold|dock\s*hold/i.test(text)) issueTags.push("Hold/Blocked");
+  if(/tire|flat|brake|door|damage|broken|leak|engine|axle|reefer/i.test(text)) issueTags.push("Mechanical/Physical");
+  if(/late|delay|resched|appointment|appt|no\s*show/i.test(text)) issueTags.push("Schedule");
+  issueTags = [...new Set(issueTags)];
+
+  // Determine alert level from attributes & info
+  let sev = sevRaw;
+  const isCritical = critical.some(r=>has(r)) || /red\b/i.test(sevRaw);
+  const isWarning = (!isCritical) && (warning.some(r=>has(r)) || /yellow|other/i.test(sevRaw));
+
+  if(isCritical) sev = "RED";
+  else if(isWarning) {
+    if(!sevRaw || /ok|green/i.test(sevRaw)) sev = "YELLOW";
+    else if(/red/i.test(sevRaw)) sev = "RED";
+    else sev = "YELLOW";
+  } else if(!sevRaw || /ok|green/i.test(sevRaw) || (!rawAttr && !info)) {
+    sev = "OK";
+  }
+
+  // Final Attributes text
+  const finalAttr = (rawAttr ? rawAttr + (issueTags.length ? " | " : "") : "") + (issueTags.length ? issueTags.join(" · ") : (rawAttr? "" : (sev==="OK" ? "OK" : "")));
+
+  row["Attributes"] = finalAttr;
+  row["Severity"]  = sev;
+}
+
+/* ========= State & DOM ========= */
 const drop=document.getElementById("drop");
 const filePick=document.getElementById("filePick");
 const btnPaste=document.getElementById("btnPaste");
@@ -501,7 +561,7 @@ let ROWS=[], IS_PERCENT={}, PCT_UNITS={}, LAST_PLAN=null;
 let STATUS_FILTER=new Set(), SORT_BY=null, SORT_DIR='asc', FILTERS=[];
 let PAN_SUPPRESS_CLICK=false;
 
-// ===== Init =====
+/* ========= Init ========= */
 document.addEventListener("DOMContentLoaded", ()=>{
   if(workloadSource) workloadSource.value="Units in Cases (computed)";
   if(planStrategy) planStrategy.value="ps_strict";
@@ -592,13 +652,14 @@ btnExport.onclick=()=>{
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 };
 
+/* ========= Toasts ========= */
 function showToast(msg){
   const t=document.createElement("div"); t.className="toast";
   t.innerHTML=`<span class="dot"></span><div>${msg}</div>`; toasts.appendChild(t);
   setTimeout(()=>{t.classList.add("bye"); setTimeout(()=>t.remove(),380);},2200);
 }
 
-// Files
+/* ========= File handling (plan) ========= */
 function handleFile(file){
   const name=file.name.toLowerCase();
   if(name.endsWith(".xlsx")){
@@ -635,6 +696,7 @@ function handleText(text){
       obj[label]=val;
     });
     obj["Transship Status"]=toStatusLabel(obj["Transship Status"]);
+    computeAttributesAndAlert(obj);
     return obj;
   });
 
@@ -646,7 +708,7 @@ function handleText(text){
   initFilterUI(); computeAndRender();
 }
 
-// Status/YMS merge
+/* ---- Status/YMS file handling ---- */
 function handleStatusFile(file){
   const name=file.name.toLowerCase();
   if(name.endsWith(".xlsx")){
@@ -708,14 +770,16 @@ function mergeStatusText(text){
     row["Status Info"]=hit.info || row["Status Info"] || "";
     if(hit.loc){ row["Trailer Location"]=hit.loc; updatedLoc++; }
     if(hit.arr){ row["Actual / Expected Arrival Time"]=hit.arr; updatedArr++; }
-    const cl=severityClass(hit.sev);
+    // Recompute Attributes & Severity alerting
+    computeAttributesAndAlert(row);
+    const cl=severityClass(row["Severity"]);
     if(cl==="sev-red") red++; else if(cl==="sev-yellow") warn++; else ok++;
   });
   computeAndRender();
   showToast(`Merged status for ${matched} VRID(s). OK: ${ok}, Yellow/Other: ${warn}, Red: ${red}${updatedLoc?`, Loc updated: ${updatedLoc}`:''}${updatedArr?`, Arrival updated: ${updatedArr}`:''}`);
 }
 
-// Filters & table
+/* ========= Filters & Sorting ========= */
 function initFilterUI(){
   const cols=["VRID"].concat(REQUIRED.filter(c=>c!=="VRID"));
   filterCol.innerHTML=cols.map(c=>`<option value="${c}">${c}</option>`).join("");
@@ -799,7 +863,7 @@ function applySort(arr){
   });
 }
 
-// Aggregations
+/* ========= Core compute & render ========= */
 function activeRows(){ return ROWS.filter(r=> r._selected && STATUS_FILTER.has(statusKey(r["Transship Status"]))); }
 function baseRows(){ return ROWS.filter(r=> STATUS_FILTER.has(statusKey(r["Transship Status"]))); }
 function visibleRows(){
@@ -875,6 +939,7 @@ function severityClass(sevRaw){
   const s=String(sevRaw||"").toLowerCase();
   if(!s) return ""; if(s.includes("red")) return "sev-red"; if(s==="ok"||s.includes("green")||s.includes("good")) return "sev-ok"; return "sev-yellow";
 }
+
 function aggregate(rows){
   const out={}; for(const col of TOTALS_COLUMNS.concat(["Priority Score"])){ let sum=0; for(const r of rows){sum+=toNum(r[col]);} out[col]={value:sum}; }
   return out;
@@ -889,6 +954,7 @@ function computePercentUnits(rows){
   }
   return m;
 }
+
 function derive(agg){
   const unitsInCases=toNum(agg["Units in Palletized Single ASIN Cases"]?.value)+toNum(agg["Units in Palletized Mixed ASIN Cases"]?.value);
   const totalUnits=toNum(agg["Total Units"]?.value);
@@ -905,6 +971,7 @@ function derive(agg){
   return {unitsInCases, casePct, toteDensityPal, toteDensityAll, totalUnits,
           unitsInTotesPal, unitsInTotesFL, palTotes, flTotes};
 }
+
 function makeBreakCard(title,obj){
   const d=document.createElement("div"); d.className="card";
   const parts=Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
@@ -931,6 +998,23 @@ function makeTotalCard(k,v,isPercent,explain="",sub=""){
   d.querySelector(".copy").onclick=(e)=>{const val=e.target.getAttribute("data-copy"); navigator.clipboard.writeText(val).then(()=>{e.target.textContent="copied ✓"; setTimeout(()=> e.target.textContent="copy",1200);});};
   return d;
 }
+
+function renderDerived(agg){
+  const d=derive(agg); derivedGrid.innerHTML="";
+  derivedGrid.appendChild(makeDerivedCard("Units in Cases (computed)", d.unitsInCases, false, "Units in Cases = Units in Palletized Single ASIN Cases + Units in Palletized Mixed ASIN Cases."));
+  derivedGrid.appendChild(makeDerivedCard("Case %", d.casePct, true, `Case % = Units in Cases / Total Units = ${fmtNumber(d.unitsInCases)} / ${fmtNumber(d.totalUnits)}.`));
+  derivedGrid.appendChild(makeDerivedCard("Tote Density (palletized-only)", d.toteDensityPal, false, `Units in Palletized Totes / Palletized Totes = ${fmtNumber(d.unitsInTotesPal)} / ${fmtNumber(d.palTotes)}.`));
+  derivedGrid.appendChild(makeDerivedCard("Tote Density (ALL totes) — recommended", d.toteDensityAll, false, `(Units in Palletized Totes + Units in FL Totes) / (Palletized Totes + FL Totes) = (${fmtNumber(d.unitsInTotesPal)} + ${fmtNumber(d.unitsInTotesFL)}) / (${fmtNumber(d.palTotes)} + ${fmtNumber(d.flTotes)}).`));
+}
+function makeDerivedCard(title,value,isPercent,explain=""){
+  const d=document.createElement("div"); d.className="card";
+  const pretty=isPercent?fmtPercent(value):fmtNumber(value);
+  d.innerHTML=`<div class="k">${title}</div><div class="v" style="margin-top:4px">${pretty}</div>${explain?`<div class="explain">${explain}</div>`:""}`;
+  return d;
+}
+function countBy(arr){const m={}; for(const x of arr){ m[x]=(m[x]||0)+1; } return m; }
+
+/* ========= Table render ========= */
 function renderTable(){
   const cols=["(Plan)","VRID"].concat(REQUIRED.filter(c=>c!=="VRID"));
   thead.innerHTML="<tr>"+cols.map((c,i)=>{
@@ -990,20 +1074,8 @@ function renderTable(){
 
   updateShadows();
 }
-function renderDerived(agg){
-  const d=derive(agg); derivedGrid.innerHTML="";
-  derivedGrid.appendChild(makeDerivedCard("Units in Cases (computed)", d.unitsInCases, false, "Units in Cases = Units in Palletized Single ASIN Cases + Units in Palletized Mixed ASIN Cases."));
-  derivedGrid.appendChild(makeDerivedCard("Case %", d.casePct, true, `Case % = Units in Cases / Total Units = ${fmtNumber(d.unitsInCases)} / ${fmtNumber(d.totalUnits)}.`));
-  derivedGrid.appendChild(makeDerivedCard("Tote Density (palletized-only)", d.toteDensityPal, false, `Units in Palletized Totes / Palletized Totes = ${fmtNumber(d.unitsInTotesPal)} / ${fmtNumber(d.palTotes)}.`));
-  derivedGrid.appendChild(makeDerivedCard("Tote Density (ALL totes) — recommended", d.toteDensityAll, false, `(Units in Palletized Totes + Units in FL Totes) / (Palletized Totes + FL Totes) = (${fmtNumber(d.unitsInTotesPal)} + ${fmtNumber(d.unitsInTotesFL)}) / (${fmtNumber(d.palTotes)} + ${fmtNumber(d.flTotes)}).`));
-}
-function makeDerivedCard(title,value,isPercent,explain=""){
-  const d=document.createElement("div"); d.className="card";
-  const pretty=isPercent?fmtPercent(value):fmtNumber(value);
-  d.innerHTML=`<div class="k">${title}</div><div class="v" style="margin-top:4px">${pretty}</div>${explain?`<div class="explain">${explain}</div>`:""}`;
-  return d;
-}
-function countBy(arr){const m={}; for(const x of arr){ m[x]=(m[x]||0)+1; } return m; }
+
+/* ========= Headcount ========= */
 function renderHeadcount(agg){
   const hours=Number(hoursInput.value)||0, rate=Number(rateInput.value)||0;
   const d=derive(agg);
@@ -1017,7 +1089,7 @@ function renderHeadcount(agg){
   headcountExplain.textContent=`Headcount = ceil(${fmtNumber(workload)} ÷ (${fmtNumber(rate)} × ${hours})) → Capacity/person: ${fmtNumber(capacity)} units (selected + status filter).`;
 }
 
-// Selection
+/* ========= Row selection ========= */
 function onTbodyClick(e){
   if(PAN_SUPPRESS_CLICK){ PAN_SUPPRESS_CLICK=false; return; }
   const tag=(e.target.tagName||"").toLowerCase();
@@ -1031,7 +1103,7 @@ function onTbodyClick(e){
 }
 function onTbodyDblClick(e){ onTbodyClick(e); }
 
-// Planning
+/* ========= Planning ========= */
 function getCandidates(useSel){
   const base=useSel? activeRows() : ROWS.filter(r=> STATUS_FILTER.has(statusKey(r["Transship Status"])));
   return base.map(r=>{
@@ -1179,7 +1251,7 @@ function buildPlanSearch(strategy, target, over, cand){
   }
 }
 
-// Recommend & compare
+/* ========= Recommend & compare ========= */
 function recommendPlan(){
   const strategy = planStrategy.value || 'ps_strict';
   const target=Number(targetUnits.value)||0, over=(Number(allowedOver.value)||0)/100, useSel=!!useSelected.checked;
@@ -1253,33 +1325,8 @@ function renderStrategySummary(strategy, ev){
     <div>Workload split → Cases: <b>${fmtPercent(ev.casesShare)}</b>, Totes: <b>${fmtPercent(ev.totesShare)}</b></div>
   `;
 }
-function renderInspector(strategy, cand){
-  const ordered = greedyOrder(strategy, cand).slice(0,10);
-  let html = `<table class="miniTable"><thead><tr>
-    <th>#</th><th>VRID</th><th>PS</th><th>Units</th><th>PPR S/M/L</th><th>Cases%</th><th>Totes%</th><th>Location</th><th>Sev</th>
-  </tr></thead><tbody>`;
-  let i=1;
-  for(const c of ordered){
-    const casesPct = c.units? (c.casesUnits/c.units*100) : 0;
-    const totesPct = c.units? (c.totesUnits/c.units*100) : 0;
-    const sevClass = c.sev==="RED"?"bad":(c.sev==="OK"?"ok":"warn");
-    html += `<tr>
-      <td>${i++}</td>
-      <td>${c.VRID}</td>
-      <td>${fmtScore(c.ps)}</td>
-      <td>${fmtNumber(c.units)}</td>
-      <td>${fmtPercent(c.small)} / ${fmtPercent(c.med)} / ${fmtPercent(c.large)}</td>
-      <td>${fmtPercent(casesPct)}</td>
-      <td>${fmtPercent(totesPct)}</td>
-      <td>${c.loc||''}</td>
-      <td><span class="badge ${sevClass}">${c.sev}</span></td>
-    </tr>`;
-  }
-  html += `</tbody></table>`;
-  document.getElementById("inspector").innerHTML = html;
-}
 
-// Scroll UX
+/* ========= Scroll UX ========= */
 function updateShadows(){
   const el=tblWrap; if(!el) return;
   const atStart = el.scrollLeft <= 1;
