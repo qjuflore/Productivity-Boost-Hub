@@ -166,7 +166,6 @@
     .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
     .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
 
-    /* Open más visible en MasterTools */
     .tool-link {
       background: var(--accent);
       color: #000 !important;
@@ -179,7 +178,6 @@
     }
     .tool-link:hover { transform: scale(1.05); }
 
-    /* Barras de búsqueda unificadas */
     .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch {
       margin-bottom: 1rem;
       padding: 0.7rem 1rem;
@@ -246,13 +244,9 @@
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
-  <!-- Tu script existente (si lo usas para cargar reports/guides/scripts) -->
   <script src="script.js"></script>
 
-  <!-- ===== PB Views (módulo de vistas: total + por herramienta) =====
-       - LocalStorage-only (sin backend) + hook opcional sendBeacon
-       - API: PBViews.bumpTotal(), PBViews.bumpTool(id), PBViews.getTotal(), PBViews.getTool(id), PBViews.listTools(), PBViews.onChange(cb)
-  -->
+  <!-- ===== PB Views (módulo local + opcional sendBeacon) ===== -->
   <script>
   (function(){
     const TOTAL_KEY = 'pb.views.total';
@@ -264,16 +258,13 @@
     function toNum(x){ const n = Number(x); return Number.isFinite(n)? n : 0; }
 
     function emitLocal(){
-      try {
-        window.dispatchEvent(new CustomEvent(CHANGE_EVT));
-      } catch(_) {}
+      try { window.dispatchEvent(new CustomEvent(CHANGE_EVT)); } catch(_) {}
     }
 
     const api = {
       bumpTotal(by=1){
         const cur = toNum(safeGet(TOTAL_KEY)) + by;
         safeSet(TOTAL_KEY, String(cur));
-        // backend opcional
         try{
           if(window.PB_VIEWS_ENDPOINT){
             navigator.sendBeacon(window.PB_VIEWS_ENDPOINT, JSON.stringify({kind:'total', by, ts: Date.now()}));
@@ -286,7 +277,6 @@
         const key = TOOL_PREFIX + id;
         const cur = toNum(safeGet(key)) + by;
         safeSet(key, String(cur));
-        // backend opcional
         try{
           if(window.PB_VIEWS_ENDPOINT){
             navigator.sendBeacon(window.PB_VIEWS_ENDPOINT, JSON.stringify({kind:'tool', id, by, ts: Date.now()}));
@@ -310,11 +300,9 @@
       onChange(cb){
         if(typeof cb!=='function') return;
         window.addEventListener(CHANGE_EVT, cb);
-        window.addEventListener('storage', (e)=>{ // cambios desde otras pestañas
+        window.addEventListener('storage', (e)=>{
           if(!e || !e.key) return;
-          if(e.key===TOTAL_KEY || e.key.startsWith(TOOL_PREFIX)){
-            cb();
-          }
+          if(e.key===TOTAL_KEY || e.key.startsWith(TOOL_PREFIX)){ cb(); }
         });
       }
     };
@@ -323,7 +311,7 @@
   })();
   </script>
 
-  <!-- Parche: tabs + persistencia de selección -->
+  <!-- Tabs persistentes -->
   <script>
     (function(){
       const tabs = document.querySelectorAll('.tab');
@@ -363,12 +351,11 @@
     })();
   </script>
 
-  <!-- Lógica MasterTools + vistas -->
+  <!-- MasterTools + vistas -->
   <script>
     const LS_FAVS = 'pb.master.favorites';
     const tools = [
       {id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'trailer-plan.html', desc:'Plan injection, density & severity attributes for trailers.'}
-      // Agrega más herramientas aquí, solo define id único y href
     ];
 
     const getFavs = () => { try { return JSON.parse(localStorage.getItem(LS_FAVS) || '[]'); } catch { return []; } };
@@ -418,7 +405,6 @@
       }
     }
 
-    // Buscador MasterTools
     const masterSearch = document.getElementById('masterSearch');
     if(masterSearch){
       masterSearch.addEventListener('input', ()=>{
@@ -430,7 +416,6 @@
       });
     }
 
-    // Render inicial
     renderMasterTools();
 
     // ====== VISITAS: pinta total, escucha cambios y suma vista del Hub ======
@@ -442,7 +427,6 @@
     }
     updateTotalViewsBadge();
 
-    // Actualiza chips de MasterTools al cambiar contadores (otra pestaña/otra tool)
     function refreshToolChips(){
       document.querySelectorAll('[data-view]').forEach(el=>{
         const id=el.getAttribute('data-view');
