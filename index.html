@@ -84,9 +84,7 @@
       transition: transform 0.2s ease;
     }
 
-    .btn:hover {
-      transform: scale(1.05);
-    }
+    .btn:hover { transform: scale(1.05); }
 
     .section { display: none; }
     .section.active { display: block; }
@@ -118,19 +116,24 @@
 
     .visible { display: block; }
 
-    .copy-btn {
-      background: var(--button-bg);
-      color: var(--button-text);
-      padding: 0.4rem 0.8rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      box-shadow: var(--button-glow);
-      transition: all 0.3s ease;
-      margin-left: 0.5rem;
+    /* Lista simple de herramientas: solo nombre, clic abre nueva pestaña */
+    .tool-list { list-style:none; padding-left:0; margin: 0.5rem 0; display:grid; gap:.6rem; }
+    .tool-link {
+      display:inline-block;
+      color: var(--accent);
       text-decoration: none;
+      font-weight: 700;
+      padding: .6rem .8rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      transition: box-shadow .2s ease, transform .1s ease, border-color .2s ease;
     }
-    .copy-btn.copied { background-color: #00c851; color: white; }
+    .tool-link:hover {
+      border-color: var(--accent);
+      box-shadow: var(--button-glow);
+      transform: translateY(-1px);
+    }
 
     .footer {
       margin-top: auto;
@@ -152,13 +155,6 @@
     }
     .submit-card a { color: var(--accent); font-weight: bold; text-decoration: none; }
     .submit-card a:hover { text-decoration: underline; }
-
-    /* ===== extra: iframe looks nice and responsive ===== */
-    .tool-frame{
-      width:100%; height:85vh; border:0; border-radius:12px; background:#0b1220;
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
-    }
-    .tool-actions{ display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.6rem; }
   </style>
 </head>
 <body>
@@ -200,33 +196,16 @@
 
   <!-- ========= NEW SECTION: MasterTools ========= -->
   <div id="mastertools" class="section">
-    <!-- Category: Trailer Plan Analyzer -->
-    <div class="category">
-      <div class="category-header" onclick="this.nextElementSibling.classList.toggle('visible')">
-        <span>🚛 Trailer Plan Analyzer</span>
-        <span>
-          <a class="copy-btn" href="trailer-plan.html" target="_blank" rel="noopener">Open in new tab</a>
-        </span>
-      </div>
-      <div class="category-content visible">
-        <p>
-          Quick link (bookmark/fallback): 
-          <a href="trailer-plan.html" target="_blank" rel="noopener">/Productivity-Boost-Hub/trailer-plan.html</a>
-        </p>
-        <iframe id="trailerFrame" class="tool-frame" src="trailer-plan.html"></iframe>
-        <div class="tool-actions">
-          <button class="btn" onclick="document.getElementById('trailerFrame').contentWindow.location.reload()">↻ Reload tool</button>
-          <button class="btn" onclick="window.open('trailer-plan.html','_blank')">⤢ Open fullscreen</button>
-          <button class="btn" onclick="document.getElementById('trailerFrame').scrollIntoView({behavior:'smooth', block:'start'})">⬇️ Scroll to tool</button>
-        </div>
-        <p style="opacity:.8; margin-top:.6rem">
-          Tip: You can upload your <b>Trailer plan CSV/XLSX</b> and merge a <b>YMS status CSV/XLSX</b> to refresh <i>Trailer Location</i>, <i>Severity</i>, and <i>Actual / Expected Arrival Time</i>.
-        </p>
-      </div>
-    </div>
-
-    <!-- (Optional) You can add more tools here later -->
-    <!-- <div class="category">...</div> -->
+    <ul class="tool-list">
+      <!-- Solo el nombre; abre en nueva pestaña -->
+      <li>
+        <a class="tool-link" href="trailer-plan.html" target="_blank" rel="noopener">🚛 Trailer Plan Analyzer</a>
+      </li>
+      <!-- Para agregar más herramientas, duplica este <li> y cambia el href y el texto -->
+      <!--
+      <li><a class="tool-link" href="otraherramienta.html" target="_blank" rel="noopener">🧪 Otra Herramienta</a></li>
+      -->
+    </ul>
   </div>
   <!-- ========= END MasterTools ========= -->
 
@@ -235,22 +214,20 @@
   <!-- Tu JS principal -->
   <script src="script.js"></script>
 
-  <!-- Fallback mínimo: si showSection no está definido en script.js -->
+  <!-- Fallback mínimo por si showSection no existe en script.js -->
   <script>
     if (typeof showSection !== 'function') {
       function showSection(id) {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         const el = document.getElementById(id);
         if (el) el.classList.add('active');
-        // Marcar pestañas activas
-        const map = {reports: 'Share Reports', guide: 'Problem Solve Guide', scripts: 'Tampermonkey Scripts', mastertools: 'MasterTools'};
         document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.tab').forEach(tab => {
-          const text = tab.textContent || '';
-          if (id === 'reports' && text.includes('Share Reports')) tab.classList.add('active');
-          if (id === 'guide' && text.includes('Problem Solve Guide')) tab.classList.add('active');
-          if (id === 'scripts' && text.includes('Tampermonkey Scripts')) tab.classList.add('active');
-          if (id === 'mastertools' && text.includes('MasterTools')) tab.classList.add('active');
+          const t = tab.textContent || '';
+          if (id === 'reports' && t.includes('Share Reports')) tab.classList.add('active');
+          if (id === 'guide' && t.includes('Problem Solve Guide')) tab.classList.add('active');
+          if (id === 'scripts' && t.includes('Tampermonkey Scripts')) tab.classList.add('active');
+          if (id === 'mastertools' && t.includes('MasterTools')) tab.classList.add('active');
         });
       }
     }
