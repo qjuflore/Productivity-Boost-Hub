@@ -120,7 +120,7 @@
     /* === Strong layout fix: Headcount Needed (Decant) slicers === */
     .hcCtl{ display:grid !important; grid-template-columns: 1fr 120px; column-gap: 10px; align-items:center; }
     @media (max-width: 720px){
-      .hcCtl{ grid-template-columns: 1fr; row-gap:8px; }
+      .hcCtl{ grid-template-columns:1fr; row-gap:8px; }
       .hcCtl .input{ width:100%; }
     }
     .hcCtl .range{ width:100%; min-width:140px; }
@@ -159,6 +159,8 @@
 <div class="right chips">
         <span class="chip">CSV/TSV/; supported</span>
         <span class="chip">Excel: XLSX supported</span>
+        <!-- NUEVO chip de vistas -->
+        <span id="tpaViews" class="chip">👁 —</span>
       </div>
       <div class="right flex">
         <button class="btn" id="btnExport">Export .csv</button>
@@ -1609,6 +1611,17 @@ function initPanScroll(){
     if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", init);
     else init();
   })();
+  </script>
+
+  <!-- pb-views: integra contador global + contador de la tool -->
+  <script src="pb-views.js"></script>
+  <script>
+    const PAGE_ID = 'trailer-plan';
+    // Sumar al total del sitio y a la tool
+    PBViews.hit('site', { title: document.title });
+    PBViews.hit(PAGE_ID, { title: document.title });
+    // Mostrar el contador de la tool en el chip
+    PBViews.render('#tpaViews', PAGE_ID, (n)=>`👁 ${Number(n||0).toLocaleString()}`);
   </script>
 
 </body>
