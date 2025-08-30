@@ -1381,31 +1381,32 @@ function initPanScroll(){
 </script>
 </body>
 </html>
-<!-- Place this where you want the total visits to appear -->
-<div id="visitInfo" style="margin: 1rem 0; font-weight: 700;">👁️ Total Visits: Loading...</div>
+<!-- Floating badges -->
+<style>
+  .visit-badge {
+    position: fixed;
+    left: 10px;
+    font-weight: 700;
+    background: rgba(0,0,0,0.5);
+    padding: 6px 10px;
+    border-radius: 8px;
+    z-index: 9999;
+    max-width: 90vw;
+    backdrop-filter: saturate(140%) blur(2px);
+  }
+  #visitInfo { top: 10px; }
+  #countryStats { top: 46px; }
+</style>
 
-<!-- Place this near the end of the body -->
+<div id="visitInfo" class="visit-badge">👁️ Total Visits: Loading...</div>
+<div id="countryStats" class="visit-badge">🌍 Top Countries: Loading...</div>
+
+<!-- Shared module -->
+<script src="/assets/js/visits.js"></script>
 <script>
-  (function showSharedVisits(){
-    const el = document.getElementById('visitInfo');
-    if (!el) return;
-
-    function render(n){
-      const num = Number(String(n || '0').replace(/[^\d]/g, '')).toLocaleString();
-      el.textContent = `👁️ Total Visits: ${num}`;
-    }
-
-    // Initial paint from localStorage
-    const raw = localStorage.getItem('pbh.totalVisits');
-    if (raw) {
-      render(raw);
-    } else {
-      // Optional fallback: render(0);
-    }
-
-    // Sync if the value changes in another tab/window
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'pbh.totalVisits' && e.newValue) render(e.newValue);
-    });
-  })();
+  PBHVisits.attach({
+    totalSelector: '#visitInfo',
+    countriesSelector: '#countryStats',
+    increment: true  // count visits here too
+  });
 </script>
