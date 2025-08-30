@@ -38,7 +38,7 @@
 
     h1 {
       font-size: 2.2rem;
-      margin-bottom: 2rem;
+      margin-bottom: 1rem;
       color: var(--accent);
       text-shadow: var(--text-glow);
       animation: fadeInUp 1s ease-out;
@@ -76,6 +76,7 @@
       gap: 1rem;
       flex-wrap: wrap;
       margin-bottom: 1rem;
+      align-items: center;
     }
 
     .btn {
@@ -143,7 +144,8 @@
       color: #aaa;
     }
 
-    #visitInfo { margin-top: 1rem; cursor: pointer; font-size: 1.1rem; }
+    #visitInfo { cursor: pointer; font-size: 1.05rem; }
+    #hubCount { font-size: .95rem; color: var(--muted); }
 
     .submit-card {
       background: var(--card-bg);
@@ -161,7 +163,7 @@
     .card { border:1px solid var(--border); background: var(--card-bg); border-radius: var(--radius); padding: .9rem; display:flex; flex-direction:column; gap:.7rem; }
     .card h3 { margin:0; font-size:1rem; color: var(--accent-2); }
     .card p { margin:0; color: var(--muted); font-size:.92rem; min-height: 2.2em; }
-    .card .row { display:flex; gap:.5rem; }
+    .card .row { display:flex; gap:.5rem; align-items:center; }
     .icon-btn { background: transparent; border:1px solid var(--border); border-radius: 10px; padding:.45rem .6rem; color: var(--text); cursor: pointer; }
     .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
     .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
@@ -205,7 +207,8 @@
   <div class="controls">
     <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
     <button class="btn" onclick="loadReports()">↻ Refresh</button>
-    <div id="visitInfo" onclick="toggleCountryStats()">👁️ Total Visits: Loading...</div>
+    <div id="visitInfo" onclick="toggleCountryStats()">👁 Total Site Views: Loading…</div>
+    <div id="hubCount">🏠 Hub Only: Loading…</div>
     <div id="countryStats"></div>
   </div>
 
@@ -236,7 +239,11 @@
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
+  <!-- Tu lógica existente -->
   <script src="script.js"></script>
+
+  <!-- pb-views: contador centralizado (asegúrate de tener pb-views.js en la raíz) -->
+  <script src="pb-views.js"></script>
 
   <!-- Parche: asegurar que MasterTools también quede seleccionado visualmente -->
   <script>
@@ -245,9 +252,7 @@
       const sections = document.querySelectorAll('.section');
 
       function setActiveTab(id){
-        // Mostrar sección activa
         sections.forEach(s => s.classList.toggle('active', s.id === id));
-        // Poner .active en la tab correspondiente
         tabs.forEach(t => {
           const isTarget = (t.textContent.includes('Share Reports') && id==='reports')
                         || (t.textContent.includes('Problem Solve Guide') && id==='guide')
@@ -255,7 +260,6 @@
                         || (t.textContent.includes('MasterTools') && id==='mastertools');
           t.classList.toggle('active', isTarget);
         });
-        // Persistir en URL y localStorage
         try{
           localStorage.setItem('pb.activeTab', id);
           const u = new URL(location.href);
@@ -265,14 +269,12 @@
         }catch(e){}
       }
 
-      // Extender showSection existente (si lo tienes en script.js)
       const original = window.showSection;
       window.showSection = function(id){
         if(typeof original === 'function'){ try{ original(id); }catch(e){} }
         setActiveTab(id);
       };
 
-      // Selección inicial (respetando lo que ya esté activo)
       const activeNow = document.querySelector('.section.active');
       const initialId = (activeNow && activeNow.id)
         || new URL(location.href).searchParams.get('tab')
@@ -283,11 +285,12 @@
     })();
   </script>
 
-  <!-- Lógica MasterTools -->
+  <!-- Lógica MasterTools (con contador de vistas por tool y sin inflar conteos) -->
   <script>
     const LS_FAVS = 'pb.master.favorites';
     const tools = [
       {id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'trailer-plan.html', desc:'Plan injection, density & severity attributes for trailers.'}
+      // Agrega más tools aquí con {id, icon, name, href, desc}
     ];
 
     const getFavs = () => { try { return JSON.parse(localStorage.getItem(LS_FAVS) || '[]'); } catch { return []; } };
@@ -307,16 +310,22 @@
       wrap.innerHTML='';
       const data=[...tools];
       data.sort((a,b)=> (isFav(b.id)-isFav(a.id)) || a.name.localeCompare(b.name));
+
+      const ids = [];
       for(const t of data){
+        ids.push(t.id);
         const card=document.createElement('div');
         card.className='card';
         card.dataset.id=t.id;
         card.innerHTML=`<h3>${t.icon} ${t.name}</h3>
           <p>${t.desc||''}</p>
-          <div class="row">
-            <a class="tool-link" href="${t.href}" target="_blank" rel="noopener">Open</a>
-            <button class="icon-btn favorite" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
-            <button class="icon-btn copy-btn" title="Copy link">⧉</button>
+          <div class="row" style="justify-content:space-between;width:100%">
+            <div class="row">
+              <a class="tool-link" href="${t.href}" target="_blank" rel="noopener">Open</a>
+              <button class="icon-btn favorite" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
+              <button class="icon-btn copy-btn" title="Copy link">⧉</button>
+            </div>
+            <span class="chip" id="views-${t.id}" aria-label="Views for ${t.name}">👁 —</span>
           </div>`;
 
         const favBtn = card.querySelector('.favorite');
@@ -329,25 +338,32 @@
             await navigator.clipboard.writeText(url);
             const old = copyBtn.textContent; copyBtn.textContent='✔';
             setTimeout(()=>copyBtn.textContent=old, 900);
-          }catch(e){ /* ignore */ }
+          }catch(e){}
         });
 
         wrap.appendChild(card);
+
+        // Mostrar contador (no incrementa; solo lee)
+        PBViews.render('#views-'+t.id, t.id, (n)=>`👁 ${Number(n||0).toLocaleString()}`);
       }
+
+      // Leer en lote para primera pintura rápida
+      PBViews.getMany(ids);
     }
 
-    const masterSearch = document.getElementById('masterSearch');
-    if(masterSearch){
-      masterSearch.addEventListener('input', ()=>{
-        const q = masterSearch.value.trim().toLowerCase();
-        document.querySelectorAll('#masterGrid .card').forEach(card=>{
-          const txt = card.textContent.toLowerCase();
-          card.style.display = q ? (txt.includes(q) ? '' : 'none') : '';
-        });
-      });
-    }
+    // ==== Contadores del sitio y del Hub ====
+    // Sumar vistas del sitio y del Hub cuando el usuario entra al Hub
+    PBViews.hit('site', { title: document.title });
+    PBViews.hit('hub',  { title: document.title });
 
+    // Renderizar totales en la UI del Hub
+    PBViews.render('#visitInfo', 'site', (n)=> `👁 Total Site Views: ${Number(n||0).toLocaleString()}`);
+    PBViews.render('#hubCount',  'hub',  (n)=> `🏠 Hub Only: ${Number(n||0).toLocaleString()}`);
+
+    // Pintar MasterTools
     renderMasterTools();
+
+    // Si tienes lógica previa para emojis/reportes/países, se mantiene en script.js
   </script>
 </body>
 </html>
