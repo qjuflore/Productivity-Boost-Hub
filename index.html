@@ -21,135 +21,29 @@
       --button-glow: 0 0 10px #00fff7;
       --radius: 14px;
     }
-
-    * { box-sizing: border-box; }
-
     body {
-      margin: 0;
-      padding: 2rem;
-      font-family: 'Orbitron', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      margin:0; padding:2rem;
+      font-family:'Orbitron',sans-serif;
+      background:var(--bg); color:var(--text);
+      min-height:100vh; display:flex; flex-direction:column;
     }
-
-    h1 {
-      font-size: 2.2rem;
-      margin-bottom: 2rem;
-      color: var(--accent);
-      text-shadow: var(--text-glow);
-    }
-
-    .tabs {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-    }
-    .tab {
-      padding: 0.5rem 1rem;
-      border-radius: 10px;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    .tab.active {
-      background: var(--accent);
-      color: black;
-      box-shadow: var(--button-glow);
-    }
-
-    .controls {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin-bottom: 1rem;
-    }
-    .btn {
-      background: var(--button-bg);
-      color: var(--button-text);
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      box-shadow: var(--button-glow);
-      transition: transform 0.2s ease;
-    }
-    .btn:hover { transform: scale(1.05); }
-
-    .section { display: none; }
-    .section.active { display: block; }
-
-    .submit-card {
-      background: var(--card-bg);
-      padding: 1rem;
-      border: 1px dashed var(--accent);
-      border-radius: 10px;
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .submit-card a { color: var(--accent); font-weight: bold; text-decoration: none; }
-    .submit-card a:hover { text-decoration: underline; }
-
-    .footer {
-      margin-top: auto;
-      text-align: center;
-      font-size: 0.9rem;
-      padding: 1rem;
-      color: #aaa;
-    }
-
-    /* MasterTools */
-    .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .8rem; }
-    .card { border:1px solid var(--border); background: var(--card-bg); border-radius: var(--radius); padding: .9rem; display:flex; flex-direction:column; gap:.7rem; }
-    .card h3 { margin:0; font-size:1rem; color: var(--accent-2); }
-    .card p { margin:0; color: var(--muted); font-size:.92rem; min-height: 2.2em; }
-    .card .row { display:flex; gap:.5rem; }
-    .icon-btn { background: transparent; border:1px solid var(--border); border-radius: 10px; padding:.45rem .6rem; color: var(--text); cursor: pointer; }
-    .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
-    .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
-    .tool-link {
-      background: var(--accent);
-      color: #000 !important;
-      font-weight: 900;
-      border: none;
-      box-shadow: var(--button-glow);
-      transition: transform .2s ease;
-      padding: 0.5rem 1rem;
-      border-radius: 10px;
-    }
-    .tool-link:hover { transform: scale(1.05); }
-
-    /* Unified search bars */
-    .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch {
-      margin-bottom: 1rem;
-      padding: 0.7rem 1rem;
-      width: 100%;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--card-bg);
-      color: var(--text);
-      font-size: 1rem;
-    }
-
-    /* Floating badges (top-left) */
-    .visit-badge {
-      position: fixed;
-      left: 10px;
-      font-weight: 700;
-      background: rgba(0,0,0,0.5);
-      padding: 6px 10px;
-      border-radius: 8px;
-      z-index: 9999;
-      max-width: 90vw;
-      backdrop-filter: saturate(140%) blur(2px);
-    }
-    #visitInfo { top: 10px; }
-    #countryStats { top: 46px; }
+    h1 { font-size:2.2rem; margin-bottom:2rem; color:var(--accent); text-shadow:var(--text-glow); }
+    .tabs{display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;}
+    .tab{padding:.5rem 1rem;border-radius:10px;background:var(--card-bg);border:1px solid var(--border);cursor:pointer;}
+    .tab.active{background:var(--accent);color:black;box-shadow:var(--button-glow);}
+    .controls{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;}
+    .btn{background:var(--button-bg);color:var(--button-text);padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-weight:bold;box-shadow:var(--button-glow);}
+    .section{display:none;} .section.active{display:block;}
+    .search{margin-bottom:1rem;padding:.7rem 1rem;width:100%;border-radius:10px;border:1px solid var(--border);background:var(--card-bg);color:var(--text);font-size:1rem;}
+    .footer{margin-top:auto;text-align:center;font-size:.9rem;padding:1rem;color:#aaa;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.8rem;}
+    .card{border:1px solid var(--border);background:var(--card-bg);border-radius:14px;padding:.9rem;display:flex;flex-direction:column;gap:.7rem;}
+    .card h3{margin:0;font-size:1rem;color:var(--accent-2);}
+    .card p{margin:0;color:var(--muted);font-size:.92rem;min-height:2.2em;}
+    .tool-link{background:var(--accent);color:#000!important;font-weight:900;border:none;box-shadow:var(--button-glow);padding:.5rem 1rem;border-radius:10px;}
+    .visit-badge{position:fixed;left:10px;z-index:9999;background:rgba(0,0,0,0.5);border-radius:10px;backdrop-filter:saturate(140%) blur(2px);padding:4px 6px;line-height:1;font-size:0;}
+    #visitInfo{top:10px;} #visitInfo::before{content:"👁️";font-size:16px;}
+    #countryStats{top:42px;} #countryStats::before{content:"🌍";font-size:16px;}
   </style>
 </head>
 <body>
@@ -170,7 +64,6 @@
   <div id="reports" class="section active">
     <input type="text" id="reportSearch" placeholder="🔍 Search reports..." class="search">
     <div id="reportContainer"></div>
-    <div id="error" class="error-msg"></div>
   </div>
 
   <div id="guide" class="section">
@@ -186,96 +79,24 @@
     <div id="scriptContainer"></div>
   </div>
 
-  <!-- MasterTools -->
   <div id="mastertools" class="section">
     <input type="text" id="masterSearch" placeholder="🔍 Search MasterTools..." class="search">
-    <div class="grid" id="masterGrid" style="margin-top:.8rem"></div>
+    <div class="grid" id="masterGrid"></div>
   </div>
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
-  <!-- Floating badges -->
-  <div id="visitInfo" class="visit-badge">👁️ Total Visits: Loading...</div>
-  <div id="countryStats" class="visit-badge">🌍 Top Countries: Loading...</div>
+  <!-- Badges -->
+  <div id="visitInfo" class="visit-badge" title="Total visits"></div>
+  <div id="countryStats" class="visit-badge" title="Top countries"></div>
 
   <script src="script.js"></script>
-
+  <script src="./assets/js/visits.js"></script>
   <script>
-    // MasterTools cards
-    const LS_FAVS = 'pb.master.favorites';
-    const tools = [
-      {id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'trailer-plan.html', desc:'Plan injection, density & severity attributes for trailers.'}
-    ];
-    const getFavs = () => { try { return JSON.parse(localStorage.getItem(LS_FAVS) || '[]'); } catch { return []; } };
-    const setFavs = (arr) => localStorage.setItem(LS_FAVS, JSON.stringify(arr));
-    const isFav = (id) => getFavs().includes(id);
-    function toggleFav(id){ const favs = new Set(getFavs()); favs.has(id)?favs.delete(id):favs.add(id); setFavs([...favs]); renderMasterTools(); }
-    function renderMasterTools(){
-      const wrap=document.getElementById('masterGrid'); if(!wrap) return;
-      wrap.innerHTML=''; const data=[...tools];
-      data.sort((a,b)=> (isFav(b.id)-isFav(a.id)) || a.name.localeCompare(b.name));
-      data.forEach(t=>{
-        const card=document.createElement('div');
-        card.className='card'; card.dataset.id=t.id;
-        card.innerHTML=`<h3>${t.icon} ${t.name}</h3>
-          <p>${t.desc||''}</p>
-          <div class="row">
-            <a class="tool-link" href="${t.href}" target="_blank" rel="noopener">Open</a>
-            <button class="icon-btn favorite" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
-            <button class="icon-btn copy-btn" title="Copy link">⧉</button>
-          </div>`;
-        card.querySelector('.favorite').addEventListener('click', ()=> toggleFav(t.id));
-        const copyBtn = card.querySelector('.copy-btn');
-        copyBtn.addEventListener('click', async ()=>{
-          try{ const url=new URL(t.href, location.href).href; await navigator.clipboard.writeText(url);
-            const old=copyBtn.textContent; copyBtn.textContent='✔'; setTimeout(()=>copyBtn.textContent=old,900);
-          }catch(e){} });
-        wrap.appendChild(card);
-      });
-    }
-    document.getElementById('masterSearch')?.addEventListener('input', e=>{
-      const q = e.target.value.trim().toLowerCase();
-      document.querySelectorAll('#masterGrid .card').forEach(card=>{
-        const txt = card.textContent.toLowerCase();
-        card.style.display = q ? (txt.includes(q) ? '' : 'none') : '';
-      });
-    });
-    renderMasterTools();
-
-    // Tabs visual sync (includes MasterTools)
-    (function(){
-      const tabs = document.querySelectorAll('.tab');
-      const sections = document.querySelectorAll('.section');
-      function setActiveTab(id){
-        sections.forEach(s => s.classList.toggle('active', s.id === id));
-        tabs.forEach(t => {
-          const isTarget =
-              (t.textContent.includes('Share Reports') && id==='reports')
-           || (t.textContent.includes('Problem Solve Guide') && id==='guide')
-           || (t.textContent.includes('Tampermonkey Scripts') && id==='scripts')
-           || (t.textContent.includes('MasterTools') && id==='mastertools');
-          t.classList.toggle('active', isTarget);
-        });
-        try { localStorage.setItem('pb.activeTab', id); } catch(e){}
-      }
-      const original = window.showSection;
-      window.showSection = function(id){
-        if(typeof original === 'function'){ try{ original(id); }catch(e){} }
-        setActiveTab(id);
-      };
-      const activeNow = document.querySelector('.section.active');
-      setActiveTab(activeNow ? activeNow.id : 'reports');
-    })();
-  </script>
-
-  <!-- Shared visits module (you already saved this as /assets/js/visits.js) -->
-  <script src="/assets/js/visits.js"></script>
-  <script>
-    // Count visits here too + render top countries (shared across all pages)
     PBHVisits.attach({
-      totalSelector: '#visitInfo',
-      countriesSelector: '#countryStats',
-      increment: true
+      totalSelector:'#visitInfo',
+      countriesSelector:'#countryStats',
+      increment:true
     });
   </script>
 </body>
