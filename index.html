@@ -144,17 +144,30 @@
       color: #aaa;
     }
 
+    /* Submit box */
+    .submit-card {
+      background: var(--card-bg);
+      padding: 1rem;
+      border: 1px dashed var(--accent);
+      border-radius: 10px;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .submit-card a { color: var(--accent); font-weight: bold; text-decoration: none; }
+    .submit-card a:hover { text-decoration: underline; }
+
     /* MasterTools */
     .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .8rem; }
     .card { border:1px solid var(--border); background: var(--card-bg); border-radius: var(--radius); padding: .9rem; display:flex; flex-direction:column; gap:.7rem; }
     .card h3 { margin:0; font-size:1rem; color: var(--accent-2); }
     .card p { margin:0; color: var(--muted); font-size:.92rem; min-height: 2.2em; }
-    .card .row { display:flex; gap:.5rem; align-items:center; }
+    .card .row { display:flex; gap:.5rem; align-items: center; }
+
     .icon-btn { background: transparent; border:1px solid var(--border); border-radius: 10px; padding:.45rem .6rem; color: var(--text); cursor: pointer; }
     .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
     .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
 
-    /* Botón Open en MasterTools */
+    /* Open button visible + badge */
     .tool-link {
       background: var(--accent);
       color: #000 !important;
@@ -164,10 +177,34 @@
       transition: transform .2s ease;
       padding: 0.5rem 1rem;
       border-radius: 10px;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
     }
     .tool-link:hover { transform: scale(1.05); }
 
-    /* Barras de búsqueda unificadas */
+    .count-dot {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #000;
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 12px;
+      line-height: 22px;
+      text-align: center;
+      border: 1px solid var(--accent);
+      box-shadow: 0 0 10px rgba(0,255,247,.35);
+      user-select: none;
+      pointer-events: none;
+    }
+
+    /* Search bars */
     .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch {
       margin-bottom: 1rem;
       padding: 0.7rem 1rem;
@@ -177,29 +214,6 @@
       background: var(--card-bg);
       color: var(--text);
       font-size: 1rem;
-    }
-
-    /* Contador de vistas (header) */
-    #viewInfo {
-      font-size: 1.05rem;
-      user-select: none;
-      padding: .4rem .7rem;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--card-bg);
-    }
-
-    /* Badge de vistas por tool (compacto) */
-    .tool-views {
-      margin-left: auto;
-      font-size: .9rem;
-      color: var(--muted);
-      padding: .15rem .45rem;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: rgba(255,255,255,0.03);
-      white-space: nowrap;
-      line-height: 1.1;
     }
   </style>
 </head>
@@ -216,8 +230,7 @@
   <div class="controls">
     <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
     <button class="btn" onclick="loadReports()">↻ Refresh</button>
-    <!-- Solo una opción: Total Views -->
-    <div id="viewInfo">👁️ Total Views: Loading…</div>
+    <!-- Se eliminó la opción de 👁️ Total Visits -->
   </div>
 
   <div id="reports" class="section active">
@@ -233,7 +246,7 @@
 
   <div id="scripts" class="section">
     <input type="text" id="scriptSearch" placeholder="🔍 Search scripts..." class="search">
-    <div class="submit-card" style="background:var(--card-bg); padding:1rem; border:1px dashed var(--accent); border-radius:10px; text-align:center; margin-bottom:2rem;">
+    <div class="submit-card">
       📝 Want to share your script? <a href="https://docs.google.com/forms/d/e/1FAIpQLSdVhvhkmE28nIxDH2DAo4FR7W14zqUxp2KlGHvib6baAMplEQ/viewform" target="_blank">Submit it here</a>
     </div>
     <div id="scriptContainer"></div>
@@ -247,72 +260,12 @@
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
-  <!-- Módulo PBViews (contador de vistas compartido en todo el sitio) -->
-  <script>
-    (function(w){
-      const NUM = (x)=>{ const n=parseInt(x,10); return isNaN(n)?0:n; };
-      const get = (k)=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
-      const set = (k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} };
-
-      const KEY_TOTAL = 'pb.views.total';
-      const P_TOOL   = 'pb.views.tool.';   // pb.views.tool.<id>
-      const P_AREA   = 'pb.views.area.';   // pb.views.area.<id>
-
-      function bump(key, n=1){
-        const cur = NUM(get(key));
-        const val = cur + (n|0);
-        set(key, String(val));
-        return val;
-      }
-
-      w.PBViews = {
-        bumpTotal(n=1){ return bump(KEY_TOTAL, n); },
-        getTotal(){ return NUM(get(KEY_TOTAL)); },
-        bumpTool(id, n=1){ return bump(P_TOOL + String(id), n); },
-        getTool(id){ return NUM(get(P_TOOL + String(id))); },
-        bumpArea(id, n=1){ return bump(P_AREA + String(id), n); },
-        getArea(id){ return NUM(get(P_AREA + String(id))); }
-      };
-    })(window);
-  </script>
-
-  <!-- Tu script principal -->
+  <!-- Tu lógica existente -->
   <script src="script.js"></script>
 
-  <!-- Sincronía de pestañas + tabs + contadores -->
+  <!-- Parche: tabs activas + URL persistente -->
   <script>
     (function(){
-      // Actualiza el contador global del header
-      function renderGlobalViews(){
-        const el = document.getElementById('viewInfo');
-        if(!el || !window.PBViews) return;
-        const total = window.PBViews.getTotal();
-        el.textContent = `👁️ Total Views: ${total.toLocaleString()}`;
-      }
-
-      // Suma 1 vista al cargar el Hub
-      try {
-        window.PBViews?.bumpTotal(1);
-        window.PBViews?.bumpArea?.('hub', 1);
-      } catch(e){}
-
-      // Pinta el valor inicial global
-      renderGlobalViews();
-
-      // Si otra pestaña incrementa, este index se actualiza
-      window.addEventListener('storage', (e)=>{
-        if(e.key === 'pb.views.total') renderGlobalViews();
-        if(e.key && e.key.startsWith('pb.views.tool.')) {
-          const id = e.key.replace('pb.views.tool.','');
-          const span = document.querySelector(`.tool-views[data-id="${id}"]`);
-          if(span){
-            const n = parseInt(e.newValue || '0', 10) || 0;
-            span.textContent = `👁️ ${n.toLocaleString()}`;
-          }
-        }
-      });
-
-      // --- Parche de tabs activo (mantiene tu lógica original) ---
       const tabs = document.querySelectorAll('.tab');
       const sections = document.querySelectorAll('.section');
 
@@ -350,11 +303,38 @@
     })();
   </script>
 
-  <!-- Lógica MasterTools con badge de vistas por tool (👁️ N) -->
+  <!-- Módulo de contadores locales (por tool y total de sitio) -->
+  <script>
+    (function(){
+      const KEY = 'pbh.counters.v1';
+      function read(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(_){ return {}; } }
+      function write(obj){ try{ localStorage.setItem(KEY, JSON.stringify(obj)); }catch(_){ } }
+      function get(k){ const c=read(); return c[k]||0; }
+      function bump(k){ const c=read(); c[k]=(c[k]||0)+1; write(c); return c[k]; }
+
+      // Exponer en window
+      window.PBCounters = { get, bump };
+
+      // Aumentar el total del sitio al abrir el hub (si quieres)
+      bump('site.total');
+    })();
+  </script>
+
+  <!-- Lógica MasterTools -->
   <script>
     const LS_FAVS = 'pb.master.favorites';
+
+    /* === LISTA DE TOOLS (agrega más aquí) === */
     const tools = [
-      {id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'trailer-plan.html', desc:'Plan injection, density & severity attributes for trailers.'}
+      {
+        id:'trailer-plan',
+        icon:'🚛',
+        name:'Trailer Plan Analyzer',
+        href:'MasterTools/trailer-plan.html',  // << enlace corregido
+        desc:'Plan injection, density & severity attributes for trailers.'
+      }
+      // Ejemplo para agregar más:
+      // { id:'otro-tool', icon:'🧮', name:'Calculator Pro', href:'MasterTools/calculator-pro.html', desc:'Fast calc.' }
     ];
 
     const getFavs = () => { try { return JSON.parse(localStorage.getItem(LS_FAVS) || '[]'); } catch { return []; } };
@@ -374,25 +354,31 @@
       wrap.innerHTML='';
       const data=[...tools];
       data.sort((a,b)=> (isFav(b.id)-isFav(a.id)) || a.name.localeCompare(b.name));
-
       for(const t of data){
-        const toolViews = (window.PBViews?.getTool(t.id) || 0).toLocaleString();
-
         const card=document.createElement('div');
         card.className='card';
         card.dataset.id=t.id;
-        card.innerHTML=`<h3>${t.icon} ${t.name}</h3>
+
+        // Contador actual (solo numero)
+        const count = (window.PBCounters?.get('tool.'+t.id)) || 0;
+
+        card.innerHTML=`
+          <h3>${t.icon} ${t.name}</h3>
           <p>${t.desc||''}</p>
           <div class="row">
-            <a class="tool-link" href="${t.href}" target="_blank" rel="noopener">Open</a>
+            <a class="tool-link" href="${t.href}" target="_blank" rel="noopener">
+              Open
+              <span class="count-dot" data-counter="${t.id}">${count}</span>
+            </a>
             <button class="icon-btn favorite" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
             <button class="icon-btn copy-btn" title="Copy link">⧉</button>
-            <span class="tool-views" data-id="${t.id}">👁️ ${toolViews}</span>
           </div>`;
 
+        // Fav
         const favBtn = card.querySelector('.favorite');
         favBtn.addEventListener('click', ()=> toggleFav(t.id));
 
+        // Copy
         const copyBtn = card.querySelector('.copy-btn');
         copyBtn.addEventListener('click', async ()=>{
           try{
@@ -403,10 +389,23 @@
           }catch(e){ /* ignore */ }
         });
 
+        // Bump al abrir
+        const openLink = card.querySelector('.tool-link');
+        const dot = card.querySelector('.count-dot');
+        openLink.addEventListener('click', ()=>{
+          try{
+            const n = window.PBCounters.bump('tool.'+t.id);
+            if(dot) dot.textContent = n;
+            // (opcional) también sumar al total del sitio:
+            window.PBCounters.bump('site.total');
+          }catch(_){}
+        });
+
         wrap.appendChild(card);
       }
     }
 
+    // Buscador
     const masterSearch = document.getElementById('masterSearch');
     if(masterSearch){
       masterSearch.addEventListener('input', ()=>{
@@ -418,18 +417,7 @@
       });
     }
 
-    // Render inicial y mantener badges al día si cambian en otra pestaña
     renderMasterTools();
-    window.addEventListener('storage', (e)=>{
-      if(e.key && e.key.startsWith('pb.views.tool.')){
-        const id = e.key.replace('pb.views.tool.','');
-        const span = document.querySelector(`.tool-views[data-id="${id}"]`);
-        if(span){
-          const n = parseInt(e.newValue || '0', 10) || 0;
-          span.textContent = `👁️ ${n.toLocaleString()}`;
-        }
-      }
-    });
   </script>
 </body>
 </html>
