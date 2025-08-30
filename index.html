@@ -90,6 +90,7 @@
       box-shadow: var(--button-glow);
       transition: transform 0.2s ease;
     }
+
     .btn:hover { transform: scale(1.05); }
 
     .section { display: none; }
@@ -143,29 +144,17 @@
       color: #aaa;
     }
 
-    #visitInfo { margin-left: auto; cursor: pointer; font-size: 1.1rem; }
-
-    .submit-card {
-      background: var(--card-bg);
-      padding: 1rem;
-      border: 1px dashed var(--accent);
-      border-radius: 10px;
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .submit-card a { color: var(--accent); font-weight: bold; text-decoration: none; }
-    .submit-card a:hover { text-decoration: underline; }
-
     /* MasterTools */
     .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .8rem; }
     .card { border:1px solid var(--border); background: var(--card-bg); border-radius: var(--radius); padding: .9rem; display:flex; flex-direction:column; gap:.7rem; }
-    .card h3 { margin:0; font-size:1rem; color: var(--accent-2); display:flex; align-items:center; gap:.5rem; }
+    .card h3 { margin:0; font-size:1rem; color: var(--accent-2); }
     .card p { margin:0; color: var(--muted); font-size:.92rem; min-height: 2.2em; }
-    .card .row { display:flex; gap:.5rem; align-items:center; flex-wrap: wrap; }
+    .card .row { display:flex; gap:.5rem; }
     .icon-btn { background: transparent; border:1px solid var(--border); border-radius: 10px; padding:.45rem .6rem; color: var(--text); cursor: pointer; }
     .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
     .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
 
+    /* Open más visible en MasterTools */
     .tool-link {
       background: var(--accent);
       color: #000 !important;
@@ -178,6 +167,7 @@
     }
     .tool-link:hover { transform: scale(1.05); }
 
+    /* Barras de búsqueda unificadas */
     .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch {
       margin-bottom: 1rem;
       padding: 0.7rem 1rem;
@@ -189,14 +179,14 @@
       font-size: 1rem;
     }
 
-    /* Chip de vistas */
-    .view-chip {
-      display:inline-flex; align-items:center; gap:.35rem;
-      background: rgba(0,255,247,0.14);
-      border:1px solid var(--border);
-      border-radius: 999px;
-      padding:.25rem .55rem;
-      font-size:.85rem; color: var(--accent-2);
+    /* Contador de vistas */
+    #viewInfo {
+      font-size: 1.05rem;
+      user-select: none;
+      padding: .4rem .7rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--card-bg);
     }
   </style>
 </head>
@@ -213,8 +203,8 @@
   <div class="controls">
     <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
     <button class="btn" onclick="loadReports()">↻ Refresh</button>
-    <div id="visitInfo" onclick="toggleCountryStats()">👁️ Total Views: Loading...</div>
-    <div id="countryStats"></div>
+    <!-- Solo una opción: Total Views -->
+    <div id="viewInfo">👁️ Total Views: Loading…</div>
   </div>
 
   <div id="reports" class="section active">
@@ -230,7 +220,7 @@
 
   <div id="scripts" class="section">
     <input type="text" id="scriptSearch" placeholder="🔍 Search scripts..." class="search">
-    <div class="submit-card">
+    <div class="submit-card" style="background:var(--card-bg); padding:1rem; border:1px dashed var(--accent); border-radius:10px; text-align:center; margin-bottom:2rem;">
       📝 Want to share your script? <a href="https://docs.google.com/forms/d/e/1FAIpQLSdVhvhkmE28nIxDH2DAo4FR7W14zqUxp2KlGHvib6baAMplEQ/viewform" target="_blank">Submit it here</a>
     </div>
     <div id="scriptContainer"></div>
@@ -244,78 +234,67 @@
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
-  <script src="script.js"></script>
-
-  <!-- ===== PB Views (módulo de vistas: total + por herramienta) ===== -->
+  <!-- Módulo PBViews (contador de vistas compartido en todo el sitio) -->
   <script>
-  (function(){
-    const TOTAL_KEY = 'pb.views.total';
-    const TOOL_PREFIX = 'pb.views.tool.';       // pb.views.tool.<id>
-    const CHANGE_EVT = 'pbviews:changed';
+    (function(w){
+      const NUM = (x)=>{ const n=parseInt(x,10); return isNaN(n)?0:n; };
+      const get = (k)=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
+      const set = (k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} };
 
-    function safeGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
-    function safeSet(k,v){ try{ localStorage.setItem(k,v); }catch(_){ } }
-    function toNum(x){ const n = Number(x); return Number.isFinite(n)? n : 0; }
+      const KEY_TOTAL = 'pb.views.total';
+      const P_TOOL   = 'pb.views.tool.';   // pb.views.tool.<id>
+      const P_AREA   = 'pb.views.area.';   // pb.views.area.<id>
 
-    function emitLocal(){
-      try { window.dispatchEvent(new CustomEvent(CHANGE_EVT)); } catch(_) {}
-    }
-
-    const api = {
-      bumpTotal(by=1){
-        const cur = toNum(safeGet(TOTAL_KEY)) + by;
-        safeSet(TOTAL_KEY, String(cur));
-        try{
-          if(window.PB_VIEWS_ENDPOINT){
-            navigator.sendBeacon(window.PB_VIEWS_ENDPOINT, JSON.stringify({kind:'total', by, ts: Date.now()}));
-          }
-        }catch(_){}
-        emitLocal();
-        return cur;
-      },
-      bumpTool(id, by=1){
-        const key = TOOL_PREFIX + id;
-        const cur = toNum(safeGet(key)) + by;
-        safeSet(key, String(cur));
-        try{
-          if(window.PB_VIEWS_ENDPOINT){
-            navigator.sendBeacon(window.PB_VIEWS_ENDPOINT, JSON.stringify({kind:'tool', id, by, ts: Date.now()}));
-          }
-        }catch(_){}
-        emitLocal();
-        return cur;
-      },
-      getTotal(){ return toNum(safeGet(TOTAL_KEY)); },
-      getTool(id){ return toNum(safeGet(TOOL_PREFIX+id)); },
-      listTools(){
-        const out=[];
-        for(let i=0;i<localStorage.length;i++){
-          const k=localStorage.key(i);
-          if(k && k.startsWith(TOOL_PREFIX)){
-            out.push([k.slice(TOOL_PREFIX.length), toNum(safeGet(k))]);
-          }
-        }
-        return out.sort((a,b)=> b[1]-a[1]);
-      },
-      onChange(cb){
-        if(typeof cb!=='function') return;
-        window.addEventListener(CHANGE_EVT, cb);
-        window.addEventListener('storage', (e)=>{ // cambios desde otras pestañas
-          if(!e || !e.key) return;
-          if(e.key===TOTAL_KEY || e.key.startsWith(TOOL_PREFIX)){
-            cb();
-          }
-        });
+      function bump(key, n=1){
+        const cur = NUM(get(key));
+        const val = cur + (n|0);
+        set(key, String(val));
+        return val;
       }
-    };
 
-    window.PBViews = Object.freeze(api);
-  })();
+      w.PBViews = {
+        bumpTotal(n=1){ return bump(KEY_TOTAL, n); },
+        getTotal(){ return NUM(get(KEY_TOTAL)); },
+        bumpTool(id, n=1){ return bump(P_TOOL + String(id), n); },
+        getTool(id){ return NUM(get(P_TOOL + String(id))); },
+        bumpArea(id, n=1){ return bump(P_AREA + String(id), n); },
+        getArea(id){ return NUM(get(P_AREA + String(id))); }
+      };
+    })(window);
   </script>
 
-  <!-- Parche: asegurar que MasterTools también quede seleccionado visualmente -->
+  <!-- Tu script principal -->
+  <script src="script.js"></script>
+
+  <!-- Sincronía de pestañas + pestañas activas + contador -->
   <script>
     (function(){
+      // Actualiza el contador visual
+      function renderViews(){
+        const el = document.getElementById('viewInfo');
+        if(!el || !window.PBViews) return;
+        const total = window.PBViews.getTotal();
+        el.textContent = `👁️ Total Views: ${total.toLocaleString()}`;
+      }
+
+      // Suma 1 vista al cargar el Hub
+      try {
+        window.PBViews?.bumpTotal(1);
+        // (Opcional) marca área del hub, por si quieres ver stats por área
+        window.PBViews?.bumpArea?.('hub', 1);
+      } catch(e){}
+
+      // Pinta el valor inicial
+      renderViews();
+
+      // Si otra pestaña del sitio incrementa, este index se actualiza
+      window.addEventListener('storage', (e)=>{
+        if(e.key === 'pb.views.total'){
+          renderViews();
+        }
+      });
+
+      // --- Parche de tabs activo (mantiene tu lógica original) ---
       const tabs = document.querySelectorAll('.tab');
       const sections = document.querySelectorAll('.section');
 
@@ -353,7 +332,7 @@
     })();
   </script>
 
-  <!-- Lógica MasterTools -->
+  <!-- Lógica MasterTools (sin cambios visuales; puedes ampliar tools aquí) -->
   <script>
     const LS_FAVS = 'pb.master.favorites';
     const tools = [
@@ -364,11 +343,11 @@
     const setFavs = (arr) => localStorage.setItem(LS_FAVS, JSON.stringify(arr));
     const isFav = (id) => getFavs().includes(id);
 
-    function formatViews(n){
-      if(n>=1_000_000) return (n/1_000_000).toFixed(1)+'M';
-      if(n>=10_000) return Math.round(n/1000)+'k';
-      if(n>=1000) return (n/1000).toFixed(1)+'k';
-      return String(n);
+    function toggleFav(id){
+      const favs = new Set(getFavs());
+      if (favs.has(id)) favs.delete(id); else favs.add(id);
+      setFavs([...favs]);
+      renderMasterTools();
     }
 
     function renderMasterTools(){
@@ -378,11 +357,10 @@
       const data=[...tools];
       data.sort((a,b)=> (isFav(b.id)-isFav(a.id)) || a.name.localeCompare(b.name));
       for(const t of data){
-        const views = (window.PBViews?.getTool(t.id)) || 0;
         const card=document.createElement('div');
         card.className='card';
         card.dataset.id=t.id;
-        card.innerHTML=`<h3>${t.icon} ${t.name} <span class="view-chip" title="Tool views">👁️ <b data-view="${t.id}">${formatViews(views)}</b></span></h3>
+        card.innerHTML=`<h3>${t.icon} ${t.name}</h3>
           <p>${t.desc||''}</p>
           <div class="row">
             <a class="tool-link" href="${t.href}" target="_blank" rel="noopener">Open</a>
@@ -391,12 +369,7 @@
           </div>`;
 
         const favBtn = card.querySelector('.favorite');
-        favBtn.addEventListener('click', ()=> {
-          const s=new Set(getFavs());
-          s.has(t.id)?s.delete(t.id):s.add(t.id);
-          setFavs([...s]);
-          renderMasterTools();
-        });
+        favBtn.addEventListener('click', ()=> toggleFav(t.id));
 
         const copyBtn = card.querySelector('.copy-btn');
         copyBtn.addEventListener('click', async ()=>{
@@ -405,7 +378,7 @@
             await navigator.clipboard.writeText(url);
             const old = copyBtn.textContent; copyBtn.textContent='✔';
             setTimeout(()=>copyBtn.textContent=old, 900);
-          }catch(e){}
+          }catch(e){ /* ignore */ }
         });
 
         wrap.appendChild(card);
@@ -424,28 +397,6 @@
     }
 
     renderMasterTools();
-
-    // ====== VISITAS: pinta total, escucha cambios y suma vista del Hub ======
-    function updateTotalViewsBadge(){
-      const el=document.getElementById('visitInfo');
-      if(!el) return;
-      const total = (window.PBViews?.getTotal?.() ?? 0);
-      el.textContent = `👁️ Total Views: ${total.toLocaleString()}`;
-    }
-    updateTotalViewsBadge();
-
-    function refreshToolChips(){
-      document.querySelectorAll('[data-view]').forEach(el=>{
-        const id=el.getAttribute('data-view');
-        const v=(window.PBViews?.getTool(id))||0;
-        el.textContent = (typeof formatViews==='function')? formatViews(v) : String(v);
-      });
-      updateTotalViewsBadge();
-    }
-    window.PBViews?.onChange(refreshToolChips);
-
-    // Suma una vista al Hub (cuenta visitas de la portada)
-    window.PBViews?.bumpTotal(1);
   </script>
 </body>
 </html>
