@@ -76,7 +76,6 @@
       gap: 1rem;
       flex-wrap: wrap;
       margin-bottom: 1rem;
-      align-items: center;
     }
 
     .btn {
@@ -144,7 +143,8 @@
       color: #aaa;
     }
 
-    /* Submit box */
+    #visitInfo { margin-top: 1rem; cursor: pointer; font-size: 1.1rem; }
+
     .submit-card {
       background: var(--card-bg);
       padding: 1rem;
@@ -161,13 +161,12 @@
     .card { border:1px solid var(--border); background: var(--card-bg); border-radius: var(--radius); padding: .9rem; display:flex; flex-direction:column; gap:.7rem; }
     .card h3 { margin:0; font-size:1rem; color: var(--accent-2); }
     .card p { margin:0; color: var(--muted); font-size:.92rem; min-height: 2.2em; }
-    .card .row { display:flex; gap:.5rem; align-items: center; }
-
+    .card .row { display:flex; gap:.5rem; }
     .icon-btn { background: transparent; border:1px solid var(--border); border-radius: 10px; padding:.45rem .6rem; color: var(--text); cursor: pointer; }
     .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
     .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
 
-    /* Open button visible + badge */
+    /* Open más visible en MasterTools */
     .tool-link {
       background: var(--accent);
       color: #000 !important;
@@ -177,34 +176,10 @@
       transition: transform .2s ease;
       padding: 0.5rem 1rem;
       border-radius: 10px;
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      gap: .5rem;
     }
     .tool-link:hover { transform: scale(1.05); }
 
-    .count-dot {
-      position: absolute;
-      top: -6px;
-      right: -6px;
-      min-width: 22px;
-      height: 22px;
-      padding: 0 6px;
-      border-radius: 999px;
-      background: #000;
-      color: var(--accent);
-      font-weight: 800;
-      font-size: 12px;
-      line-height: 22px;
-      text-align: center;
-      border: 1px solid var(--accent);
-      box-shadow: 0 0 10px rgba(0,255,247,.35);
-      user-select: none;
-      pointer-events: none;
-    }
-
-    /* Search bars */
+    /* Barras de búsqueda unificadas */
     .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch {
       margin-bottom: 1rem;
       padding: 0.7rem 1rem;
@@ -230,7 +205,8 @@
   <div class="controls">
     <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
     <button class="btn" onclick="loadReports()">↻ Refresh</button>
-    <!-- Se eliminó la opción de 👁️ Total Visits -->
+    <div id="visitInfo" onclick="toggleCountryStats()">👁️ Total Visits: Loading...</div>
+    <div id="countryStats"></div>
   </div>
 
   <div id="reports" class="section active">
@@ -260,17 +236,18 @@
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
-  <!-- Tu lógica existente -->
   <script src="script.js"></script>
 
-  <!-- Parche: tabs activas + URL persistente -->
+  <!-- Parche: asegurar que MasterTools también quede seleccionado visualmente -->
   <script>
     (function(){
       const tabs = document.querySelectorAll('.tab');
       const sections = document.querySelectorAll('.section');
 
       function setActiveTab(id){
+        // Mostrar sección activa
         sections.forEach(s => s.classList.toggle('active', s.id === id));
+        // Poner .active en la tab correspondiente
         tabs.forEach(t => {
           const isTarget = (t.textContent.includes('Share Reports') && id==='reports')
                         || (t.textContent.includes('Problem Solve Guide') && id==='guide')
@@ -278,6 +255,7 @@
                         || (t.textContent.includes('MasterTools') && id==='mastertools');
           t.classList.toggle('active', isTarget);
         });
+        // Persistir en URL y localStorage
         try{
           localStorage.setItem('pb.activeTab', id);
           const u = new URL(location.href);
@@ -287,12 +265,14 @@
         }catch(e){}
       }
 
+      // Extender showSection existente (si lo tienes en script.js)
       const original = window.showSection;
       window.showSection = function(id){
         if(typeof original === 'function'){ try{ original(id); }catch(e){} }
         setActiveTab(id);
       };
 
+      // Selección inicial (respetando lo que ya esté activo)
       const activeNow = document.querySelector('.section.active');
       const initialId = (activeNow && activeNow.id)
         || new URL(location.href).searchParams.get('tab')
@@ -303,38 +283,11 @@
     })();
   </script>
 
-  <!-- Módulo de contadores locales (por tool y total de sitio) -->
-  <script>
-    (function(){
-      const KEY = 'pbh.counters.v1';
-      function read(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(_){ return {}; } }
-      function write(obj){ try{ localStorage.setItem(KEY, JSON.stringify(obj)); }catch(_){ } }
-      function get(k){ const c=read(); return c[k]||0; }
-      function bump(k){ const c=read(); c[k]=(c[k]||0)+1; write(c); return c[k]; }
-
-      // Exponer en window
-      window.PBCounters = { get, bump };
-
-      // Aumentar el total del sitio al abrir el hub (si quieres)
-      bump('site.total');
-    })();
-  </script>
-
   <!-- Lógica MasterTools -->
   <script>
     const LS_FAVS = 'pb.master.favorites';
-
-    /* === LISTA DE TOOLS (agrega más aquí) === */
     const tools = [
-      {
-        id:'trailer-plan',
-        icon:'🚛',
-        name:'Trailer Plan Analyzer',
-        href:'MasterTools/trailer-plan.html',  // << enlace corregido
-        desc:'Plan injection, density & severity attributes for trailers.'
-      }
-      // Ejemplo para agregar más:
-      // { id:'otro-tool', icon:'🧮', name:'Calculator Pro', href:'MasterTools/calculator-pro.html', desc:'Fast calc.' }
+      {id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'MasterTools/trailer-plan.html', desc:'Plan injection, density & severity attributes for trailers.'}
     ];
 
     const getFavs = () => { try { return JSON.parse(localStorage.getItem(LS_FAVS) || '[]'); } catch { return []; } };
@@ -358,27 +311,17 @@
         const card=document.createElement('div');
         card.className='card';
         card.dataset.id=t.id;
-
-        // Contador actual (solo numero)
-        const count = (window.PBCounters?.get('tool.'+t.id)) || 0;
-
-        card.innerHTML=`
-          <h3>${t.icon} ${t.name}</h3>
+        card.innerHTML=`<h3>${t.icon} ${t.name}</h3>
           <p>${t.desc||''}</p>
           <div class="row">
-            <a class="tool-link" href="${t.href}" target="_blank" rel="noopener">
-              Open
-              <span class="count-dot" data-counter="${t.id}">${count}</span>
-            </a>
+            <a class="tool-link" href="${t.href}" target="_blank" rel="noopener">Open</a>
             <button class="icon-btn favorite" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
             <button class="icon-btn copy-btn" title="Copy link">⧉</button>
           </div>`;
 
-        // Fav
         const favBtn = card.querySelector('.favorite');
         favBtn.addEventListener('click', ()=> toggleFav(t.id));
 
-        // Copy
         const copyBtn = card.querySelector('.copy-btn');
         copyBtn.addEventListener('click', async ()=>{
           try{
@@ -389,23 +332,10 @@
           }catch(e){ /* ignore */ }
         });
 
-        // Bump al abrir
-        const openLink = card.querySelector('.tool-link');
-        const dot = card.querySelector('.count-dot');
-        openLink.addEventListener('click', ()=>{
-          try{
-            const n = window.PBCounters.bump('tool.'+t.id);
-            if(dot) dot.textContent = n;
-            // (opcional) también sumar al total del sitio:
-            window.PBCounters.bump('site.total');
-          }catch(_){}
-        });
-
         wrap.appendChild(card);
       }
     }
 
-    // Buscador
     const masterSearch = document.getElementById('masterSearch');
     if(masterSearch){
       masterSearch.addEventListener('input', ()=>{
