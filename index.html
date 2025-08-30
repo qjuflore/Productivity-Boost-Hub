@@ -7,149 +7,282 @@
   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <style>
-    :root { --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364); --card-bg: rgba(255,255,255,.05); --border: rgba(255,255,255,.1); --accent:#00fff7; --accent-2:#9ef5ff; --text:#e0f7fa; --muted:#b7dfe6; --text-glow:0 0 5px #00fff7; --button-bg:#00fff7; --button-text:#000; --button-glow:0 0 10px #00fff7; --focus:0 0 0 3px rgba(0,255,247,.35); --radius:14px; }
-    *{box-sizing:border-box}
-    body{margin:0;padding:2rem clamp(1rem,3vw,2rem);font-family:'Orbitron',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
-    h1{font-size:clamp(1.6rem,2.2rem + .5vw,2.4rem);margin:0 0 1.25rem;color:var(--accent);text-shadow:var(--text-glow);letter-spacing:.5px;display:flex;align-items:center;gap:.6rem}
-    .topbar{display:grid;gap:.75rem;margin-bottom:1rem}
-    .tabs{display:flex;gap:.6rem;flex-wrap:wrap}
-    .tab{padding:.55rem .9rem;border-radius:var(--radius);background:var(--card-bg);border:1px solid var(--border);cursor:pointer;font-weight:700;transition:.2s}
-    .tab.active{background:var(--accent);color:#111;box-shadow:var(--button-glow);border-color:transparent}
-    .controls{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
-    .btn{background:var(--button-bg);color:var(--button-text);padding:.55rem .9rem;border:none;border-radius:10px;cursor:pointer;font-weight:800;box-shadow:var(--button-glow);transition:transform .12s}
-    .btn:hover{transform:translateY(-1px)}
-    .btn.secondary{background:transparent;color:var(--accent-2);border:1px solid var(--border);box-shadow:none}
-    .pill{font-size:.95rem;padding:.45rem .7rem;background:var(--card-bg);border:1px solid var(--border);border-radius:999px}
-    .section{display:none}
-    .section.active{display:block}
-    .search{width:100%;border-radius:12px;border:1px solid var(--border);background:var(--card-bg);padding:.7rem .9rem;color:var(--text)}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.8rem}
-    .card{border:1px solid var(--border);background:var(--card-bg);border-radius:var(--radius);padding:.9rem;display:flex;flex-direction:column;gap:.7rem}
-    .card h3{margin:0;font-size:1rem;color:var(--accent-2)}
-    .card p{margin:0;color:var(--muted);font-size:.92rem;min-height:2.2em}
-    .row{display:flex;gap:.5rem;flex-wrap:wrap}
-    .tool-link,.icon-btn{display:inline-flex;align-items:center;gap:.5rem;text-decoration:none;font-weight:800;border-radius:10px;padding:.45rem .6rem;cursor:pointer}
-    .tool-link{color:var(--accent);border:1px solid var(--border);background:var(--card-bg)}
-    .tool-link:hover{border-color:var(--accent);box-shadow:var(--button-glow)}
-    .icon-btn{background:transparent;border:1px solid var(--border);color:var(--text)}
-    .icon-btn:hover{border-color:var(--accent);box-shadow:var(--button-glow)}
-    .favorite[aria-pressed="true"]{border-color:var(--accent);box-shadow:var(--button-glow)}
-    .footer{margin-top:auto;text-align:center;font-size:.9rem;padding:1rem;color:#b9dfe6}
-    .submit-card{background:var(--card-bg);padding:1rem;border:1px dashed var(--accent);border-radius:10px;text-align:center;margin:.8rem 0}
-    .submit-card a{color:var(--accent);font-weight:700;text-decoration:none}
-    .submit-card a:hover{text-decoration:underline}
-    /* Preview drawer */
-    .preview{position:fixed;top:0;right:-420px;width:min(420px,94vw);height:100vh;background:#08161c;border-left:1px solid var(--border);box-shadow:-8px 0 24px rgba(0,0,0,.25);transition:right .22s;z-index:50;display:flex;flex-direction:column}
-    .preview.open{right:0}
-    .preview-header{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.8rem .9rem;border-bottom:1px solid var(--border)}
-    .preview-title{font-weight:800;color:var(--accent-2)}
-    .preview-body{padding:.9rem;overflow:auto}
+    :root {
+      --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --border: rgba(255, 255, 255, 0.1);
+      --accent: #00fff7;
+      --text: #e0f7fa;
+      --text-glow: 0 0 5px #00fff7;
+      --button-bg: #00fff7;
+      --button-text: #000;
+      --button-glow: 0 0 10px #00fff7;
+    }
+
+    body {
+      margin: 0;
+      padding: 2rem;
+      font-family: 'Orbitron', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 2rem;
+      color: var(--accent);
+      text-shadow: var(--text-glow);
+      animation: fadeInUp 1s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .tab {
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: black;
+      box-shadow: var(--button-glow);
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .btn {
+      background: var(--button-bg);
+      color: var(--button-text);
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: var(--button-glow);
+      transition: transform 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+    }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .category {
+      background: var(--card-bg);
+      margin-bottom: 1rem;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .category-header {
+      padding: 1rem;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.07);
+    }
+
+    .category-content {
+      display: none;
+      padding: 1rem;
+      white-space: pre-wrap;
+      border-top: 1px solid var(--border);
+    }
+
+    .visible { display: block; }
+
+    .copy-btn {
+      background: var(--button-bg);
+      color: var(--button-text);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      box-shadow: var(--button-glow);
+      transition: all 0.3s ease;
+      margin-left: 0.5rem;
+    }
+    .copy-btn.copied { background-color: #00c851; color: white; }
+
+    .footer {
+      margin-top: auto;
+      text-align: center;
+      font-size: 0.9rem;
+      padding: 1rem;
+      color: #aaa;
+    }
+
+    #visitInfo { margin-top: 1rem; cursor: pointer; font-size: 1.1rem; }
+
+    .submit-card {
+      background: var(--card-bg);
+      padding: 1rem;
+      border: 1px dashed var(--accent);
+      border-radius: 10px;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .submit-card a { color: var(--accent); font-weight: bold; text-decoration: none; }
+    .submit-card a:hover { text-decoration: underline; }
+
+    /* === Added minimal styles for MasterTools (non-breaking) === */
+    .mt-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .8rem; }
+    .mt-card { border:1px solid var(--border); background: var(--card-bg); border-radius: 12px; padding: .9rem; display:flex; flex-direction:column; gap:.7rem; }
+    .mt-card h3 { margin:0; font-size:1rem; color: #9ef5ff; }
+    .mt-card p { margin:0; color: #b7dfe6; font-size:.92rem; min-height: 2.2em; }
+    .mt-row { display:flex; gap:.5rem; flex-wrap: wrap; }
+    .mt-link, .mt-btn { display:inline-flex; align-items:center; gap:.4rem; text-decoration:none; font-weight:800; border-radius:10px; padding:.45rem .6rem; cursor:pointer; }
+    .mt-link { color: var(--accent); border: 1px solid var(--border); background: var(--card-bg); }
+    .mt-link:hover { box-shadow: 0 0 10px #00fff7; }
+    .mt-btn { background: transparent; border:1px solid var(--border); color:#e0f7fa; }
+    .mt-btn:hover { box-shadow: 0 0 10px #00fff7; }
+    .mt-fav[aria-pressed="true"] { border-color: #00fff7; box-shadow: 0 0 10px #00fff7; }
   </style>
 </head>
 <body>
-  <h1>🚀 Productivity Boost Hub <span class="pill">v2025.08.30</span></h1>
+  <h1>🚀 Productivity Boost Hub</h1>
 
-  <div class="topbar">
-    <div class="tabs">
-      <button class="tab active" data-target="reports">📊 Share Reports</button>
-      <button class="tab" data-target="guide">🧩 Problem Solve Guide</button>
-      <button class="tab" data-target="scripts">🧠 Tampermonkey Scripts</button>
-      <button class="tab" data-target="mastertools">🧰 MasterTools</button>
-    </div>
-
-    <div class="controls" id="globalControls">
-      <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
-      <button class="btn secondary" id="expandAll">Expand all</button>
-      <button class="btn" id="refreshBtn">↻ Refresh</button>
-      <div class="pill" id="visitInfo">👁️ Total Visits: 12,480 (demo)</div>
-      <div class="pill" id="countryStats" style="display:none">🇺🇸 US 87% · 🇲🇽 MX 7% · 🌎 Others 6% (demo)</div>
-    </div>
+  <div class="tabs">
+    <div class="tab active" onclick="showSection('reports')">📊 Share Reports</div>
+    <div class="tab" onclick="showSection('guide')">🧩 Problem Solve Guide</div>
+    <div class="tab" onclick="showSection('scripts')">🧠 Tampermonkey Scripts</div>
+    <!-- Added MasterTools tab without altering existing behavior -->
+    <div class="tab" onclick="showSection('mastertools')">🧰 MasterTools</div>
   </div>
 
-  <!-- === OLD SECTIONS (IDENTICAL) === -->
-  <section id="reports" class="section active">
+  <div class="controls">
+    <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
+    <button class="btn" onclick="loadReports()">↻ Refresh</button>
+    <div id="visitInfo" onclick="toggleCountryStats()">👁️ Total Visits: Loading...</div>
+    <div id="countryStats"></div>
+  </div>
+
+  <div id="reports" class="section active">
     <input type="text" id="reportSearch" placeholder="🔍 Search reports..." style="margin-bottom: 1rem; padding: 0.5rem; width: 100%; border-radius: 10px; border: none;">
     <div id="reportContainer"></div>
     <div id="error" class="error-msg"></div>
-  </section>
+  </div>
 
-  <section id="guide" class="section">
+  <div id="guide" class="section">
     <input type="text" id="guideSearch" placeholder="🔍 Search guide..." style="margin-bottom: 1rem; padding: 0.5rem; width: 100%; border-radius: 10px; border: none;">
     <div id="guideContainer"></div>
-  </section>
+  </div>
 
-  <section id="scripts" class="section">
+  <div id="scripts" class="section">
     <input type="text" id="scriptSearch" placeholder="🔍 Search scripts..." style="margin-bottom: 1rem; padding: 0.5rem; width: 100%; border-radius: 10px; border: none;">
     <div class="submit-card">
       📝 Want to share your script? <a href="https://docs.google.com/forms/d/e/1FAIpQLSdVhvhkmE28nIxDH2DAo4FR7W14zqUxp2KlGHvib6baAMplEQ/viewform" target="_blank">Submit it here</a>
     </div>
     <div id="scriptContainer"></div>
-  </section>
+  </div>
 
-  <!-- === NEW MASTERTOOLS (modern + favorites + preview) === -->
-  <section id="mastertools" class="section">
-    <input type="text" id="masterSearch" class="search" placeholder="🔍 Search MasterTools...">
-    <div class="grid" id="masterGrid" style="margin-top:.8rem"></div>
-  </section>
+  <!-- === New MasterTools section (favorites + copy link + search) === -->
+  <div id="mastertools" class="section">
+    <input type="text" id="masterSearch" placeholder="🔍 Search MasterTools..." style="margin-bottom: 1rem; padding: 0.5rem; width: 100%; border-radius: 10px; border: none;">
+    <div id="masterGrid" class="mt-grid"></div>
+  </div>
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
-  <!-- Preview Drawer -->
-  <aside id="preview" class="preview" aria-hidden="true">
-    <div class="preview-header">
-      <div class="preview-title" id="previewTitle">Preview</div>
-      <button class="icon-btn" id="previewClose">✕</button>
-    </div>
-    <div class="preview-body" id="previewBody">Nothing selected.</div>
-  </aside>
+  <script src="script.js"></script>
 
-  <!-- Include original behavior (from your old index) -->
-  <script src="script.js" defer></script>
-
+  <!-- Minimal, isolated script for MasterTools only (does not modify other sections) -->
   <script>
   (function(){
-    const $ = (s, r=document)=>r.querySelector(s); const $$=(s, r=document)=>Array.from(r.querySelectorAll(s));
-    // Persisted UI
-    const LS={tab:'pb.activeTab', emoji:'pb.emojis', favs:'pb.master.favorites'};
-    const state={ get activeTab(){return localStorage.getItem(LS.tab)||'reports'}, set activeTab(v){localStorage.setItem(LS.tab,v)}, get emojis(){return localStorage.getItem(LS.emoji)!=='off'}, set emojis(f){localStorage.setItem(LS.emoji, f?'on':'off')}, get favorites(){try{return JSON.parse(localStorage.getItem(LS.favs)||'[]')}catch{return[]}}, set favorites(v){localStorage.setItem(LS.favs, JSON.stringify(v))} };
+    // Avoid interfering with existing code: namespaced constants
+    const LS_KEY = 'pb.master.favorites';
+    const $ = (s, r=document)=>r.querySelector(s);
+    const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
 
-    // Tabs
-    function setActiveTab(id){ $$('.section').forEach(s=>s.classList.toggle('active', s.id===id)); $$('.tab').forEach(t=>t.classList.toggle('active', t.dataset.target===id)); state.activeTab=id; const u=new URL(location.href); u.searchParams.set('tab', id); u.hash='#'+id; history.replaceState(null,'',u); }
-    $$('.tab').forEach(tab=> tab.addEventListener('click', ()=> setActiveTab(tab.dataset.target)));
-    (function(){ const u=new URL(location.href); const p=u.searchParams.get('tab')||location.hash.replace('#','')||state.activeTab; setActiveTab(p||'reports'); })();
-
-    // Emoji toggle
-    const emojiBtn=$('#emojiToggle'); function syncEmoji(){ const on=state.emojis; emojiBtn.textContent= on? '😎 Emojis: ON':'🙂 Emojis: OFF'; document.documentElement.classList.toggle('emoji-off', !on);} emojiBtn.addEventListener('click', ()=>{ state.emojis=!state.emojis; syncEmoji(); }); syncEmoji();
-
-    // Visits demo
-    $('#visitInfo').addEventListener('click', ()=>{ const cs=$('#countryStats'); cs.style.display = cs.style.display==='none'?'inline-flex':'none'; });
-
-    // MasterTools data
-    const MASTER_DATA=[
-      { id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'trailer-plan.html', desc:'Plan injection, density & severity attributes for trailers.' }
+    const tools = [
+      { id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'trailer-plan.html', desc:'Plan injection, density & severity attributes for trailers.' },
+      // Add more tools here
     ];
-    function isFav(id){ return state.favorites.includes(id); }
-    function toggleFav(id){ const favs=new Set(state.favorites); favs.has(id)?favs.delete(id):favs.add(id); state.favorites=[...favs]; renderMasterTools(); }
-    function toolCard(t){ const card=document.createElement('div'); card.className='card'; card.dataset.id=t.id; card.innerHTML=\`
-        <h3>\${t.icon} \${t.name}</h3>
-        <p>\${t.desc||''}</p>
-        <div class="row">
-          <a class="tool-link" href="\${t.href}" target="_blank" rel="noopener">Open</a>
-          <button class="icon-btn favorite" aria-pressed="\${isFav(t.id)}" title="Favorite">★</button>
-          <button class="icon-btn copy-btn" title="Copy link">⧉</button>
-          <button class="icon-btn" data-preview-html="<iframe src='\${t.href}' style='width:100%;height:70vh;border:0;border-radius:12px;'></iframe>" data-preview-title="\${t.name} — Preview">Preview</button>
-        </div>\`;
-      const favBtn=card.querySelector('.favorite'); favBtn.addEventListener('click', ()=> toggleFav(t.id));
-      const copyBtn=card.querySelector('.copy-btn'); copyBtn.addEventListener('click', async ()=>{ try{ const url=new URL(t.href, location.href).href; await navigator.clipboard.writeText(url); const old=copyBtn.textContent; copyBtn.textContent='✔'; setTimeout(()=>copyBtn.textContent=old, 900);}catch{} });
-      return card; }
-    function renderMasterTools(){ const wrap=$('#masterGrid'); if(!wrap) return; wrap.innerHTML=''; const data=[...MASTER_DATA]; data.sort((a,b)=> (isFav(b.id)-isFav(a.id)) || a.name.localeCompare(b.name)); data.forEach(t=> wrap.appendChild(toolCard(t))); }
-    const masterSearch=$('#masterSearch'); if(masterSearch) masterSearch.addEventListener('input', ()=>{ const q=masterSearch.value.trim().toLowerCase(); $$('#masterGrid .card').forEach(c=>{ const txt=c.textContent.toLowerCase(); c.style.display= q? (txt.includes(q)?'':'none') : ''; }); });
 
-    // Preview drawer
-    const drawer=$('#preview'); const closeBtn=$('#previewClose'); function openPreview(html, title='Preview'){ $('#previewTitle').textContent=title; $('#previewBody').innerHTML=html||'Empty'; drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); } closeBtn.addEventListener('click', ()=>{ drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); }); document.addEventListener('click', (e)=>{ const t=e.target.closest('[data-preview-html]'); if(!t) return; openPreview(t.getAttribute('data-preview-html'), t.getAttribute('data-preview-title')||'Preview'); });
+    const getFavs = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { return []; } };
+    const setFavs = (arr) => localStorage.setItem(LS_KEY, JSON.stringify(arr));
+    const isFav  = (id) => getFavs().includes(id);
 
-    // Initial
-    renderMasterTools();
+    function toggleFav(id){
+      const favs = new Set(getFavs());
+      favs.has(id) ? favs.delete(id) : favs.add(id);
+      setFavs([...favs]);
+      render();
+    }
+
+    function card(t){
+      const el = document.createElement('div');
+      el.className = 'mt-card';
+      el.dataset.id = t.id;
+      el.innerHTML = `
+        <h3>${t.icon} ${t.name}</h3>
+        <p>${t.desc||''}</p>
+        <div class="mt-row">
+          <a class="mt-link" href="${t.href}" target="_blank" rel="noopener">Open</a>
+          <button class="mt-btn mt-fav" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
+          <button class="mt-btn mt-copy" title="Copy link">⧉</button>
+        </div>`;
+      const favBtn = el.querySelector('.mt-fav');
+      favBtn.addEventListener('click', ()=> toggleFav(t.id));
+      const copyBtn = el.querySelector('.mt-copy');
+      copyBtn.addEventListener('click', async ()=>{
+        try{
+          const url = new URL(t.href, location.href).href;
+          await navigator.clipboard.writeText(url);
+          const prev = copyBtn.textContent; copyBtn.textContent='✔'; setTimeout(()=>copyBtn.textContent=prev, 900);
+        }catch(e){}
+      });
+      return el;
+    }
+
+    function render(){
+      const grid = document.getElementById('masterGrid');
+      if(!grid) return;
+      grid.innerHTML = '';
+      const data = tools.slice().sort((a,b)=> (isFav(b.id)-isFav(a.id)) || a.name.localeCompare(b.name));
+      for(const t of data) grid.appendChild(card(t));
+    }
+
+    // Search
+    const search = document.getElementById('masterSearch');
+    if(search){
+      search.addEventListener('input', ()=>{
+        const q = search.value.trim().toLowerCase();
+        $$('#masterGrid .mt-card').forEach(c=>{
+          const txt = c.textContent.toLowerCase();
+          c.style.display = q ? (txt.includes(q) ? '' : 'none') : '';
+        });
+      });
+    }
+
+    // Initial render
+    render();
   })();
   </script>
 </body>
