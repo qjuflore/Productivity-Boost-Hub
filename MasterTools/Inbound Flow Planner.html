@@ -73,7 +73,8 @@
         <p class="sub">Plan decanters vs stowers, trailer injection, and EOS WIP — built for Flow (<b>BFL2</b>).</p>
       </div>
       <div class="right">
-        <a class="btn" id="btnHome" href="https://qjuflore.github.io/Productivity-Boost-Hub/?tab=mastertools#mastertools/">🏠 Back to Hub</a>
+        <!-- FIX: hash sin "/" y target explícito -->
+        <a class="btn" id="btnHome" href="https://qjuflore.github.io/Productivity-Boost-Hub/?tab=mastertools#mastertools" target="_self" title="Go back to Productivity Boost Hub">🏠 Back to Hub</a>
         <span class="pill muted" id="toolViewChip" title="Views for this tool">👁️ 0</span>
         <button class="btn" id="resetBtn">Reset</button>
         <button class="btn primary" id="copyBtn">Copy Plan</button>
@@ -578,10 +579,28 @@
     function attachHandlers(){
       document.querySelectorAll('input[type="range"], input[type="number"]').forEach(inp => {});
       syncInputs();
+
       document.getElementById('resetBtn').addEventListener('click',()=>{
         state = {...defaults}; save(); syncInputs(); render();
       });
+
       document.getElementById('copyBtn').addEventListener('click',copyPlan);
+
+      // ===== FIX robusto para Back to Hub =====
+      const btnHome = document.getElementById('btnHome');
+      if (btnHome){
+        btnHome.addEventListener('click', function(e){
+          const url = 'https://qjuflore.github.io/Productivity-Boost-Hub/?tab=mastertools#mastertools';
+          try{ localStorage.setItem('pb.activeTab','mastertools'); }catch(_){}
+          // Si el usuario usa Ctrl/Cmd/Shift para abrir en nueva pestaña, no interceptamos
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+            this.href = url;
+            return;
+          }
+          e.preventDefault();
+          location.href = url; // navegación garantizada
+        });
+      }
     }
     attachHandlers();
     render();
