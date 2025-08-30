@@ -149,12 +149,12 @@
     .card { border:1px solid var(--border); background: var(--card-bg); border-radius: var(--radius); padding: .9rem; display:flex; flex-direction:column; gap:.7rem; }
     .card h3 { margin:0; font-size:1rem; color: var(--accent-2); }
     .card p { margin:0; color: var(--muted); font-size:.92rem; min-height: 2.2em; }
-    .card .row { display:flex; gap:.5rem; }
+    .card .row { display:flex; gap:.5rem; align-items:center; }
     .icon-btn { background: transparent; border:1px solid var(--border); border-radius: 10px; padding:.45rem .6rem; color: var(--text); cursor: pointer; }
     .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
     .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
 
-    /* Open más visible en MasterTools */
+    /* Botón Open en MasterTools */
     .tool-link {
       background: var(--accent);
       color: #000 !important;
@@ -179,7 +179,7 @@
       font-size: 1rem;
     }
 
-    /* Contador de vistas */
+    /* Contador de vistas (header) */
     #viewInfo {
       font-size: 1.05rem;
       user-select: none;
@@ -187,6 +187,18 @@
       border: 1px solid var(--border);
       border-radius: 10px;
       background: var(--card-bg);
+    }
+
+    /* Badge de vistas por tool */
+    .tool-views {
+      margin-left: auto;
+      font-size: .9rem;
+      color: var(--muted);
+      padding: .2rem .5rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.03);
+      white-space: nowrap;
     }
   </style>
 </head>
@@ -266,11 +278,11 @@
   <!-- Tu script principal -->
   <script src="script.js"></script>
 
-  <!-- Sincronía de pestañas + pestañas activas + contador -->
+  <!-- Sincronía de pestañas + tabs + contadores -->
   <script>
     (function(){
-      // Actualiza el contador visual
-      function renderViews(){
+      // Actualiza el contador global del header
+      function renderGlobalViews(){
         const el = document.getElementById('viewInfo');
         if(!el || !window.PBViews) return;
         const total = window.PBViews.getTotal();
@@ -280,17 +292,22 @@
       // Suma 1 vista al cargar el Hub
       try {
         window.PBViews?.bumpTotal(1);
-        // (Opcional) marca área del hub, por si quieres ver stats por área
         window.PBViews?.bumpArea?.('hub', 1);
       } catch(e){}
 
-      // Pinta el valor inicial
-      renderViews();
+      // Pinta el valor inicial global
+      renderGlobalViews();
 
-      // Si otra pestaña del sitio incrementa, este index se actualiza
+      // Si otra pestaña incrementa, este index se actualiza
       window.addEventListener('storage', (e)=>{
-        if(e.key === 'pb.views.total'){
-          renderViews();
+        if(e.key === 'pb.views.total') renderGlobalViews();
+        if(e.key && e.key.startsWith('pb.views.tool.')) {
+          const id = e.key.replace('pb.views.tool.','');
+          const span = document.querySelector(`.tool-views[data-id="${id}"]`);
+          if(span){
+            const n = parseInt(e.newValue || '0', 10) || 0;
+            span.textContent = `👁️ Views: ${n.toLocaleString()}`;
+          }
         }
       });
 
@@ -332,7 +349,7 @@
     })();
   </script>
 
-  <!-- Lógica MasterTools (sin cambios visuales; puedes ampliar tools aquí) -->
+  <!-- Lógica MasterTools con badge de vistas por tool -->
   <script>
     const LS_FAVS = 'pb.master.favorites';
     const tools = [
@@ -356,7 +373,10 @@
       wrap.innerHTML='';
       const data=[...tools];
       data.sort((a,b)=> (isFav(b.id)-isFav(a.id)) || a.name.localeCompare(b.name));
+
       for(const t of data){
+        const toolViews = (window.PBViews?.getTool(t.id) || 0).toLocaleString();
+
         const card=document.createElement('div');
         card.className='card';
         card.dataset.id=t.id;
@@ -366,6 +386,7 @@
             <a class="tool-link" href="${t.href}" target="_blank" rel="noopener">Open</a>
             <button class="icon-btn favorite" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
             <button class="icon-btn copy-btn" title="Copy link">⧉</button>
+            <span class="tool-views" data-id="${t.id}">👁️ Views: ${toolViews}</span>
           </div>`;
 
         const favBtn = card.querySelector('.favorite');
@@ -396,7 +417,18 @@
       });
     }
 
+    // Render inicial y mantener badges al día si cambian en otra pestaña
     renderMasterTools();
+    window.addEventListener('storage', (e)=>{
+      if(e.key && e.key.startsWith('pb.views.tool.')){
+        const id = e.key.replace('pb.views.tool.','');
+        const span = document.querySelector(`.tool-views[data-id="${id}"]`);
+        if(span){
+          const n = parseInt(e.newValue || '0', 10) || 0;
+          span.textContent = `👁️ Views: ${n.toLocaleString()}`;
+        }
+      }
+    });
   </script>
 </body>
 </html>
