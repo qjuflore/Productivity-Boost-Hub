@@ -159,8 +159,9 @@
 <div class="right chips">
         <span class="chip">CSV/TSV/; supported</span>
         <span class="chip">Excel: XLSX supported</span>
-        <!-- NUEVO chip de vistas -->
-        <span id="tpaViews" class="chip">👁 —</span>
+        <!-- NUEVO: contadores visibles -->
+        <span id="siteViews" class="chip">🌐 Site: —</span>
+        <span id="tpaViews" class="chip">👁 Tool: —</span>
       </div>
       <div class="right flex">
         <button class="btn" id="btnExport">Export .csv</button>
@@ -1613,15 +1614,16 @@ function initPanScroll(){
   })();
   </script>
 
-  <!-- pb-views: integra contador global + contador de la tool -->
+  <!-- pb-views: incluir el módulo y renderizar contadores -->
   <script src="pb-views.js"></script>
   <script>
-    const PAGE_ID = 'trailer-plan';
-    // Sumar al total del sitio y a la tool
+    // Sumar al total del sitio y a la tool específica
     PBViews.hit('site', { title: document.title });
-    PBViews.hit(PAGE_ID, { title: document.title });
-    // Mostrar el contador de la tool en el chip
-    PBViews.render('#tpaViews', PAGE_ID, (n)=>`👁 ${Number(n||0).toLocaleString()}`);
+    PBViews.hit('trailer-plan', { title: document.title });
+
+    // Mostrar contadores separados en el header
+    PBViews.render('#siteViews', 'site', (n)=> `🌐 Site: ${Number(n||0).toLocaleString()}`);
+    PBViews.render('#tpaViews',  'trailer-plan', (n)=> `👁 Tool: ${Number(n||0).toLocaleString()}`);
   </script>
 
 </body>
