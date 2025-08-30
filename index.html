@@ -374,7 +374,8 @@
         card.innerHTML=`<h3>${t.icon} ${t.name}</h3>
           <p>${t.desc||''}</p>
           <div class="row">
-            <a class="tool-link" href="${t.href}" target="_blank" rel="noopener">Open</a>
+            <!-- Cambio: abrir en la misma pestaña (sin target="_blank") -->
+            <a class="tool-link" href="${t.href}">Open</a>
             <button class="icon-btn favorite" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
             <button class="icon-btn copy-btn" title="Copy link">⧉</button>
             <span class="tool-views" data-id="${t.id}">👁️ ${toolViews}</span>
