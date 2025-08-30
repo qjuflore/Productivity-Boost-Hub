@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Trailer Plan Analyzer — BFL2 (EN v19.6)</title>
+  <title>Trailer Plan Analyzer — BFL2 (EN v19.8)</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root{
@@ -12,6 +12,8 @@
       --chip:#1b2536; --border:#1e293b; --neon:#4ef1a1; --highlight:#1f2a44;
       --sevGreen:#18422a; --sevYellow:#3b3419; --sevRed:#3b1919;
       --sevYBorder:#937b2f; --sevRBorder:#9b3131; --sevGBorder:#2d7750;
+      --cellYellow:#2f2a11; --cellYellowBorder:#6f5b1b;
+      --cellRed:#2f1111; --cellRedBorder:#6b1f1f;
     }
     *{box-sizing:border-box}
     body{margin:0;background:linear-gradient(180deg,#0b0f14,#0d131f);color:var(--text);
@@ -76,24 +78,22 @@
     }
     th.planHead{cursor:pointer}
 
+    /* Row accent by severity (kept) */
     tr.sev-ok td{ box-shadow: inset 3px 0 0 0 var(--sevGBorder); background-image: linear-gradient(90deg, rgba(46,139,87,.08), transparent); }
     tr.sev-yellow td{ box-shadow: inset 3px 0 0 0 var(--sevYBorder); background-image: linear-gradient(90deg, rgba(255,215,0,.10), transparent); }
     tr.sev-red td{ box-shadow: inset 3px 0 0 0 var(--sevRBorder); background-image: linear-gradient(90deg, rgba(255,0,0,.10), transparent); }
+
     .sevBadge{padding:2px 8px;border-radius:999px;border:1px solid var(--border);font-size:12px}
     .sev-ok .sevBadge{background:#0f2b19;color:#b4f0bf;border-color:#1c4730}
     .sev-yellow .sevBadge{background:#332a0f;color:#ffe08a;border-color:#6f5b1b}
     .sev-red .sevBadge{background:#331212;color:#ffb3b3;border-color:#6b1f1f}
 
-    tr.selRow td{
-      position: relative;
-      box-shadow: 0 0 0 1px rgba(78,241,161,0.35) inset, 0 0 18px rgba(78,241,161,0.18) inset;
-    }
-    tr.selRow td::after{
-      content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
-      background: radial-gradient(120% 120% at 0% 0%, rgba(78,241,161,0.18), transparent 60%);
-      mix-blend-mode: screen;
-    }
+    /* Neon selection */
+    tr.selRow td{ position: relative; box-shadow: 0 0 0 1px rgba(78,241,161,0.35) inset, 0 0 18px rgba(78,241,161,0.18) inset; }
+    tr.selRow td::after{ content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+      background: radial-gradient(120% 120% at 0% 0%, rgba(78,241,161,0.18), transparent 60%); mix-blend-mode: screen; }
 
+    /* Scrollable area */
     .scrollWrap{position:relative; overflow:auto; max-height:62vh; margin-top:10px; border-radius:12px; outline:1px solid var(--border); background:#0b1220; cursor:grab; user-select:none; touch-action:none;}
     .scrollWrap.dragging{cursor:grabbing}
     .scrollShadow{position:absolute; top:0; bottom:0; width:28px; pointer-events:none; opacity:0; transition:opacity .18s}
@@ -111,21 +111,39 @@
     .toast.bye{opacity:0; transform: translateY(8px); transition: opacity .35s ease, transform .35s ease}
     @keyframes toastIn{from{opacity:0; transform: translateY(6px)} to{opacity:1; transform: translateY(0)}}
 
-    .miniTable{width:100%; border-collapse:collapse; font-size:12px}
-    .miniTable th,.miniTable td{border:1px solid var(--border); padding:6px 8px; white-space:nowrap}
-    .badge{display:inline-block;padding:2px 8px;border:1px solid var(--border);border-radius:999px;background:#0b1220}
-    .ok{color:#b4f0bf; border-color:#1c4730; background:#0f2b19}
-    .warn{color:#ffe08a; border-color:#6f5b1b; background:#332a0f}
-    .bad{color:#ffb3b3; border-color:#6b1f1f; background:#331212}
-
-    /* Headcount controls anti-overlap */
-    .hcCtl{display:flex; gap:8px; align-items:center; flex-wrap:nowrap}
-    .hcCtl .range{flex:1 1 auto; min-width:0; width:100%}
-    .hcCtl .input{flex:0 0 120px; width:120px}
-    @media (max-width:520px){
-      .hcCtl{flex-wrap:wrap}
-      .hcCtl .input{flex:1 1 140px; width:100%}
+    /* Cell-level alerts */
+    td.cell-warn{ background: var(--cellYellow) !important; border-color: var(--cellYellowBorder) !important; }
+    td.cell-bad{  background: var(--cellRed)   !important; border-color: var(--cellRedBorder)   !important; }
+    .hcCtl{display:grid;grid-template-columns: 1fr 100px;gap:8px}
+    @media (max-width:640px){ .hcCtl{grid-template-columns:1fr} }
+  
+    /* === Strong layout fix: Headcount Needed (Decant) slicers === */
+    .hcCtl{ display:grid !important; grid-template-columns: 1fr 120px; column-gap: 10px; align-items:center; }
+    @media (max-width: 720px){
+      .hcCtl{ grid-template-columns: 1fr; row-gap:8px; }
+      .hcCtl .input{ width:100%; }
     }
+    .hcCtl .range{ width:100%; min-width:140px; }
+    .hcCtl .input{ min-width:0; }
+
+    /* === Modern quick links look & motion === */
+    #quickLinks{ display:flex; gap:10px; align-items:center; }
+    #quickLinks .btn{ position:relative; padding:8px 14px; border-radius:999px; overflow:hidden; }
+    #quickLinks .btn::after{ content:""; position:absolute; inset:-2px; border-radius:inherit; 
+      box-shadow: 0 0 0 0 rgba(78,241,161,0); transition: box-shadow .25s ease; pointer-events:none; }
+    #quickLinks .btn:hover{ transform: translateY(-1px); }
+    #quickLinks .btn:hover::after{ box-shadow: 0 0 16px 2px rgba(78,241,161,.35); }
+    #quickLinks .btn .pulse{ position:absolute; top:6px; right:6px; width:6px; height:6px; border-radius:999px;
+      background: var(--neon, #4ef1a1); box-shadow: 0 0 0 0 rgba(78,241,161,.6); animation: pulseDot 2s infinite; }
+    @keyframes pulseDot{ 0%{box-shadow:0 0 0 0 rgba(78,241,161,.6)} 70%{box-shadow:0 0 0 10px rgba(78,241,161,0)} 100%{box-shadow:0 0 0 0 rgba(78,241,161,0)} }
+
+    /* === VRID mini button (chip-like) === */
+    .miniChip{ display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px;
+      border:1px solid var(--border); background: linear-gradient(180deg,#0d1a2b,#0a1322); color:#cfe7ff;
+      font-size:12px; line-height:1; cursor:pointer; }
+    .miniChip:hover{ box-shadow:0 0 0 1px rgba(78,241,161,.35), 0 0 14px rgba(78,241,161,.2) inset; }
+    .vridBtn{ user-select:none; }
+
   </style>
 </head>
 <body>
@@ -133,7 +151,12 @@
     <div class="flex">
       <a href="https://qjuflore.github.io/Productivity-Boost-Hub/" class="btn ghost" id="btnHome">🏠 Back to Hub</a>
       <h1>Trailer Plan Analyzer — BFL2</h1>
-      <div class="right chips">
+            <div class="right flex" id="quickLinks">
+        <a class="btn ghost" href="https://trans-logistics.amazon.com/yms/shipclerk/#/yard" target="_blank" rel="noopener">YMS<span class="pulse" aria-hidden="true"></span></a>
+        <a class="btn ghost" href="https://oculus.qubit.amazon.dev/transship/BFL2" target="_blank" rel="noopener">Oculus<span class="pulse" aria-hidden="true"></span></a>
+        <a class="btn ghost" href="https://axzile.corp.amazon.com/-/carthamus/script/yms-audit-%7C-download-all" target="_blank" rel="noopener">YMS Script<span class="pulse" aria-hidden="true"></span></a>
+      </div>
+<div class="right chips">
         <span class="chip">CSV/TSV/; supported</span>
         <span class="chip">Excel: XLSX supported</span>
       </div>
@@ -166,7 +189,7 @@
           <div class="flex">
             <label class="btn" for="fileStatusPick">🛠️ Import status (YMS)</label>
             <input id="fileStatusPick" type="file" accept=".csv,.tsv,.txt,.xlsx" />
-            <span class="k">Maps by VRID (col E) → updates <b>Severity</b> (A), <b>Status Info</b> (B), fresher <b>Trailer Location</b> and <b>Actual / Expected Arrival Time</b> if present.</span>
+            <span class="k">Maps by VRID (col E) → updates <b>Severity</b> (A), fresher <b>Trailer Location</b> and <b>Actual / Expected Arrival Time</b> if present.</span>
           </div>
           <div class="chips" id="sevLegend" style="margin-top:10px">
             <span class="chip">Legend:</span>
@@ -218,7 +241,7 @@
           </div>
           <div style="min-width:260px">
             <div class="k">Hours remaining</div>
-            <div class="hcCtl">
+            <div class="flex hcCtl">
               <input id="hoursRange" type="range" min="1" max="12" step="1" value="4" class="range">
               <input id="hoursInput" type="number" min="0.5" max="24" step="0.5" value="4" class="input">
             </div>
@@ -226,7 +249,7 @@
           </div>
           <div style="min-width:260px">
             <div class="k">Decanter rate (units/hour per person)</div>
-            <div class="hcCtl">
+            <div class="flex hcCtl">
               <input id="rateRange" type="range" min="50" max="1200" step="10" value="350" class="range">
               <input id="rateInput" type="number" min="10" max="3000" step="10" value="350" class="input">
             </div>
@@ -348,18 +371,31 @@
   <div id="toasts" aria-live="polite"></div>
 
 <script>
-/* ========= Config ========= */
+/* ===== Columns & constants ===== */
+const FLAG_COLS = ["Blue Flag","Reactive Flag","Ghost Trailer Flag","Unsellable Flag"];
+const FLAG_LABEL = {
+  "Blue Flag":"Blue Flag",
+  "Reactive Flag":"Reactive Flag",
+  "Ghost Trailer Flag":"Ghost Trailer",
+  "Unsellable Flag":"Unsellable"
+};
+
 const REQUIRED = [
   "VRID","Transship Status","Load Config","Trailer Location",
-  "Severity","Status Info","Attributes","Actual / Expected Arrival Time",
+  "Severity","Attributes","Actual / Expected Arrival Time",
   "Priority Score",
   "Single ASIN Pallets","Mixed ASIN Pallets","FL Cases","FL Totes","Palletized Totes",
   "Apparel","Shoes","Library","Library Deep","HRV",
   "PPR Small","PPR Medium","PPR Large",
   "Palletized Single ASIN Cases","Palletized Mixed ASIN Cases",
   "Units in FL Totes","Units in Palletized Totes","Units in Palletized Single ASIN Cases","Units in Palletized Mixed ASIN Cases",
-  "Total Units"
+  "Total Units",
+  ...FLAG_COLS
 ];
+
+// hide raw flag columns; show Attributes
+const HIDE_IN_TABLE = new Set(FLAG_COLS);
+
 const PERCENT_HINT = ["PPR Small","PPR Medium","PPR Large"];
 const TOTALS_COLUMNS = [
   "Single ASIN Pallets","Mixed ASIN Pallets","FL Cases","FL Totes","Palletized Totes",
@@ -369,22 +405,24 @@ const TOTALS_COLUMNS = [
   "Units in FL Totes","Units in Palletized Totes","Units in Palletized Single ASIN Cases","Units in Palletized Mixed ASIN Cases",
   "Total Units"
 ];
-const NON_NUMERIC = ["VRID","Transship Status","Load Config","Trailer Location","Severity","Status Info","Attributes","Actual / Expected Arrival Time"];
+
+const NON_NUMERIC = ["VRID","Transship Status","Load Config","Trailer Location","Severity","Attributes","Actual / Expected Arrival Time"];
 const NUMERIC = REQUIRED.filter(c => !NON_NUMERIC.includes(c));
+
 const normalize = s => String(s||"").trim().toLowerCase().replace(/[_%-]/g," ").replace(/\s+/g," ");
 const up = s => String(s||"").trim().toUpperCase();
 
-/* Rename MISSING → ARRIVAL_SCHEDULED */
+/* Status normalization */
 function toStatusLabel(raw){
-  const s=String(raw||"").trim();
-  if(!s) return "ARRIVAL_SCHEDULED";
-  const u=s.toUpperCase();
-  if(u==="MISSING") return "ARRIVAL_SCHEDULED";
-  return s;
+  const s = String(raw || "").trim();
+  if (!s) return "Ghost Trailer";       // Empty → Ghost Trailer
+  const u = s.toUpperCase();
+  if (u === "MISSING") return "Ghost Trailer"; // MISSING → Ghost Trailer
+  return s;                             
 }
 function statusKey(raw){ return up(toStatusLabel(raw)); }
 
-/* ========= CSV parsing helpers ========= */
+/* Parsing helpers */
 function guessDelimiter(text){
   const line = (text.match(/^[^\r\n]+/)||[""])[0];
   const counts = {",":(line.match(/,/g)||[]).length,"\t":(line.match(/\t/g)||[]).length,";":(line.match(/;/g)||[]).length};
@@ -409,22 +447,20 @@ function arrayToCSV(rows){
   }).join(",")).join("\n");
 }
 
-/* ========= Formatting ========= */
+/* Formatting */
 function toNum(v){ if(v==null) return 0; let s=String(v).replace(/,/g,"").replace(/%/g,"").trim(); if(s==="") return 0; const x=Number(s); return isFinite(x)?x:0; }
 function fmtNumber(n){const f=Number(n); return isFinite(f)? f.toLocaleString(undefined,{maximumFractionDigits:0}) : ""; }
 function fmtScore(n){const f=Number(n); return isFinite(f)? f.toLocaleString(undefined,{maximumFractionDigits:2}) : ""; }
 function fmtPercent(n){const f=Number(n); return isFinite(f)? f.toLocaleString(undefined,{maximumFractionDigits:2})+"%" : ""; }
 function parseWhen(s){ const t=Date.parse(String(s||"").replaceAll("  "," ")); return isNaN(t)? null : t; }
 
-/* ========= Header mapping ========= */
+/* Header mapping */
 function mapHeaders(headers){
   const map = {}, normToReal = {}; headers.forEach(h => normToReal[normalize(h)] = h);
   const arrivalSyns = ["actual / expected arrival time","arrival time","expected arrival","actual arrival","eta","ata","scheduled arrival","appt time","appointment time"];
-  const attrSyns = ["attributes","attribute","issues","flags","problems","problem flags","notes","comments","yms attributes","status attributes"];
   for(const syn of arrivalSyns){ const k=Object.keys(normToReal).find(x=>x.includes(syn)); if(k){ map["Actual / Expected Arrival Time"]=normToReal[k]; break; } }
-  for(const syn of attrSyns){ const k=Object.keys(normToReal).find(x=>x.includes(syn)); if(k){ map["Attributes"]=normToReal[k]; break; } }
   REQUIRED.forEach(label => {
-    if((label==="Actual / Expected Arrival Time" && map[label]) || (label==="Attributes" && map[label])) return;
+    if(label==="Actual / Expected Arrival Time" && map[label]) return;
     const n=normalize(label);
     if(normToReal[n]) map[label]=normToReal[n];
     else{ const hit=Object.keys(normToReal).find(k=>k.includes(n)); if(hit) map[label]=normToReal[hit]; }
@@ -440,60 +476,7 @@ function detectPercentColumn(values,label){
   return nonEmpty>0 && (withPct/nonEmpty)>=0.30;
 }
 
-/* ========= Attributes detector & Severity sync ========= */
-function computeAttributesAndAlert(row){
-  // Base text to analyze
-  const rawAttr = String(row["Attributes"]||"").trim();
-  const info = String(row["Status Info"]||"");
-  const sevRaw = String(row["Severity"]||"");
-  const text = (rawAttr + " | " + info).toLowerCase();
-
-  // Quick classifiers
-  const has = (re) => re.test(text);
-
-  const critical = [
-    /red\b|critical|engine|axle|brake|air\s*line|no\s*brakes|leak|fuel|fire|hazmat|rollover|accident|collision|frame|reefer\s*(fail|down)/i,
-    /seal\s*(broken|tamper)/i
-  ];
-  const warning = [
-    /yellow\b|other\b|hold|yard\s*hold|dock\s*hold|maintenance|late|delay|resched|no\s*show/i,
-    /paper|docs|paperwork|bol|missing\s*doc/i,
-    /tire|flat|light|door|damage|broken|dent|leak|wet|mold|roof|floor|hole/i,
-    /lock|key|no\s*key|security/i
-  ];
-
-  let issueTags = [];
-
-  // Tag extraction
-  if(/paper|docs|paperwork|bol/i.test(text)) issueTags.push("Paperwork");
-  if(/seal/i.test(text)) issueTags.push("Seal/Security");
-  if(/hold|maintenance|yard\s*hold|dock\s*hold/i.test(text)) issueTags.push("Hold/Blocked");
-  if(/tire|flat|brake|door|damage|broken|leak|engine|axle|reefer/i.test(text)) issueTags.push("Mechanical/Physical");
-  if(/late|delay|resched|appointment|appt|no\s*show/i.test(text)) issueTags.push("Schedule");
-  issueTags = [...new Set(issueTags)];
-
-  // Determine alert level from attributes & info
-  let sev = sevRaw;
-  const isCritical = critical.some(r=>has(r)) || /red\b/i.test(sevRaw);
-  const isWarning = (!isCritical) && (warning.some(r=>has(r)) || /yellow|other/i.test(sevRaw));
-
-  if(isCritical) sev = "RED";
-  else if(isWarning) {
-    if(!sevRaw || /ok|green/i.test(sevRaw)) sev = "YELLOW";
-    else if(/red/i.test(sevRaw)) sev = "RED";
-    else sev = "YELLOW";
-  } else if(!sevRaw || /ok|green/i.test(sevRaw) || (!rawAttr && !info)) {
-    sev = "OK";
-  }
-
-  // Final Attributes text
-  const finalAttr = (rawAttr ? rawAttr + (issueTags.length ? " | " : "") : "") + (issueTags.length ? issueTags.join(" · ") : (rawAttr? "" : (sev==="OK" ? "OK" : "")));
-
-  row["Attributes"] = finalAttr;
-  row["Severity"]  = sev;
-}
-
-/* ========= State & DOM ========= */
+/* ===== State ===== */
 const drop=document.getElementById("drop");
 const filePick=document.getElementById("filePick");
 const btnPaste=document.getElementById("btnPaste");
@@ -561,7 +544,7 @@ let ROWS=[], IS_PERCENT={}, PCT_UNITS={}, LAST_PLAN=null;
 let STATUS_FILTER=new Set(), SORT_BY=null, SORT_DIR='asc', FILTERS=[];
 let PAN_SUPPRESS_CLICK=false;
 
-/* ========= Init ========= */
+/* ===== Init ===== */
 document.addEventListener("DOMContentLoaded", ()=>{
   if(workloadSource) workloadSource.value="Units in Cases (computed)";
   if(planStrategy) planStrategy.value="ps_strict";
@@ -643,23 +626,14 @@ btnCopySlack.onclick=()=>{
   navigator.clipboard.writeText(lines.join("\n")).then(()=>{copyMsg.textContent="Copied ✓"; setTimeout(()=>copyMsg.textContent="",1200);});
 };
 
-btnExport.onclick=()=>{
-  if(!ROWS.length){alert("Nothing to export."); return;}
-  const cols=["VRID"].concat(REQUIRED.filter(c=>c!=="VRID"));
-  const rows=[cols]; visibleRows().forEach(r=> rows.push(cols.map(c=> r[c]??"")));
-  const csv=arrayToCSV(rows); const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="trailer_plan_export.csv";
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-};
-
-/* ========= Toasts ========= */
+/* ===== Toasts ===== */
 function showToast(msg){
   const t=document.createElement("div"); t.className="toast";
   t.innerHTML=`<span class="dot"></span><div>${msg}</div>`; toasts.appendChild(t);
   setTimeout(()=>{t.classList.add("bye"); setTimeout(()=>t.remove(),380);},2200);
 }
 
-/* ========= File handling (plan) ========= */
+/* ===== File handling (plan) ===== */
 function handleFile(file){
   const name=file.name.toLowerCase();
   if(name.endsWith(".xlsx")){
@@ -696,7 +670,7 @@ function handleText(text){
       obj[label]=val;
     });
     obj["Transship Status"]=toStatusLabel(obj["Transship Status"]);
-    computeAttributesAndAlert(obj);
+    computeAttributesIntoRow(obj); // Attributes only
     return obj;
   });
 
@@ -708,7 +682,7 @@ function handleText(text){
   initFilterUI(); computeAndRender();
 }
 
-/* ---- Status/YMS file handling ---- */
+/* ===== Status/YMS file handling ===== */
 function handleStatusFile(file){
   const name=file.name.toLowerCase();
   if(name.endsWith(".xlsx")){
@@ -731,20 +705,18 @@ function handleStatusFile(file){
 function detectStatusMapping(headerRow){
   const normMap={}; headerRow.forEach((h,i)=> normMap[normalize(h)]=i);
   const hasHeaders=Object.keys(normMap).some(k=>k.includes("severity")||k.includes("vrid"));
-  let idxSev=null, idxInfo=null, idxVRID=null, idxLoc=null, idxArr=null;
+  let idxSev=null, idxVRID=null, idxLoc=null, idxArr=null;
   if(hasHeaders){
     for(const [k,i] of Object.entries(normMap)){
       if(idxSev===null && (k==="severity"||k.includes("severity"))) idxSev=i;
       if(idxVRID===null && (k==="vrid"||k.includes("vrid"))) idxVRID=i;
-      if(idxInfo===null && (k.includes("comment")||k.includes("detail")||k.includes("note")||k==="info")) idxInfo=i;
       if(idxLoc===null && (k.includes("trailer location")||k==="location"||k.includes("yard")||k.includes("spot")||k.includes("door")||k.includes("dock"))) idxLoc=i;
       if(idxArr===null && (k.includes("arrival")||k==="eta"||k==="ata"||k.includes("expected")||k.includes("actual")||k.includes("appt"))) idxArr=i;
     }
   }
   if(idxSev===null) idxSev=0;
-  if(idxInfo===null) idxInfo=1;
   if(idxVRID===null) idxVRID=hasHeaders ? (normMap["vrid"] ?? 4) : 4;
-  return {idxSev, idxInfo, idxVRID, idxLoc, idxArr, hasHeaders};
+  return {idxSev, idxVRID, idxLoc, idxArr, hasHeaders};
 }
 function mergeStatusText(text){
   const rows=parseAnyTable(text).filter(r=> r.length && r.some(c=> String(c).trim()!==''));
@@ -756,22 +728,19 @@ function mergeStatusText(text){
     const r=rows[i];
     const vrid=String(r[mapping.idxVRID]||"").trim(); if(!vrid) continue;
     const sev=String(r[mapping.idxSev]||"").trim();
-    const info=String(r[mapping.idxInfo]||"").trim();
     const loc=(mapping.idxLoc!=null)? String(r[mapping.idxLoc]||"").trim() : "";
     const arr=(mapping.idxArr!=null)? String(r[mapping.idxArr]||"").trim() : "";
-    map.set(up(vrid), {sev, info, loc, arr});
+    map.set(up(vrid), {sev, loc, arr});
   }
   let matched=0, updatedLoc=0, ok=0, warn=0, red=0, updatedArr=0;
   ROWS.forEach(row=>{
     const key=up(String(row["VRID"]||""));
     const hit=map.get(key); if(!hit) return;
     matched++;
-    row["Severity"]=hit.sev || row["Severity"] || "";
-    row["Status Info"]=hit.info || row["Status Info"] || "";
+    if(hit.sev) row["Severity"]=hit.sev;                 // keep severity from YMS
     if(hit.loc){ row["Trailer Location"]=hit.loc; updatedLoc++; }
     if(hit.arr){ row["Actual / Expected Arrival Time"]=hit.arr; updatedArr++; }
-    // Recompute Attributes & Severity alerting
-    computeAttributesAndAlert(row);
+    computeAttributesIntoRow(row); // recompute Attributes only
     const cl=severityClass(row["Severity"]);
     if(cl==="sev-red") red++; else if(cl==="sev-yellow") warn++; else ok++;
   });
@@ -779,11 +748,27 @@ function mergeStatusText(text){
   showToast(`Merged status for ${matched} VRID(s). OK: ${ok}, Yellow/Other: ${warn}, Red: ${red}${updatedLoc?`, Loc updated: ${updatedLoc}`:''}${updatedArr?`, Arrival updated: ${updatedArr}`:''}`);
 }
 
-/* ========= Filters & Sorting ========= */
+/* ===== Attributes computation (does not touch Severity) ===== */
+function computeAttributes(row){
+  const parts=[];
+  for(const col of FLAG_COLS){
+    const val = toNum(row[col]);
+    if(val>0){
+      const label = FLAG_LABEL[col] || col;
+      parts.push(`${label} ${fmtNumber(val)}`);
+    }
+  }
+  return parts.join(" • ");
+}
+function computeAttributesIntoRow(row){
+  row["Attributes"] = computeAttributes(row) || "";
+}
+
+/* ===== Filters & sorting ===== */
 function initFilterUI(){
-  const cols=["VRID"].concat(REQUIRED.filter(c=>c!=="VRID"));
-  filterCol.innerHTML=cols.map(c=>`<option value="${c}">${c}</option>`).join("");
-  filterCol.value="VRID"; syncOpChoices();
+  const allCols=["VRID"].concat(REQUIRED.filter(c=>c!=="VRID"));
+  document.getElementById("filterCol").innerHTML=allCols.map(c=>`<option value="${c}">${c}</option>`).join("");
+  document.getElementById("filterCol").value="VRID"; syncOpChoices();
 }
 function syncOpChoices(){
   const col=filterCol.value, isNum=NUMERIC.includes(col);
@@ -795,7 +780,7 @@ function syncOpChoices(){
       .map(([v,t])=>`<option value="${v}">${t}</option>`).join("");
   }
   filterVal1.value=""; filterVal2.value="";
-  valBox2.classList.toggle("hidden", !(isNum && filterOp.value==="between"));
+  valBox2.classList.toggle("hidden", !(NUMERIC.includes(filterCol.value) && filterOp.value==="between"));
   filterOp.onchange=()=>{ const need2=(NUMERIC.includes(filterCol.value) && filterOp.value==="between"); valBox2.classList.toggle("hidden", !need2); };
 }
 function addFilterFromUI(){
@@ -863,7 +848,7 @@ function applySort(arr){
   });
 }
 
-/* ========= Core compute & render ========= */
+/* ===== Aggregations & render ===== */
 function activeRows(){ return ROWS.filter(r=> r._selected && STATUS_FILTER.has(statusKey(r["Transship Status"]))); }
 function baseRows(){ return ROWS.filter(r=> STATUS_FILTER.has(statusKey(r["Transship Status"]))); }
 function visibleRows(){
@@ -898,6 +883,8 @@ function renderStatusFilterUI(){
 }
 
 function computeAndRender(){
+  ROWS.forEach(computeAttributesIntoRow); // keep Attributes updated (doesn't touch Severity)
+
   const totalVRIDs=new Set(ROWS.map(r=>r["VRID"])).size;
   const selectedVRIDs=new Set(activeRows().map(r=>r["VRID"])).size;
   const counts=countBy(ROWS.map(r=> statusKey(r["Transship Status"])));
@@ -932,14 +919,19 @@ function computeAndRender(){
   renderHeadcount(agg);
 }
 
+/* Severity helpers */
 function sevLabel(s){
   const c=severityClass(s); if(c==="sev-red") return "RED"; if(c==="sev-ok") return "OK"; if(!s) return "UNKNOWN"; return "YELLOW";
 }
 function severityClass(sevRaw){
   const s=String(sevRaw||"").toLowerCase();
-  if(!s) return ""; if(s.includes("red")) return "sev-red"; if(s==="ok"||s.includes("green")||s.includes("good")) return "sev-ok"; return "sev-yellow";
+  if(!s) return "";
+  if(s.includes("red")) return "sev-red";
+  if(s==="ok"||s.includes("green")||s.includes("good")) return "sev-ok";
+  return "sev-yellow";
 }
 
+/* Aggregation helpers */
 function aggregate(rows){
   const out={}; for(const col of TOTALS_COLUMNS.concat(["Priority Score"])){ let sum=0; for(const r of rows){sum+=toNum(r[col]);} out[col]={value:sum}; }
   return out;
@@ -954,7 +946,6 @@ function computePercentUnits(rows){
   }
   return m;
 }
-
 function derive(agg){
   const unitsInCases=toNum(agg["Units in Palletized Single ASIN Cases"]?.value)+toNum(agg["Units in Palletized Mixed ASIN Cases"]?.value);
   const totalUnits=toNum(agg["Total Units"]?.value);
@@ -971,7 +962,6 @@ function derive(agg){
   return {unitsInCases, casePct, toteDensityPal, toteDensityAll, totalUnits,
           unitsInTotesPal, unitsInTotesFL, palTotes, flTotes};
 }
-
 function makeBreakCard(title,obj){
   const d=document.createElement("div"); d.className="card";
   const parts=Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
@@ -999,24 +989,9 @@ function makeTotalCard(k,v,isPercent,explain="",sub=""){
   return d;
 }
 
-function renderDerived(agg){
-  const d=derive(agg); derivedGrid.innerHTML="";
-  derivedGrid.appendChild(makeDerivedCard("Units in Cases (computed)", d.unitsInCases, false, "Units in Cases = Units in Palletized Single ASIN Cases + Units in Palletized Mixed ASIN Cases."));
-  derivedGrid.appendChild(makeDerivedCard("Case %", d.casePct, true, `Case % = Units in Cases / Total Units = ${fmtNumber(d.unitsInCases)} / ${fmtNumber(d.totalUnits)}.`));
-  derivedGrid.appendChild(makeDerivedCard("Tote Density (palletized-only)", d.toteDensityPal, false, `Units in Palletized Totes / Palletized Totes = ${fmtNumber(d.unitsInTotesPal)} / ${fmtNumber(d.palTotes)}.`));
-  derivedGrid.appendChild(makeDerivedCard("Tote Density (ALL totes) — recommended", d.toteDensityAll, false, `(Units in Palletized Totes + Units in FL Totes) / (Palletized Totes + FL Totes) = (${fmtNumber(d.unitsInTotesPal)} + ${fmtNumber(d.unitsInTotesFL)}) / (${fmtNumber(d.palTotes)} + ${fmtNumber(d.flTotes)}).`));
-}
-function makeDerivedCard(title,value,isPercent,explain=""){
-  const d=document.createElement("div"); d.className="card";
-  const pretty=isPercent?fmtPercent(value):fmtNumber(value);
-  d.innerHTML=`<div class="k">${title}</div><div class="v" style="margin-top:4px">${pretty}</div>${explain?`<div class="explain">${explain}</div>`:""}`;
-  return d;
-}
-function countBy(arr){const m={}; for(const x of arr){ m[x]=(m[x]||0)+1; } return m; }
-
-/* ========= Table render ========= */
+/* Table render (with cell coloring rules) */
 function renderTable(){
-  const cols=["(Plan)","VRID"].concat(REQUIRED.filter(c=>c!=="VRID"));
+  const cols=["(Plan)","VRID"].concat(REQUIRED.filter(c=>c!=="VRID" && !HIDE_IN_TABLE.has(c)));
   thead.innerHTML="<tr>"+cols.map((c,i)=>{
     if(i===0) return `<th class="planHead"><input id="chkAll" type="checkbox" /></th>`;
     const sortable="sortable"; const sorted=(SORT_BY===c)?"sorted":""; const arrow=(SORT_BY===c)?(SORT_DIR==='asc'?'▲':'▼'):'↕';
@@ -1038,15 +1013,24 @@ function renderTable(){
         <input type="checkbox" class="rowChk" data-id="${r._id}" ${isSel?"checked":""}>
         <span class="planTag">${isSel?"IN PLAN":"SKIP"}</span>
       </td>`);
-    cells.push(`<td>${r["VRID"]??""}</td>`);
-    for(const c of REQUIRED.filter(c=>c!=="VRID")){
+    cells.push(`<td><button class="miniChip vridBtn" data-vrid="${r["VRID"]??""}" title="Copy VRID">${r["VRID"]??""}</button></td>`);
+    for(const c of REQUIRED.filter(c=>c!=="VRID" && !HIDE_IN_TABLE.has(c))){
       let v=r[c];
+      let tdClass="";
       if(NUMERIC.includes(c)){
         const n=toNum(v); const percent=IS_PERCENT[c];
         v=percent?fmtPercent(n):(c==="Priority Score"?fmtScore(n):fmtNumber(n));
       }
-      if(c==="Severity"){ v=`<span class="sevBadge">${v||""}</span>`; }
-      cells.push(`<td>${v??""}</td>`);
+      if(c==="Severity"){
+        const raw=String(r[c]||""); const lc=raw.toLowerCase();
+        if(lc.includes("red")) tdClass="cell-bad";
+        else if(raw && lc!=="ok") tdClass="cell-warn";
+        v=`<span class="sevBadge">${raw||""}</span>`;
+      }
+      if(c==="Attributes"){
+        if(String(r[c]||"").trim()!=="") tdClass="cell-warn";
+      }
+      cells.push(`<td class="${tdClass}">${v??""}</td>`);
     }
     return `<tr class="${rowCls}" data-id="${r._id}">`+cells.join("")+`</tr>`;
   }).join("");
@@ -1075,7 +1059,21 @@ function renderTable(){
   updateShadows();
 }
 
-/* ========= Headcount ========= */
+/* Derived cards & headcount */
+function renderDerived(agg){
+  const d=derive(agg); derivedGrid.innerHTML="";
+  derivedGrid.appendChild(makeDerivedCard("Units in Cases (computed)", d.unitsInCases, false, "Units in Cases = Units in Palletized Single ASIN Cases + Units in Palletized Mixed ASIN Cases."));
+  derivedGrid.appendChild(makeDerivedCard("Case %", d.casePct, true, `Case % = Units in Cases / Total Units = ${fmtNumber(d.unitsInCases)} / ${fmtNumber(d.totalUnits)}.`));
+  derivedGrid.appendChild(makeDerivedCard("Tote Density (palletized-only)", d.toteDensityPal, false, `Units in Palletized Totes / Palletized Totes = ${fmtNumber(d.unitsInTotesPal)} / ${fmtNumber(d.palTotes)}.`));
+  derivedGrid.appendChild(makeDerivedCard("Tote Density (ALL totes) — recommended", d.toteDensityAll, false, `(Units in Palletized Totes + Units in FL Totes) / (Palletized Totes + FL Totes) = (${fmtNumber(d.unitsInTotesPal)} + ${fmtNumber(d.unitsInTotesFL)}) / (${fmtNumber(d.palTotes)} + ${fmtNumber(d.flTotes)}).`));
+}
+function makeDerivedCard(title,value,isPercent,explain=""){
+  const d=document.createElement("div"); d.className="card";
+  const pretty=isPercent?fmtPercent(value):fmtNumber(value);
+  d.innerHTML=`<div class="k">${title}</div><div class="v" style="margin-top:4px">${pretty}</div>${explain?`<div class="explain">${explain}</div>`:""}`;
+  return d;
+}
+function countBy(arr){const m={}; for(const x of arr){ m[x]=(m[x]||0)+1; } return m; }
 function renderHeadcount(agg){
   const hours=Number(hoursInput.value)||0, rate=Number(rateInput.value)||0;
   const d=derive(agg);
@@ -1089,7 +1087,7 @@ function renderHeadcount(agg){
   headcountExplain.textContent=`Headcount = ceil(${fmtNumber(workload)} ÷ (${fmtNumber(rate)} × ${hours})) → Capacity/person: ${fmtNumber(capacity)} units (selected + status filter).`;
 }
 
-/* ========= Row selection ========= */
+/* Selection */
 function onTbodyClick(e){
   if(PAN_SUPPRESS_CLICK){ PAN_SUPPRESS_CLICK=false; return; }
   const tag=(e.target.tagName||"").toLowerCase();
@@ -1098,12 +1096,12 @@ function onTbodyClick(e){
   const tr=e.target.closest("tr"); if(!tr) return;
   const id=Number(tr.getAttribute("data-id")); const row=ROWS.find(r=>r._id===id); if(!row) return;
   row._selected=!row._selected;
-  showToast(`${row._selected ? 'Added' : 'Removed'} VRID ${row["VRID"]} ${row._selected ? 'to' : 'from'} plan — ${activeRows().length + (row._selected?1:-1)} selected`);
+  showToast(`${row._selected ? 'Added' : 'Removed'} VRID ${row["VRID"]} ${row._selected ? 'to' : 'from'} plan`);
   renderTable(); computeAndRender();
 }
 function onTbodyDblClick(e){ onTbodyClick(e); }
 
-/* ========= Planning ========= */
+/* Planning */
 function getCandidates(useSel){
   const base=useSel? activeRows() : ROWS.filter(r=> STATUS_FILTER.has(statusKey(r["Transship Status"])));
   return base.map(r=>{
@@ -1134,44 +1132,53 @@ function evaluateSubset(sub,target,over){
   const totesShare = (totesUnits/units)*100;
   return {units, smallUnits, medUnits, largeUnits, w_small, w_med, w_large, overshoot, within, avgPS, casesUnits, totesUnits, casesShare, totesShare};
 }
+
+/* >>> FIXED comparators for max_cases/max_totes (now DESC by share) <<< */
 function greedyOrder(strategy, cand){
-  const distanceTo = (c, tgtSmall, tgtMed, tgtLarge) => {
-    return Math.sqrt((c.small-tgtSmall)**2 + (c.med-tgtMed)**2 + (c.large-tgtLarge)**2);
-  };
+  const safeShare = (num, den) => den>0 ? (num/den) : 0;
+  const distanceTo = (c, tgtSmall, tgtMed, tgtLarge) => Math.sqrt((c.small-tgtSmall)**2 + (c.med-tgtMed)**2 + (c.large-tgtLarge)**2);
   const arr=[...cand];
   switch(strategy){
     case 'ps_strict':
       return arr.sort((a,b)=> (b.ps-a.ps) || (b.units-a.units));
-    case 'max_cases':
+    case 'max_cases': {
       return arr.sort((a,b)=>{
-        const da=(a.casesUnits/a.units)-(b.casesUnits/b.units);
-        if(da!==0) return da>0?-1:1;
-        if(b.casesUnits!==a.casesUnits) return b.casesUnits-a.casesUnits;
-        return (b.ps-a.ps);
+        const as = safeShare(a.casesUnits, a.units);
+        const bs = safeShare(b.casesUnits, b.units);
+        if(bs !== as) return bs - as;                 // DESC by cases share ✅
+        if(b.casesUnits !== a.casesUnits) return b.casesUnits - a.casesUnits; // DESC by absolute cases units
+        if(b.ps !== a.ps) return b.ps - a.ps;         // DESC by PS
+        return b.units - a.units;                      // DESC by units
       });
-    case 'max_totes':
+    }
+    case 'max_totes': {
       return arr.sort((a,b)=>{
-        const da=(a.totesUnits/a.units)-(b.totesUnits/b.units);
-        if(da!==0) return da>0?-1:1;
-        if(b.totesUnits!==a.totesUnits) return b.totesUnits-a.totesUnits;
-        return (b.ps-a.ps);
+        const as = safeShare(a.totesUnits, a.units);
+        const bs = safeShare(b.totesUnits, b.units);
+        if(bs !== as) return bs - as;                 // DESC by totes share ✅
+        if(b.totesUnits !== a.totesUnits) return b.totesUnits - a.totesUnits; // DESC by absolute totes units
+        if(b.ps !== a.ps) return b.ps - a.ps;         // DESC by PS
+        return b.units - a.units;                      // DESC by units
       });
+    }
     case 'high_smalls':
       return arr.sort((a,b)=> (b.small-a.small) || (b.med-a.med) || (a.large-b.large) || (b.units-a.units));
     case 'high_mediums':
       return arr.sort((a,b)=> (b.med-a.med) || (b.small-a.small) || (a.large-b.large) || (b.units-a.units));
     case 'high_large':
       return arr.sort((a,b)=> (b.large-a.large) || (b.units-a.units));
-    case 'balance_60_39_0':
+    case 'balance_60_39_0': {
       return arr.sort((a,b)=>{
         const da=distanceTo(a,60,39,0)-distanceTo(b,60,39,0);
-        if(da!==0) return da<0?-1:1;
-        return (b.ps-a.ps);
+        if(da!==0) return da<0?-1:1;                 // closer to target first
+        return (b.ps-a.ps);                           // then higher PS
       });
+    }
     default:
       return arr.sort((a,b)=> (b.ps-a.ps) || (b.units-a.units));
   }
 }
+
 function isBetter(ev, bestEv, target){
   if(!bestEv) return true;
   if(ev.within && !bestEv.within) return true;
@@ -1209,21 +1216,16 @@ function buildPlanGreedy(strategy, target, over, cand){
   const ordered=greedyOrder(strategy, cand);
   const windowMin = target*(1-over), windowMax = target*(1+over);
   let picked=[], sum=0, best=null;
-
   const consider = (arr) => {
     const ev=evaluateSubset(arr, target, over);
     if(!ev) return;
-    if(isBetter(ev, best?.ev, target)){
-      best={sub:[...arr], ev};
-    }
+    if(isBetter(ev, best?.ev, target)) best={sub:[...arr], ev};
   };
-
   for(const c of ordered){
     picked.push(c); sum+=c.units;
     consider(picked);
     if(sum>=windowMin && sum<=windowMax) break;
   }
-
   if(best && !best.ev.within && picked.length>1){
     for(let i=picked.length-1;i>=0;i--){
       const trial=[...picked]; trial.splice(i,1);
@@ -1240,7 +1242,7 @@ function buildPlanSearch(strategy, target, over, cand){
     let best=null;
     const total=1<<n;
     for(let mask=1; mask<total; mask++){
-      const sub=[]; for(let i=0;i<n;i++) if(mask&(1<<i)) sub.push(cand[i]);
+      const sub=[]; for(let i=0; i<n; i++) if(mask&(1<<i)) sub.push(cand[i]);
       const ev=evaluateSubset(sub, target, over);
       const sc=scoreForStrategy(strategy, ev);
       if(!best || sc>best.score) best={sub,ev,score:sc};
@@ -1251,7 +1253,7 @@ function buildPlanSearch(strategy, target, over, cand){
   }
 }
 
-/* ========= Recommend & compare ========= */
+/* Recommend & compare */
 function recommendPlan(){
   const strategy = planStrategy.value || 'ps_strict';
   const target=Number(targetUnits.value)||0, over=(Number(allowedOver.value)||0)/100, useSel=!!useSelected.checked;
@@ -1266,7 +1268,7 @@ function recommendPlan(){
 
   const s=best.sub.slice().sort((a,b)=> (b.ps-a.ps) || String(a.VRID||"").localeCompare(String(b.VRID||"")));
   const lines=[]; const oversPct=(best.ev.overshoot*100);
-  lines.push(`TRAILER PLAN — Strategy: ${strategy.replaceAll('_',' ').toUpperCase()} | Mode: ${strictMode.checked?'STRICT-GREEDY':'BALANCED SEARCH'} | Target: ${fmtNumber(target)} units | Allowed deviation: ${document.getElementById('allowedOver').value}% (±)`);
+  lines.push(`TRAILER PLAN — Strategy: ${strategy.replaceAll('_',' ').toUpperCase()} | Mode: STRICT-GREEDY | Target: ${fmtNumber(target)} units | Allowed deviation: ${document.getElementById('allowedOver').value}% (±)`);
   lines.push(`Selected Units: ${fmtNumber(best.ev.units)}  (Deviation vs target: ${oversPct.toFixed(2)}%)`);
   lines.push(`Weighted PPR → Small: ${fmtPercent(best.ev.w_small)} (≈ ${fmtNumber(best.ev.smallUnits)} units), Medium: ${fmtPercent(best.ev.w_med)} (≈ ${fmtNumber(best.ev.medUnits)} units), Large: ${fmtPercent(best.ev.w_large)} (≈ ${fmtNumber(best.ev.largeUnits)} units)`);
   lines.push(`Workload split → Cases: ${fmtNumber(best.ev.casesUnits)} (${fmtPercent(best.ev.casesShare)} of plan) | Totes: ${fmtNumber(best.ev.totesUnits)} (${fmtPercent(best.ev.totesShare)} of plan)`);
@@ -1279,7 +1281,7 @@ function recommendPlan(){
 
   renderStrategySummary(strategy, best.ev);
   renderInspector(strategy, cand);
-  showToast(`Recommended plan using ${strictMode.checked?'STRICT':'SEARCH'} — ${strategy}`);
+  showToast(`Recommended plan using STRICT — ${strategy}`);
 }
 function compareStrategies(){
   const strategies = ["ps_strict","max_cases","max_totes","high_smalls","high_mediums","high_large","balance_60_39_0"];
@@ -1325,8 +1327,33 @@ function renderStrategySummary(strategy, ev){
     <div>Workload split → Cases: <b>${fmtPercent(ev.casesShare)}</b>, Totes: <b>${fmtPercent(ev.totesShare)}</b></div>
   `;
 }
+function renderInspector(strategy, cand){
+  const ordered = greedyOrder(strategy, cand).slice(0,10);
+  let html = `<table class="miniTable"><thead><tr>
+    <th>#</th><th>VRID</th><th>PS</th><th>Units</th><th>PPR S/M/L</th><th>Cases%</th><th>Totes%</th><th>Location</th><th>Sev</th>
+  </tr></thead><tbody>`;
+  let i=1;
+  for(const c of ordered){
+    const casesPct = c.units? (c.casesUnits/c.units*100) : 0;
+    const totesPct = c.units? (c.totesUnits/c.units*100) : 0;
+    const sevClass = c.sev==="RED"?"bad":(c.sev==="OK"?"ok":"warn");
+    html += `<tr>
+      <td>${i++}</td>
+      <td>${c.VRID}</td>
+      <td>${fmtScore(c.ps)}</td>
+      <td>${fmtNumber(c.units)}</td>
+      <td>${fmtPercent(c.small)} / ${fmtPercent(c.med)} / ${fmtPercent(c.large)}</td>
+      <td>${fmtPercent(casesPct)}</td>
+      <td>${fmtPercent(totesPct)}</td>
+      <td>${c.loc||''}</td>
+      <td><span class="badge ${sevClass}">${c.sev}</span></td>
+    </tr>`;
+  }
+  html += `</tbody></table>`;
+  document.getElementById("inspector").innerHTML = html;
+}
 
-/* ========= Scroll UX ========= */
+/* Scroll UX */
 function updateShadows(){
   const el=tblWrap; if(!el) return;
   const atStart = el.scrollLeft <= 1;
@@ -1379,34 +1406,210 @@ function initPanScroll(){
   updateShadows();
 }
 </script>
+
+  <script id="tpa_persist_v7">
+  (function(){
+    const KEY = "TrailerPlanAnalyzer_state_v7";
+    const get = (id)=>document.getElementById(id);
+    window.__TPA_RESTORING__ = false;
+
+    function selectedVRIDsFromRows(){
+      try{
+        if(!Array.isArray(window.ROWS)) return [];
+        const out=[];
+        for(const r of window.ROWS){ if(r && r._selected && r["VRID"]!=null) out.push(String(r["VRID"])); }
+        return out;
+      }catch(_e){ return []; }
+    }
+    function idxsFromVRIDs(vrids){
+      if(!Array.isArray(window.ROWS)||!Array.isArray(vrids)) return [];
+      const map = new Map();
+      window.ROWS.forEach((r,i)=>{ map.set(String(r["VRID"]), i); });
+      return vrids.map(v=> map.has(String(v)) ? map.get(String(v)) : -1).filter(i=> i>=0);
+    }
+
+    function saveState(reason){
+      if(window.__TPA_RESTORING__) return;
+      try{
+        const ids = ["workloadSource","hoursRange","hoursInput","rateRange","rateInput",
+                     "search","planStrategy","targetUnits","allowedOver","useSelected","strictMode"];
+        const form = {};
+        ids.forEach(id=>{
+          const el=get(id);
+          if(!el) return;
+          if(el.type==="checkbox") form[id]=!!el.checked;
+          else if(el.type==="file"){} else form[id]=el.value;
+        });
+        const lp = (typeof window.LAST_PLAN!=="undefined" && window.LAST_PLAN) ? window.LAST_PLAN : null;
+        const planVRIDs = (lp && Array.isArray(lp.idxs)) ? (lp.idxs.map(i=> (window.ROWS?.[i]?.VRID)).filter(v=>v!=null).map(String)) : [];
+
+        const state = {
+          form,
+          rows: (Array.isArray(window.ROWS)? window.ROWS : []),
+          isPercent: window.IS_PERCENT||{},
+          pctUnits: window.PCT_UNITS||{},
+          statusFilter: Array.from(window.STATUS_FILTER||[]),
+          sortBy: window.SORT_BY||null,
+          sortDir: window.SORT_DIR||'asc',
+          filters: Array.isArray(window.FILTERS)? window.FILTERS : [],
+          lastPlan: lp ? { strategy: lp.strategy||get("planStrategy")?.value||"", idxs: lp.idxs||[], ev: lp.ev||null, text: lp.text||"" } : null,
+          planOutput: get("planOutput")?.textContent || "",
+          strategySummaryHTML: get("strategySummary")?.innerHTML || "",
+          inspectorHTML: get("inspector")?.innerHTML || "",
+          trailerRaw: window.__TRAILER_RAW__ || "",
+          ymsRaw: window.__YMS_RAW__ || "",
+          selectedVRIDs: selectedVRIDsFromRows(),
+          planVRIDs
+        };
+        localStorage.setItem(KEY, JSON.stringify(state));
+      }catch(err){}
+    }
+
+    function restoreState(){
+      try{
+        const raw = localStorage.getItem(KEY);
+        if(!raw) return false;
+        const s = JSON.parse(raw);
+        window.__TPA_RESTORING__ = true;
+
+        // Rebuild from raw text if available
+        if(s.trailerRaw && typeof window.handleText === "function"){
+          window.handleText(s.trailerRaw);
+        }else{
+          window.ROWS = Array.isArray(s.rows)? s.rows : [];
+          window.IS_PERCENT = s.isPercent||{};
+          window.PCT_UNITS = s.pctUnits||{};
+        }
+        if(s.ymsRaw && typeof window.mergeStatusText==="function"){
+          window.mergeStatusText(s.ymsRaw);
+        }
+
+        // Restore globals & form
+        window.STATUS_FILTER = new Set(s.statusFilter||["INBOUND"]);
+        window.SORT_BY = s.sortBy||null;
+        window.SORT_DIR = s.sortDir||'asc';
+        window.FILTERS = Array.isArray(s.filters)? s.filters : [];
+        if(s.form){
+          Object.keys(s.form).forEach(id=>{
+            const el=get(id); if(!el) return;
+            if(el.type==="checkbox") el.checked = !!s.form[id];
+            else el.value = s.form[id];
+          });
+        }
+
+        // Apply selection strictly from saved VRIDs (and plan VRIDs). If we have any saved, clear others.
+        const haveSavedSel = Array.isArray(s.selectedVRIDs) && s.selectedVRIDs.length>0;
+        const havePlanSel  = Array.isArray(s.planVRIDs) && s.planVRIDs.length>0;
+        if((haveSavedSel || havePlanSel) && Array.isArray(window.ROWS)){
+          const selSet = new Set((s.selectedVRIDs||[]).map(String));
+          const planSet = new Set((s.planVRIDs||[]).map(String));
+          window.ROWS.forEach(r=>{ if(r) r._selected = false; }); // clear default ALL selected
+          window.ROWS.forEach(r=>{
+            if(!r) return;
+            const v=String(r["VRID"]);
+            if(selSet.has(v) || planSet.has(v)) r._selected = true;
+          });
+        }
+
+        // Rebuild LAST_PLAN idxs from planVRIDs if provided
+        if(s.lastPlan){
+          window.LAST_PLAN = s.lastPlan;
+          if(havePlanSel && Array.isArray(window.ROWS)){
+            const idxs = idxsFromVRIDs(s.planVRIDs);
+            window.LAST_PLAN.idxs = idxs;
+          }
+        }else{
+          window.LAST_PLAN = null;
+        }
+
+        // Render and restore views
+        if(typeof renderFilterChips==="function") renderFilterChips();
+        if(typeof computeAndRender==="function") computeAndRender();
+        if(typeof renderTable==="function") renderTable();
+
+        if(s.planOutput){ const po=get("planOutput"); if(po) po.textContent = s.planOutput; }
+        if(s.strategySummaryHTML){ const ss=get("strategySummary"); if(ss) ss.innerHTML = s.strategySummaryHTML; }
+        if(s.inspectorHTML){ const ins=get("inspector"); if(ins) ins.innerHTML = s.inspectorHTML; }
+
+        window.__TPA_RESTORING__ = false;
+        return true;
+      }catch(e){
+        window.__TPA_RESTORING__ = false;
+        return false;
+      }
+    }
+
+    // Delegated handlers to ensure saving selection changes and VRID copy
+    function hookDelegates(){
+      document.addEventListener("click", function(ev){
+        const chk = ev.target.closest(".rowChk");
+        if(chk){ setTimeout(function(){ saveState("rowChk"); }, 0); }
+        const planCell = ev.target.closest(".planCell");
+        if(planCell){ setTimeout(function(){ saveState("planCell"); }, 0); }
+        const vridBtn = ev.target.closest(".vridBtn");
+        if(vridBtn){
+          const vrid = vridBtn.getAttribute("data-vrid") || vridBtn.textContent.trim();
+          if(navigator.clipboard && vrid){
+            navigator.clipboard.writeText(vrid);
+          }
+          // quick toast if available
+          if(typeof window.showToast === "function") window.showToast("Copied VRID " + vrid);
+        }
+      }, {passive:true});
+    }
+
+    function wrapRaw(name, rawSinkName){
+      const fn = window[name];
+      if(typeof fn!=="function") return;
+      window[name] = function(arg){
+        if(typeof arg === "string"){ window[rawSinkName] = arg; }
+        if(window.__TPA_RESTORING__) return fn.apply(this, arguments);
+        try{ return fn.apply(this, arguments); }
+        finally{ try{ saveState(name); }catch(_e){} }
+      }
+    }
+    function wrapSave(name){
+      const fn = window[name];
+      if(typeof fn!=="function") return;
+      window[name] = function(){
+        if(window.__TPA_RESTORING__) return fn.apply(this, arguments);
+        try{ return fn.apply(this, arguments); }
+        finally{ try{ saveState(name); }catch(_e){} }
+      };
+    }
+
+    function hookReset(){
+      const btn = get("btnReset");
+      if(!btn) return;
+      btn.addEventListener("click", function(){
+        try{ localStorage.removeItem(KEY); }catch(_e){}
+        setTimeout(saveState, 80);
+      });
+    }
+
+    function hookInputs(){
+      const sel = "input:not([type=file]), select, textarea";
+      document.querySelectorAll(sel).forEach(el=>{
+        el.addEventListener("change", function(){ saveState("change"); }, {passive:true});
+        el.addEventListener("input",  function(){ saveState("input");  }, {passive:true});
+      });
+    }
+
+    function init(){
+      wrapRaw("handleText","__TRAILER_RAW__");
+      wrapRaw("mergeStatusText","__YMS_RAW__");
+      ["computeAndRender","renderTable","compareStrategies","renderStrategySummary","recommendPlan","applyPlan"]
+        .forEach(wrapSave);
+      hookDelegates();
+      hookReset();
+      hookInputs();
+      restoreState();
+      saveState("init");
+    }
+    if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", init);
+    else init();
+  })();
+  </script>
+
 </body>
 </html>
-<!-- Floating badges -->
-<style>
-  .visit-badge {
-    position: fixed;
-    left: 10px;
-    font-weight: 700;
-    background: rgba(0,0,0,0.5);
-    padding: 6px 10px;
-    border-radius: 8px;
-    z-index: 9999;
-    max-width: 90vw;
-    backdrop-filter: saturate(140%) blur(2px);
-  }
-  #visitInfo { top: 10px; }
-  #countryStats { top: 46px; }
-</style>
-
-<div id="visitInfo" class="visit-badge">👁️ Total Visits: Loading...</div>
-<div id="countryStats" class="visit-badge">🌍 Top Countries: Loading...</div>
-
-<!-- Shared module -->
-<script src="/assets/js/visits.js"></script>
-<script>
-  PBHVisits.attach({
-    totalSelector: '#visitInfo',
-    countriesSelector: '#countryStats',
-    increment: true  // count visits here too
-  });
-</script>
