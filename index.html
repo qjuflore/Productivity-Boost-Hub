@@ -6,7 +6,6 @@
   <title>🚀 Productivity Boost Hub</title>
   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
-  <script src="assets/js/visits.js"></script>
   <style>
     :root {
       --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
@@ -96,6 +95,33 @@
     .section { display: none; }
     .section.active { display: block; }
 
+    .category {
+      background: var(--card-bg);
+      margin-bottom: 1rem;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .category-header {
+      padding: 1rem;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.07);
+    }
+
+    .category-content {
+      display: none;
+      padding: 1rem;
+      white-space: pre-wrap;
+      border-top: 1px solid var(--border);
+    }
+
+    .visible { display: block; }
+
     .copy-btn {
       background: var(--button-bg);
       color: var(--button-text);
@@ -139,6 +165,8 @@
     .icon-btn { background: transparent; border:1px solid var(--border); border-radius: 10px; padding:.45rem .6rem; color: var(--text); cursor: pointer; }
     .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
     .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
+
+    /* Open más visible en MasterTools */
     .tool-link {
       background: var(--accent);
       color: #000 !important;
@@ -151,6 +179,7 @@
     }
     .tool-link:hover { transform: scale(1.05); }
 
+    /* Barras de búsqueda unificadas */
     .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch {
       margin-bottom: 1rem;
       padding: 0.7rem 1rem;
@@ -176,7 +205,7 @@
   <div class="controls">
     <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
     <button class="btn" onclick="loadReports()">↻ Refresh</button>
-    <div id="visitInfo">👁️ Total Visits: Loading...</div>
+    <div id="visitInfo" onclick="toggleCountryStats()">👁️ Total Visits: Loading...</div>
     <div id="countryStats"></div>
   </div>
 
@@ -199,6 +228,7 @@
     <div id="scriptContainer"></div>
   </div>
 
+  <!-- MasterTools -->
   <div id="mastertools" class="section">
     <input type="text" id="masterSearch" placeholder="🔍 Search MasterTools..." class="search">
     <div class="grid" id="masterGrid" style="margin-top:.8rem"></div>
@@ -207,8 +237,53 @@
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
   <script src="script.js"></script>
-  <!-- Visits module (shared across index and tools) -->
-  <script src="assets/js/visits.js"></script>
+
+  <!-- Parche: asegurar que MasterTools también quede seleccionado visualmente -->
+  <script>
+    (function(){
+      const tabs = document.querySelectorAll('.tab');
+      const sections = document.querySelectorAll('.section');
+
+      function setActiveTab(id){
+        // Mostrar sección activa
+        sections.forEach(s => s.classList.toggle('active', s.id === id));
+        // Poner .active en la tab correspondiente
+        tabs.forEach(t => {
+          const isTarget = (t.textContent.includes('Share Reports') && id==='reports')
+                        || (t.textContent.includes('Problem Solve Guide') && id==='guide')
+                        || (t.textContent.includes('Tampermonkey Scripts') && id==='scripts')
+                        || (t.textContent.includes('MasterTools') && id==='mastertools');
+          t.classList.toggle('active', isTarget);
+        });
+        // Persistir en URL y localStorage
+        try{
+          localStorage.setItem('pb.activeTab', id);
+          const u = new URL(location.href);
+          u.searchParams.set('tab', id);
+          u.hash = '#'+id;
+          history.replaceState(null,'',u);
+        }catch(e){}
+      }
+
+      // Extender showSection existente (si lo tienes en script.js)
+      const original = window.showSection;
+      window.showSection = function(id){
+        if(typeof original === 'function'){ try{ original(id); }catch(e){} }
+        setActiveTab(id);
+      };
+
+      // Selección inicial (respetando lo que ya esté activo)
+      const activeNow = document.querySelector('.section.active');
+      const initialId = (activeNow && activeNow.id)
+        || new URL(location.href).searchParams.get('tab')
+        || (location.hash||'').slice(1)
+        || localStorage.getItem('pb.activeTab')
+        || 'reports';
+      setActiveTab(initialId);
+    })();
+  </script>
+
+  <!-- Lógica MasterTools -->
   <script>
     const LS_FAVS = 'pb.master.favorites';
     const tools = [
@@ -254,7 +329,7 @@
             await navigator.clipboard.writeText(url);
             const old = copyBtn.textContent; copyBtn.textContent='✔';
             setTimeout(()=>copyBtn.textContent=old, 900);
-          }catch(e){ }
+          }catch(e){ /* ignore */ }
         });
 
         wrap.appendChild(card);
@@ -273,64 +348,6 @@
     }
 
     renderMasterTools();
-
-    (function(){
-      const tabs = document.querySelectorAll('.tab');
-      const sections = document.querySelectorAll('.section');
-      function setActiveTab(id){
-        sections.forEach(s => s.classList.toggle('active', s.id === id));
-        tabs.forEach(t => {
-          const isTarget = (t.textContent.includes('Share Reports') && id==='reports')
-                        || (t.textContent.includes('Problem Solve Guide') && id==='guide')
-                        || (t.textContent.includes('Tampermonkey Scripts') && id==='scripts')
-                        || (t.textContent.includes('MasterTools') && id==='mastertools');
-          t.classList.toggle('active', isTarget);
-        });
-      }
-      const original = window.showSection;
-      window.showSection = function(id){
-        if(typeof original === 'function'){ try{ original(id); }catch(e){} }
-        setActiveTab(id);
-      };
-    })();
-
-    // Attach PBHVisits so all tool pages increment counts
-    document.addEventListener('DOMContentLoaded', ()=>{
-      if(window.PBHVisits){
-        window.PBHVisits.attach({ totalSelector:'#visitInfo', countriesSelector:'#countryStats', increment:true });
-      }
-    });
-  </script>
-  <script>
-    // Render visits total & countries using PBHVisits module. Works on direct tool links too
-    (function(){
-      var totalEl = document.getElementById('visitInfo');
-      var countriesEl = document.getElementById('countryStats');
-      function fmt(n){ n = String(n||'0').replace(/[^0-9]/g,''); return Number(n||0).toLocaleString(); }
-      function renderFromStorage(){
-        var raw = localStorage.getItem('pbh.totalVisits')||'0';
-        if (totalEl) totalEl.textContent = '👁️ Total Visits: ' + fmt(raw);
-        try {
-          var top = JSON.parse(localStorage.getItem('pbh.countryTop')||'[]');
-          if (countriesEl) countriesEl.textContent = top.map(function(p){return p[0] + ' ' + fmt(p[1]);}).join(' · ');
-        } catch (e) {}
-      }
-      renderFromStorage();
-      if (window.PBHVisits && typeof window.PBHVisits.attach==='function'){
-        window.PBHVisits.attach({ totalSelector:'#visitInfo', countriesSelector:'#countryStats', increment:true })
-          .then(renderFromStorage)
-          .catch(renderFromStorage);
-      }
-      if (totalEl && countriesEl){
-        totalEl.addEventListener('click', function(){
-          var s = getComputedStyle(countriesEl).display;
-          countriesEl.style.display = (!s || s==='none') ? 'inline' : 'none';
-        });
-      }
-      window.addEventListener('storage', function(e){
-        if (e.key==='pbh.totalVisits' || e.key==='pbh.countryTop') renderFromStorage();
-      });
-    })();
   </script>
 </body>
 </html>
