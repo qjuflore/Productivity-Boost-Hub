@@ -165,11 +165,16 @@
     .icon-btn { background: transparent; border:1px solid var(--border); border-radius: 10px; padding:.45rem .6rem; color: var(--text); cursor: pointer; }
     .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
     .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
-  </style>
-  <style id="patch-modern">
-    /* Modern accessibility & focus visuals (non-breaking) */
-    .tab:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,255,247,.35); }
-    .tab[aria-selected="true"] { background: var(--accent); color: #000; box-shadow: var(--button-glow); }
+    /* Make OPEN button more visible */
+    .tool-link {
+      background: var(--accent);
+      color: #000 !important;
+      font-weight: 900;
+      border: none;
+      box-shadow: var(--button-glow);
+      transition: transform .2s ease;
+    }
+    .tool-link:hover { transform: scale(1.05); }
   </style>
 </head>
 <body>
@@ -282,67 +287,6 @@
     }
 
     renderMasterTools();
-  </script>
-  <script>
-    // --- Patch: robust tab selection + persistence (keeps old behavior) ---
-    (function(){
-      const qs=(s,r=document)=>r.querySelector(s); const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
-      // Map tabs to ids by reading their onclick("showSection('<id>')")
-      const tabs = qsa('.tabs .tab');
-      const tabMap = new Map();
-      tabs.forEach(tab=>{
-        const on = tab.getAttribute('onclick')||'';
-        const m = on.match(/showSection\(['\"]([a-z0-9_-]+)['\"]\)/i);
-        if(m){ tab.dataset.tabid = m[1]; tab.setAttribute('role','tab'); tab.setAttribute('aria-controls', m[1]); }
-      });
-      const sections = qsa('.section');
-      const tablist = qs('.tabs'); if(tablist) tablist.setAttribute('role','tablist');
-
-      function setActiveVisual(id){
-        // section visibility (fallback if original didn't)
-        sections.forEach(s=> s.classList.toggle('active', s.id===id));
-        // tab active state
-        tabs.forEach(t=>{
-          const sel = (t.dataset.tabid===id);
-          t.classList.toggle('active', sel);
-          t.setAttribute('aria-selected', sel? 'true':'false');
-        });
-        // persist + URL
-        try{
-          localStorage.setItem('pb.activeTab', id);
-          const u=new URL(location.href); u.searchParams.set('tab', id); u.hash = '#'+id; history.replaceState(null,'',u);
-        }catch{}
-      }
-
-      // Keep original showSection, extend it with our visual sync
-      const original = window.showSection;
-      window.showSection = function(id){
-        if(typeof original === 'function'){ try{ original(id); }catch(e){} }
-        setActiveVisual(id);
-      };
-
-      // Keyboard support without changing existing markup
-      tabs.forEach((t, idx)=>{
-        t.setAttribute('tabindex','0');
-        t.addEventListener('keydown', (e)=>{
-          if(e.key==='Enter' || e.key===' '){ e.preventDefault(); window.showSection(t.dataset.tabid); }
-          if(e.ctrlKey && (e.key==='ArrowRight' || e.key==='ArrowLeft')){
-            e.preventDefault();
-            const arr=tabs; const next = e.key==='ArrowRight' ? (idx+1)%arr.length : (idx-1+arr.length)%arr.length;
-            arr[next].focus(); window.showSection(arr[next].dataset.tabid);
-          }
-        });
-      });
-
-      // Initial activation: ?tab=, #hash, or saved
-      const init = (function(){
-        const u = new URL(location.href);
-        return u.searchParams.get('tab') || (location.hash||'').replace('#','') || localStorage.getItem('pb.activeTab') || 'reports';
-      })();
-      // If current DOM already shows another active section, respect it; else apply init
-      const activeNow = qsa('.section.active')[0]?.id;
-      setActiveVisual(activeNow || init);
-    })();
   </script>
 </body>
 </html>
