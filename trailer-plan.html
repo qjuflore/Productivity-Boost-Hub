@@ -1381,3 +1381,31 @@ function initPanScroll(){
 </script>
 </body>
 </html>
+<!-- Place this where you want the total visits to appear -->
+<div id="visitInfo" style="margin: 1rem 0; font-weight: 700;">👁️ Total Visits: Loading...</div>
+
+<!-- Place this near the end of the body -->
+<script>
+  (function showSharedVisits(){
+    const el = document.getElementById('visitInfo');
+    if (!el) return;
+
+    function render(n){
+      const num = Number(String(n || '0').replace(/[^\d]/g, '')).toLocaleString();
+      el.textContent = `👁️ Total Visits: ${num}`;
+    }
+
+    // Initial paint from localStorage
+    const raw = localStorage.getItem('pbh.totalVisits');
+    if (raw) {
+      render(raw);
+    } else {
+      // Optional fallback: render(0);
+    }
+
+    // Sync if the value changes in another tab/window
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'pbh.totalVisits' && e.newValue) render(e.newValue);
+    });
+  })();
+</script>
