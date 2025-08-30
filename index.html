@@ -12,12 +12,18 @@
       --card-bg: rgba(255, 255, 255, 0.05);
       --border: rgba(255, 255, 255, 0.1);
       --accent: #00fff7;
+      --accent-2: #9ef5ff;
       --text: #e0f7fa;
+      --muted: #b7dfe6;
       --text-glow: 0 0 5px #00fff7;
       --button-bg: #00fff7;
       --button-text: #000;
       --button-glow: 0 0 10px #00fff7;
+      --focus: 0 0 0 3px rgba(0, 255, 247, 0.35);
+      --radius: 14px;
     }
+
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -47,6 +53,7 @@
       display: flex;
       gap: 1rem;
       margin-bottom: 1rem;
+      flex-wrap: wrap;
     }
 
     .tab {
@@ -83,9 +90,7 @@
       transition: transform 0.2s ease;
     }
 
-    .btn:hover {
-      transform: scale(1.05);
-    }
+    .btn:hover { transform: scale(1.05); }
 
     .section { display: none; }
     .section.active { display: block; }
@@ -151,18 +156,20 @@
     .submit-card a { color: var(--accent); font-weight: bold; text-decoration: none; }
     .submit-card a:hover { text-decoration: underline; }
 
-    /* === Added minimal styles for MasterTools (non-breaking) === */
-    .mt-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .8rem; }
-    .mt-card { border:1px solid var(--border); background: var(--card-bg); border-radius: 12px; padding: .9rem; display:flex; flex-direction:column; gap:.7rem; }
-    .mt-card h3 { margin:0; font-size:1rem; color: #9ef5ff; }
-    .mt-card p { margin:0; color: #b7dfe6; font-size:.92rem; min-height: 2.2em; }
-    .mt-row { display:flex; gap:.5rem; flex-wrap: wrap; }
-    .mt-link, .mt-btn { display:inline-flex; align-items:center; gap:.4rem; text-decoration:none; font-weight:800; border-radius:10px; padding:.45rem .6rem; cursor:pointer; }
-    .mt-link { color: var(--accent); border: 1px solid var(--border); background: var(--card-bg); }
-    .mt-link:hover { box-shadow: 0 0 10px #00fff7; }
-    .mt-btn { background: transparent; border:1px solid var(--border); color:#e0f7fa; }
-    .mt-btn:hover { box-shadow: 0 0 10px #00fff7; }
-    .mt-fav[aria-pressed="true"] { border-color: #00fff7; box-shadow: 0 0 10px #00fff7; }
+    /* MasterTools */
+    .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .8rem; }
+    .card { border:1px solid var(--border); background: var(--card-bg); border-radius: var(--radius); padding: .9rem; display:flex; flex-direction:column; gap:.7rem; }
+    .card h3 { margin:0; font-size:1rem; color: var(--accent-2); }
+    .card p { margin:0; color: var(--muted); font-size:.92rem; min-height: 2.2em; }
+    .card .row { display:flex; gap:.5rem; }
+    .icon-btn { background: transparent; border:1px solid var(--border); border-radius: 10px; padding:.45rem .6rem; color: var(--text); cursor: pointer; }
+    .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
+    .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
+  </style>
+  <style id="patch-modern">
+    /* Modern accessibility & focus visuals (non-breaking) */
+    .tab:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,255,247,.35); }
+    .tab[aria-selected="true"] { background: var(--accent); color: #000; box-shadow: var(--button-glow); }
   </style>
 </head>
 <body>
@@ -172,7 +179,6 @@
     <div class="tab active" onclick="showSection('reports')">📊 Share Reports</div>
     <div class="tab" onclick="showSection('guide')">🧩 Problem Solve Guide</div>
     <div class="tab" onclick="showSection('scripts')">🧠 Tampermonkey Scripts</div>
-    <!-- Added MasterTools tab without altering existing behavior -->
     <div class="tab" onclick="showSection('mastertools')">🧰 MasterTools</div>
   </div>
 
@@ -202,88 +208,141 @@
     <div id="scriptContainer"></div>
   </div>
 
-  <!-- === New MasterTools section (favorites + copy link + search) === -->
+  <!-- MasterTools -->
   <div id="mastertools" class="section">
-    <input type="text" id="masterSearch" placeholder="🔍 Search MasterTools..." style="margin-bottom: 1rem; padding: 0.5rem; width: 100%; border-radius: 10px; border: none;">
-    <div id="masterGrid" class="mt-grid"></div>
+    <input type="text" id="masterSearch" placeholder="🔍 Search MasterTools..." class="search">
+    <div class="grid" id="masterGrid" style="margin-top:.8rem"></div>
   </div>
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
   <script src="script.js"></script>
-
-  <!-- Minimal, isolated script for MasterTools only (does not modify other sections) -->
   <script>
-  (function(){
-    // Avoid interfering with existing code: namespaced constants
-    const LS_KEY = 'pb.master.favorites';
-    const $ = (s, r=document)=>r.querySelector(s);
-    const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
-
+    // MasterTools logic
+    const LS_FAVS = 'pb.master.favorites';
     const tools = [
-      { id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'trailer-plan.html', desc:'Plan injection, density & severity attributes for trailers.' },
-      // Add more tools here
+      {id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'trailer-plan.html', desc:'Plan injection, density & severity attributes for trailers.'}
     ];
 
-    const getFavs = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { return []; } };
-    const setFavs = (arr) => localStorage.setItem(LS_KEY, JSON.stringify(arr));
-    const isFav  = (id) => getFavs().includes(id);
+    const getFavs = () => { try { return JSON.parse(localStorage.getItem(LS_FAVS) || '[]'); } catch { return []; } };
+    const setFavs = (arr) => localStorage.setItem(LS_FAVS, JSON.stringify(arr));
+    const isFav = (id) => getFavs().includes(id);
 
     function toggleFav(id){
       const favs = new Set(getFavs());
-      favs.has(id) ? favs.delete(id) : favs.add(id);
+      if (favs.has(id)) favs.delete(id); else favs.add(id);
       setFavs([...favs]);
-      render();
+      renderMasterTools();
     }
 
-    function card(t){
-      const el = document.createElement('div');
-      el.className = 'mt-card';
-      el.dataset.id = t.id;
-      el.innerHTML = `
-        <h3>${t.icon} ${t.name}</h3>
-        <p>${t.desc||''}</p>
-        <div class="mt-row">
-          <a class="mt-link" href="${t.href}" target="_blank" rel="noopener">Open</a>
-          <button class="mt-btn mt-fav" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
-          <button class="mt-btn mt-copy" title="Copy link">⧉</button>
-        </div>`;
-      const favBtn = el.querySelector('.mt-fav');
-      favBtn.addEventListener('click', ()=> toggleFav(t.id));
-      const copyBtn = el.querySelector('.mt-copy');
-      copyBtn.addEventListener('click', async ()=>{
-        try{
-          const url = new URL(t.href, location.href).href;
-          await navigator.clipboard.writeText(url);
-          const prev = copyBtn.textContent; copyBtn.textContent='✔'; setTimeout(()=>copyBtn.textContent=prev, 900);
-        }catch(e){}
-      });
-      return el;
+    function renderMasterTools(){
+      const wrap=document.getElementById('masterGrid');
+      if(!wrap) return;
+      wrap.innerHTML='';
+      const data=[...tools];
+      data.sort((a,b)=> (isFav(b.id)-isFav(a.id)) || a.name.localeCompare(b.name));
+      for(const t of data){
+        const card=document.createElement('div');
+        card.className='card';
+        card.dataset.id=t.id;
+        card.innerHTML=`<h3>${t.icon} ${t.name}</h3>
+          <p>${t.desc||''}</p>
+          <div class="row">
+            <a class="tool-link" href="${t.href}" target="_blank" rel="noopener">Open</a>
+            <button class="icon-btn favorite" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
+            <button class="icon-btn copy-btn" title="Copy link">⧉</button>
+          </div>`;
+
+        const favBtn = card.querySelector('.favorite');
+        favBtn.addEventListener('click', ()=> toggleFav(t.id));
+
+        const copyBtn = card.querySelector('.copy-btn');
+        copyBtn.addEventListener('click', async ()=>{
+          try{
+            const url = new URL(t.href, location.href).href;
+            await navigator.clipboard.writeText(url);
+            const old = copyBtn.textContent; copyBtn.textContent='✔';
+            setTimeout(()=>copyBtn.textContent=old, 900);
+          }catch(e){ /* ignore */ }
+        });
+
+        wrap.appendChild(card);
+      }
     }
 
-    function render(){
-      const grid = document.getElementById('masterGrid');
-      if(!grid) return;
-      grid.innerHTML = '';
-      const data = tools.slice().sort((a,b)=> (isFav(b.id)-isFav(a.id)) || a.name.localeCompare(b.name));
-      for(const t of data) grid.appendChild(card(t));
-    }
-
-    // Search
-    const search = document.getElementById('masterSearch');
-    if(search){
-      search.addEventListener('input', ()=>{
-        const q = search.value.trim().toLowerCase();
-        $$('#masterGrid .mt-card').forEach(c=>{
-          const txt = c.textContent.toLowerCase();
-          c.style.display = q ? (txt.includes(q) ? '' : 'none') : '';
+    const masterSearch = document.getElementById('masterSearch');
+    if(masterSearch){
+      masterSearch.addEventListener('input', ()=>{
+        const q = masterSearch.value.trim().toLowerCase();
+        document.querySelectorAll('#masterGrid .card').forEach(card=>{
+          const txt = card.textContent.toLowerCase();
+          card.style.display = q ? (txt.includes(q) ? '' : 'none') : '';
         });
       });
     }
 
-    // Initial render
-    render();
-  })();
+    renderMasterTools();
+  </script>
+  <script>
+    // --- Patch: robust tab selection + persistence (keeps old behavior) ---
+    (function(){
+      const qs=(s,r=document)=>r.querySelector(s); const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
+      // Map tabs to ids by reading their onclick("showSection('<id>')")
+      const tabs = qsa('.tabs .tab');
+      const tabMap = new Map();
+      tabs.forEach(tab=>{
+        const on = tab.getAttribute('onclick')||'';
+        const m = on.match(/showSection\(['\"]([a-z0-9_-]+)['\"]\)/i);
+        if(m){ tab.dataset.tabid = m[1]; tab.setAttribute('role','tab'); tab.setAttribute('aria-controls', m[1]); }
+      });
+      const sections = qsa('.section');
+      const tablist = qs('.tabs'); if(tablist) tablist.setAttribute('role','tablist');
+
+      function setActiveVisual(id){
+        // section visibility (fallback if original didn't)
+        sections.forEach(s=> s.classList.toggle('active', s.id===id));
+        // tab active state
+        tabs.forEach(t=>{
+          const sel = (t.dataset.tabid===id);
+          t.classList.toggle('active', sel);
+          t.setAttribute('aria-selected', sel? 'true':'false');
+        });
+        // persist + URL
+        try{
+          localStorage.setItem('pb.activeTab', id);
+          const u=new URL(location.href); u.searchParams.set('tab', id); u.hash = '#'+id; history.replaceState(null,'',u);
+        }catch{}
+      }
+
+      // Keep original showSection, extend it with our visual sync
+      const original = window.showSection;
+      window.showSection = function(id){
+        if(typeof original === 'function'){ try{ original(id); }catch(e){} }
+        setActiveVisual(id);
+      };
+
+      // Keyboard support without changing existing markup
+      tabs.forEach((t, idx)=>{
+        t.setAttribute('tabindex','0');
+        t.addEventListener('keydown', (e)=>{
+          if(e.key==='Enter' || e.key===' '){ e.preventDefault(); window.showSection(t.dataset.tabid); }
+          if(e.ctrlKey && (e.key==='ArrowRight' || e.key==='ArrowLeft')){
+            e.preventDefault();
+            const arr=tabs; const next = e.key==='ArrowRight' ? (idx+1)%arr.length : (idx-1+arr.length)%arr.length;
+            arr[next].focus(); window.showSection(arr[next].dataset.tabid);
+          }
+        });
+      });
+
+      // Initial activation: ?tab=, #hash, or saved
+      const init = (function(){
+        const u = new URL(location.href);
+        return u.searchParams.get('tab') || (location.hash||'').replace('#','') || localStorage.getItem('pb.activeTab') || 'reports';
+      })();
+      // If current DOM already shows another active section, respect it; else apply init
+      const activeNow = qsa('.section.active')[0]?.id;
+      setActiveVisual(activeNow || init);
+    })();
   </script>
 </body>
 </html>
