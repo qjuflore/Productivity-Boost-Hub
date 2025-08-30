@@ -46,414 +46,268 @@
       animation: fadeInUp .9s ease-out;
     }
 
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px);} to { opacity: 1; transform: translateY(0);} }
 
-    .topbar {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: .75rem;
-      margin-bottom: 1rem;
-    }
+    .topbar { display: grid; gap: .75rem; margin-bottom: 1rem; }
 
     /* Tabs */
-    .tabs {
-      display: flex;
-      gap: .6rem;
-      flex-wrap: wrap;
-    }
-
-    .tab {
-      -webkit-tap-highlight-color: transparent;
-      padding: .55rem 0.9rem;
-      border-radius: var(--radius);
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      transition: transform .15s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
-      user-select: none;
-      font-weight: 700;
-    }
-    .tab[aria-selected="true"], .tab.active { background: var(--accent); color: #111; box-shadow: var(--button-glow); border-color: transparent; }
-    .tab:focus-visible { outline: none; box-shadow: var(--focus); }
+    .tabs { display: flex; gap: .6rem; flex-wrap: wrap; }
+    .tab { padding: .55rem .9rem; border-radius: var(--radius); background: var(--card-bg); border: 1px solid var(--border); cursor: pointer; font-weight: 700; transition: 0.2s; }
+    .tab.active { background: var(--accent); color: #111; box-shadow: var(--button-glow); border-color: transparent; }
 
     /* Controls */
-    .controls {
-      display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
-    }
-    .btn {
-      background: var(--button-bg);
-      color: var(--button-text);
-      padding: .55rem .9rem;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 800;
-      box-shadow: var(--button-glow);
-      transition: transform .12s ease, filter .2s ease;
-    }
+    .controls { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+    .btn { background: var(--button-bg); color: var(--button-text); padding: .55rem .9rem; border: none; border-radius: 10px; cursor: pointer; font-weight: 800; box-shadow: var(--button-glow); transition: transform .12s ease; }
     .btn:hover { transform: translateY(-1px); }
     .btn.secondary { background: transparent; color: var(--accent-2); border: 1px solid var(--border); box-shadow: none; }
-
     .pill { font-size: .95rem; padding:.45rem .7rem; background: var(--card-bg); border:1px solid var(--border); border-radius: 999px; }
 
     /* Sections */
     .section { display: none; }
     .section.active { display: block; }
 
-    /* Category accordion */
-    .category {
-      background: var(--card-bg);
-      margin-bottom: .8rem;
-      border-radius: var(--radius);
-      overflow: hidden;
-      border: 1px solid var(--border);
-    }
-    .category-header {
-      padding: .9rem 1rem;
-      font-size: 1.05rem;
-      cursor: pointer;
-      display: flex; justify-content: space-between; align-items: center;
-      background-color: rgba(255,255,255,.07);
-      gap: .8rem;
-    }
-    .category-content { display: none; padding: .9rem 1rem; border-top: 1px solid var(--border); }
-    .category.open .category-content { display: block; }
-
-    /* Inputs */
-    .search {
-      width: 100%;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--card-bg);
-      padding: .7rem .9rem;
-      color: var(--text);
-      outline: none;
-    }
+    .search { width: 100%; border-radius: 12px; border: 1px solid var(--border); background: var(--card-bg); padding: .7rem .9rem; color: var(--text); outline: none; }
     .search:focus { box-shadow: var(--focus); }
 
-    /* Simple tool list (legacy) */
-    .tool-list { list-style:none; padding-left:0; margin: .6rem 0 0 0; display:grid; gap:.6rem; }
-    .tool-link {
-      display:inline-flex; align-items:center; gap:.5rem;
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 800;
-      padding: .6rem .8rem;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--card-bg);
-      transition: box-shadow .2s ease, transform .1s ease, border-color .2s ease;
-    }
-    .tool-link:hover { border-color: var(--accent); box-shadow: var(--button-glow); transform: translateY(-1px); }
-
-    /* NEW: MasterTools grid cards */
+    /* Grid + Cards */
     .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .8rem; }
     .card { border:1px solid var(--border); background: var(--card-bg); border-radius: var(--radius); padding: .9rem; display:flex; flex-direction:column; gap:.7rem; }
     .card h3 { margin:0; font-size:1rem; color: var(--accent-2); }
     .card p { margin:0; color: var(--muted); font-size:.92rem; min-height: 2.2em; }
-    .card .row { display:flex; gap:.5rem; }
-    .icon-btn { background: transparent; border:1px solid var(--border); border-radius: 10px; padding:.45rem .6rem; color: var(--text); cursor: pointer; }
+    .row { display:flex; gap:.5rem; flex-wrap: wrap; }
+    .tool-link, .icon-btn { display:inline-flex; align-items:center; gap:.5rem; text-decoration:none; font-weight:800; border-radius:10px; padding:.45rem .6rem; cursor:pointer; }
+    .tool-link { color: var(--accent); border: 1px solid var(--border); background: var(--card-bg); }
+    .tool-link:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
+    .icon-btn { background: transparent; border:1px solid var(--border); color: var(--text); }
     .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
     .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
 
-    .footer {
-      margin-top: auto; text-align: center; font-size: .9rem; padding: 1rem; color: #b9dfe6;
-    }
+    .footer { margin-top: auto; text-align: center; font-size: .9rem; padding: 1rem; color: #b9dfe6; }
 
-    #visitInfo { cursor: pointer; font-size: 1rem; }
-    #countryStats { font-size:.95rem; color: var(--muted); }
+    /* Options menu */
+    .menu { position: relative; display: inline-block; }
+    .menu-btn { background: transparent; border:1px solid var(--border); border-radius:10px; padding:.45rem .6rem; color: var(--text); cursor:pointer; }
+    .menu-list { position:absolute; right:0; margin-top:.4rem; min-width:220px; background: var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:.4rem; display:none; z-index:10; }
+    .menu.open .menu-list { display:block; }
+    .menu-item { padding:.5rem .6rem; border-radius:8px; cursor:pointer; }
+    .menu-item:hover { background: rgba(255,255,255,.07); }
+
+    /* Preview drawer */
+    .preview { position: fixed; top:0; right:-420px; width:min(420px, 94vw); height:100vh; background:#08161c; border-left:1px solid var(--border); box-shadow: -8px 0 24px rgba(0,0,0,.25); transition:right .22s ease; z-index: 50; display:flex; flex-direction:column; }
+    .preview.open { right:0; }
+    .preview-header { display:flex; align-items:center; justify-content:space-between; gap:.5rem; padding: .8rem .9rem; border-bottom:1px solid var(--border); }
+    .preview-title { font-weight:800; color: var(--accent-2); }
+    .preview-body { padding: .9rem; overflow:auto; }
   </style>
 </head>
 <body>
-  <h1>🚀 Productivity Boost Hub <span class="pill" id="buildTag" title="Build tag">v2025.08.30</span></h1>
+  <h1>🚀 Productivity Boost Hub <span class="pill">v2025.08.30</span></h1>
 
   <div class="topbar">
     <!-- Tabs -->
-    <div class="tabs" role="tablist" aria-label="Sections">
-      <button class="tab" role="tab" data-target="reports" aria-controls="reports" aria-selected="true">📊 Share Reports</button>
-      <button class="tab" role="tab" data-target="guide" aria-controls="guide" aria-selected="false">🧩 Problem Solve Guide</button>
-      <button class="tab" role="tab" data-target="scripts" aria-controls="scripts" aria-selected="false">🧠 Tampermonkey Scripts</button>
-      <button class="tab" role="tab" data-target="mastertools" aria-controls="mastertools" aria-selected="false">🧰 MasterTools</button>
+    <div class="tabs">
+      <button class="tab" data-target="reports">📊 Share Reports</button>
+      <button class="tab" data-target="guide">🧩 Problem Solve Guide</button>
+      <button class="tab" data-target="scripts">🧠 Tampermonkey Scripts</button>
+      <button class="tab" data-target="mastertools">🧰 MasterTools</button>
     </div>
 
-    <!-- Controls -->
-    <div class="controls">
-      <button class="btn" id="emojiToggle" type="button" aria-pressed="true">😎 Emojis: ON</button>
-      <button class="btn secondary" id="expandAll" type="button" data-mode="expand">Expand all</button>
-      <button class="btn" id="refreshBtn" type="button" title="Reload current section">↻ Refresh</button>
-      <div id="visitInfo" class="pill" onclick="toggleCountryStats()" title="Click to toggle details">👁️ Total Visits: Loading...</div>
-      <div id="countryStats"></div>
+    <!-- Controls (global) -->
+    <div class="controls" id="globalControls">
+      <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
+      <button class="btn secondary" id="expandAll">Expand all</button>
+      <button class="btn" id="refreshBtn">↻ Refresh</button>
+      <div class="menu" id="optionsMenu">
+        <button class="menu-btn" id="optionsBtn">⋯ Options</button>
+        <div class="menu-list" role="menu" aria-label="Options">
+          <div class="menu-item" data-opt="view-cards">View: Cards</div>
+          <div class="menu-item" data-opt="view-list">View: List</div>
+          <div class="menu-item" data-opt="toggle-preview">Toggle Preview Panel</div>
+          <div class="menu-item" data-opt="compact">Compact density</div>
+        </div>
+      </div>
+      <div id="visitInfo" class="pill">👁️ Total Visits: 12,480 (demo)</div>
+      <div id="countryStats" class="pill" style="display:none">🇺🇸 US 87% · 🇲🇽 MX 7% · 🌎 Others 6% (demo)</div>
     </div>
   </div>
 
   <!-- REPORTS -->
-  <section id="reports" class="section active" role="tabpanel" aria-labelledby="tab-reports">
-    <input type="text" id="reportSearch" class="search" placeholder="🔍 Search reports..." aria-label="Search reports">
-    <div id="reportContainer" style="margin-top:.8rem"></div>
+  <section id="reports" class="section">
+    <input type="text" id="reportSearch" class="search" placeholder="🔍 Search reports...">
+    <div id="reportContainer" class="grid" style="margin-top:.8rem"></div>
     <div id="error" class="error-msg"></div>
   </section>
 
   <!-- GUIDE -->
-  <section id="guide" class="section" role="tabpanel" aria-labelledby="tab-guide">
-    <input type="text" id="guideSearch" class="search" placeholder="🔍 Search guide..." aria-label="Search guide">
-    <div id="guideContainer" style="margin-top:.8rem"></div>
+  <section id="guide" class="section">
+    <input type="text" id="guideSearch" class="search" placeholder="🔍 Search guide...">
+    <div id="guideContainer" class="grid" style="margin-top:.8rem"></div>
   </section>
 
   <!-- SCRIPTS -->
-  <section id="scripts" class="section" role="tabpanel" aria-labelledby="tab-scripts">
-    <input type="text" id="scriptSearch" class="search" placeholder="🔍 Search scripts..." aria-label="Search scripts">
-    <div class="category" id="submitCategory">
-      <div class="category-header" data-accordion>
-        <span>📝 Submit your script</span>
-        <span aria-hidden>▾</span>
-      </div>
-      <div class="category-content">
-        <div class="card">
-          <p>Want to share your script? Fill the form and it will appear here after review.</p>
-          <div class="row">
-            <a class="tool-link" href="https://docs.google.com/forms/d/e/1FAIpQLSdVhvhkmE28nIxDH2DAo4FR7W14zqUxp2KlGHvib6baAMplEQ/viewform" target="_blank" rel="noopener">Open Google Form</a>
-            <a class="tool-link" href="https://drive.google.com/drive/folders/1Ob9wywyzwtR3ecBAZrYqJxdqDBwbaH0I" target="_blank" rel="noopener">Shared Drive Folder</a>
-          </div>
-        </div>
+  <section id="scripts" class="section">
+    <input type="text" id="scriptSearch" class="search" placeholder="🔍 Search scripts...">
+    <div class="card" style="margin-top:.8rem">
+      <p style="margin:.2rem 0 .6rem 0">📝 Want to share your script? Fill the form and it will appear here after review.</p>
+      <div class="row">
+        <a class="tool-link" href="https://docs.google.com/forms/d/e/1FAIpQLSdVhvhkmE28nIxDH2DAo4FR7W14zqUxp2KlGHvib6baAMplEQ/viewform" target="_blank" rel="noopener">Open Google Form</a>
+        <a class="tool-link" href="https://drive.google.com/drive/folders/1Ob9wywyzwtR3ecBAZrYqJxdqDBwbaH0I" target="_blank" rel="noopener">Shared Drive Folder</a>
       </div>
     </div>
-    <div id="scriptContainer"></div>
+    <div id="scriptContainer" class="grid" style="margin-top:.8rem"></div>
   </section>
 
-  <!-- M A S T E R T O O L S -->
-  <section id="mastertools" class="section" role="tabpanel" aria-labelledby="tab-mastertools">
-    <input type="text" id="masterSearch" class="search" placeholder="🔍 Search MasterTools..." aria-label="Search master tools">
+  <!-- MASTERTOOLS -->
+  <section id="mastertools" class="section">
+    <input type="text" id="masterSearch" class="search" placeholder="🔍 Search MasterTools...">
     <div class="grid" id="masterGrid" style="margin-top:.8rem"></div>
-    <ul class="tool-list" id="masterLegacy" hidden>
-      <li>
-        <a class="tool-link" href="trailer-plan.html" target="_blank" rel="noopener">🚛 Trailer Plan Analyzer</a>
-      </li>
-    </ul>
   </section>
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
-  <!-- Optional external file: kept for backwards-compat. If present, its functions will be used. -->
-  <script src="script.js" defer></script>
+  <!-- Preview Drawer -->
+  <aside id="preview" class="preview" aria-hidden="true">
+    <div class="preview-header">
+      <div class="preview-title" id="previewTitle">Preview</div>
+      <button class="menu-btn" id="previewClose">✕</button>
+    </div>
+    <div class="preview-body" id="previewBody">Nothing selected.</div>
+  </aside>
 
   <script>
-  (function() {
-    const $ = (sel, root=document) => root.querySelector(sel);
-    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+  (function(){
+    const $ = (s, r=document)=>r.querySelector(s); const $$=(s, r=document)=>Array.from(r.querySelectorAll(s));
 
-    // ---------- Persisted UI state ----------
+    // ===== Persisted UI state =====
     const LS = {
       tab: 'pb.activeTab',
       emoji: 'pb.emojis',
       favs: 'pb.master.favorites',
       expand: 'pb.expandAll',
+      view: 'pb.view', // 'cards' | 'list'
+      preview: 'pb.preview', // 'on' | 'off'
+      compact: 'pb.compact', // 'on' | 'off'
     };
 
     const state = {
-      get activeTab() { return localStorage.getItem(LS.tab) || 'reports'; },
-      set activeTab(v) { localStorage.setItem(LS.tab, v); },
-      get emojis() { return localStorage.getItem(LS.emoji) !== 'off'; },
-      set emojis(flag) { localStorage.setItem(LS.emoji, flag ? 'on' : 'off'); },
-      get favorites() { try { return JSON.parse(localStorage.getItem(LS.favs) || '[]'); } catch { return []; } },
-      set favorites(list) { localStorage.setItem(LS.favs, JSON.stringify(list)); },
-      get expandAll() { return localStorage.getItem(LS.expand) === 'on'; },
-      set expandAll(flag) { localStorage.setItem(LS.expand, flag ? 'on' : 'off'); },
+      get activeTab(){ return localStorage.getItem(LS.tab) || 'reports'; },
+      set activeTab(v){ localStorage.setItem(LS.tab, v); },
+      get emojis(){ return localStorage.getItem(LS.emoji) !== 'off'; },
+      set emojis(f){ localStorage.setItem(LS.emoji, f?'on':'off'); },
+      get favorites(){ try { return JSON.parse(localStorage.getItem(LS.favs)||'[]'); } catch { return []; } },
+      set favorites(v){ localStorage.setItem(LS.favs, JSON.stringify(v)); },
+      get expandAll(){ return localStorage.getItem(LS.expand)==='on'; },
+      set expandAll(f){ localStorage.setItem(LS.expand, f?'on':'off'); },
+      get view(){ return localStorage.getItem(LS.view) || 'cards'; },
+      set view(v){ localStorage.setItem(LS.view, v); },
+      get preview(){ return localStorage.getItem(LS.preview) || 'off'; },
+      set preview(v){ localStorage.setItem(LS.preview, v); },
+      get compact(){ return localStorage.getItem(LS.compact) || 'off'; },
+      set compact(v){ localStorage.setItem(LS.compact, v); },
     };
 
-    // ---------- Tabs (fixes MasterTools selection, URL hash / ?tab support) ----------
-    function setActiveTab(id) {
-      // switch sections
-      $$('.section').forEach(sec => sec.classList.toggle('active', sec.id === id));
-      // switch tabs
-      $$('.tab').forEach(tab => {
-        const selected = tab.dataset.target === id;
-        tab.classList.toggle('active', selected);
-        tab.setAttribute('aria-selected', selected ? 'true' : 'false');
-      });
-      // persist & url
-      state.activeTab = id;
-      const url = new URL(location.href);
-      url.searchParams.set('tab', id);
-      url.hash = `#${id}`;
-      history.replaceState(null, '', url);
-      updateExpandAllButton();
+    // ===== Tabs (selection + URL) =====
+    function setActiveTab(id){
+      $$('.section').forEach(s=>s.classList.toggle('active', s.id===id));
+      $$('.tab').forEach(t=>t.classList.toggle('active', t.dataset.target===id));
+      state.activeTab=id;
+      const url=new URL(location.href); url.searchParams.set('tab', id); url.hash='#'+id; history.replaceState(null,'',url);
+      syncOptions();
     }
 
-    function initTabs() {
-      $$('.tab').forEach(tab => tab.addEventListener('click', () => setActiveTab(tab.dataset.target)));
-      // hash / query support
-      const url = new URL(location.href);
-      const fromQuery = url.searchParams.get('tab');
-      const fromHash = location.hash?.replace('#','');
-      const initial = fromQuery || fromHash || state.activeTab || 'reports';
-      setActiveTab(initial);
+    $$('.tab').forEach(tab=> tab.addEventListener('click', ()=> setActiveTab(tab.dataset.target)));
+    // Initial tab from URL/hash/localStorage
+    (function(){ const u=new URL(location.href); const p=u.searchParams.get('tab')||location.hash.replace('#','')||state.activeTab; setActiveTab(p||'reports'); })();
+
+    // ===== Emoji toggle =====
+    const emojiBtn=$('#emojiToggle');
+    function syncEmoji(){ const on=state.emojis; emojiBtn.textContent= on? '😎 Emojis: ON':'🙂 Emojis: OFF'; document.documentElement.classList.toggle('emoji-off',!on);} 
+    emojiBtn.addEventListener('click', ()=>{ state.emojis=!state.emojis; syncEmoji(); }); syncEmoji();
+
+    // ===== Expand/Collapse All (per section) =====
+    const expandBtn=$('#expandAll');
+    function syncExpandBtn(){ expandBtn.textContent= state.expandAll? 'Collapse all':'Expand all'; }
+    expandBtn.addEventListener('click', ()=>{ state.expandAll=!state.expandAll; syncExpandBtn(); const sec=$('#'+state.activeTab); $$('.category', sec).forEach(c=>c.classList.toggle('open', state.expandAll)); });
+    syncExpandBtn();
+
+    // ===== Options menu (view/list + preview panel + compact) =====
+    const menu=$('#optionsMenu'); const menuBtn=$('#optionsBtn'); const menuList=menu.querySelector('.menu-list');
+    document.addEventListener('click', (e)=>{ if(menu.contains(e.target)){ menu.classList.toggle('open', e.target===menuBtn ? !menu.classList.contains('open') : true); } else { menu.classList.remove('open'); } });
+
+    function syncOptions(){
+      // View mode
+      const containers = ['reportContainer','guideContainer','scriptContainer','masterGrid'].map(id=> $('#'+id)).filter(Boolean);
+      containers.forEach(el=>{ el.classList.toggle('grid', state.view==='cards'); el.style.display=''; });
+      // Preview panel
+      $('#preview').classList.toggle('open', state.preview==='on');
+      $('#preview').setAttribute('aria-hidden', state.preview==='on' ? 'false':'true');
+      // Compact density
+      document.body.classList.toggle('compact', state.compact==='on');
     }
 
-    // expose for external calls
-    window.showSection = setActiveTab;
-
-    // ---------- Controls ----------
-    const emojiBtn = $('#emojiToggle');
-    function syncEmojiToggle() {
-      const on = state.emojis;
-      emojiBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      emojiBtn.textContent = on ? '😎 Emojis: ON' : '🙂 Emojis: OFF';
-      document.documentElement.classList.toggle('emoji-off', !on);
-    }
-    emojiBtn.addEventListener('click', () => { state.emojis = !state.emojis; syncEmojiToggle(); });
-
-    $('#refreshBtn').addEventListener('click', () => {
-      // call section-specific refreshers if available; fallback to location reload
-      const id = state.activeTab;
-      const map = { reports: 'loadReports', guide: 'loadGuide', scripts: 'loadScripts', mastertools: 'renderMasterTools' };
-      const fn = window[map[id]];
-      if (typeof fn === 'function') fn(); else location.reload();
+    menuList.addEventListener('click', (e)=>{
+      const item=e.target.closest('.menu-item'); if(!item) return;
+      const opt=item.dataset.opt;
+      if(opt==='view-cards') state.view='cards';
+      if(opt==='view-list') state.view='list';
+      if(opt==='toggle-preview') state.preview= state.preview==='on'?'off':'on';
+      if(opt==='compact') state.compact= state.compact==='on'?'off':'on';
+      syncOptions(); menu.classList.remove('open');
     });
 
-    // ---------- Accordion behavior ----------
-    function toggleAccordion(catEl, explicit) {
-      if (!catEl) return;
-      const open = explicit ?? !catEl.classList.contains('open');
-      catEl.classList.toggle('open', open);
-    }
-    document.addEventListener('click', (e) => {
-      const header = e.target.closest('[data-accordion]');
-      if (header) toggleAccordion(header.closest('.category'));
+    // ===== Preview drawer helpers =====
+    window.openPreview = function(content, title='Preview'){ $('#previewTitle').textContent=title; $('#previewBody').innerHTML= content || 'Empty'; state.preview='on'; syncOptions(); }
+    $('#previewClose').addEventListener('click', ()=>{ state.preview='off'; syncOptions(); });
+
+    // Delegated preview: any element with [data-preview-html]
+    document.addEventListener('click', (e)=>{
+      const t=e.target.closest('[data-preview-html]'); if(!t) return;
+      openPreview(t.getAttribute('data-preview-html'), t.getAttribute('data-preview-title')||'Preview');
     });
 
-    // Expand/Collapse All (per current section)
-    const expandBtn = $('#expandAll');
-    function updateExpandAllButton() {
-      const wantOpen = state.expandAll;
-      expandBtn.dataset.mode = wantOpen ? 'collapse' : 'expand';
-      expandBtn.textContent = wantOpen ? 'Collapse all' : 'Expand all';
-    }
-    expandBtn.addEventListener('click', () => {
-      state.expandAll = !state.expandAll;
-      updateExpandAllButton();
-      const sec = $('#'+state.activeTab);
-      $$('.category', sec).forEach(c => c.classList.toggle('open', state.expandAll));
-    });
-
-    // ---------- Dummy visits (placeholder) ----------
-    window.toggleCountryStats = function() {
-      const stats = $('#countryStats');
-      if (stats.textContent) { stats.textContent = ''; return; }
-      stats.textContent = '🇺🇸 US 87% · 🇲🇽 MX 7% · 🌎 Others 6% (demo)';
-    }
-    $('#visitInfo').textContent = '👁️ Total Visits: 12,480 (demo)';
-
-    // ---------- Search helpers (simple contains filter) ----------
-    function attachSearch(input, container) {
-      if (!input || !container) return;
-      input.addEventListener('input', () => {
-        const q = input.value.trim().toLowerCase();
-        const items = container.children;
-        for (const el of items) {
-          const text = el.textContent.toLowerCase();
-          el.style.display = q ? (text.includes(q) ? '' : 'none') : '';
-        }
-      });
-    }
-
-    // ---------- MasterTools (cards + favorites + search) ----------
-    const MASTER_DATA = [
-      {
-        id: 'trailer-plan',
-        icon: '🚛',
-        name: 'Trailer Plan Analyzer',
-        href: 'trailer-plan.html',
-        desc: 'Plan injection, density & severity attributes for trailers.'
-      },
-      // Add more tools here ↓
-      // { id: 'aft-smart-analyzer', icon: '🧠', name: 'AFT Smart Analyzer', href: 'aft-smart.html', desc: 'Search all tabs, export CSV, modern UI.' },
+    // ===== MasterTools (favorites + cards + search) =====
+    const MASTER_DATA=[
+      { id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'trailer-plan.html', desc:'Plan injection, density & severity attributes for trailers.' },
+      // Add more tools here
     ];
-
-    function isFav(id) { return state.favorites.includes(id); }
-
-    function toggleFav(id, btn) {
-      const favs = new Set(state.favorites);
-      if (favs.has(id)) favs.delete(id); else favs.add(id);
-      state.favorites = Array.from(favs);
-      if (btn) btn.setAttribute('aria-pressed', isFav(id) ? 'true' : 'false');
-      renderMasterTools(); // keep list ordered with favorites first
-    }
-
-    function toolCard(t) {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.dataset.id = t.id;
-      card.innerHTML = `
-        <h3>${t.icon} ${t.name}</h3>
-        <p>${t.desc || ''}</p>
-        <div class="row">
-          <a class="tool-link" href="${t.href}" target="_blank" rel="noopener">Open</a>
-          <button class="icon-btn favorite" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
-          <button class="icon-btn" title="Copy link">⧉</button>
-        </div>
-      `;
-      const [openLink, favBtn, copyBtn] = card.querySelectorAll('.row > *');
-      favBtn.addEventListener('click', () => toggleFav(t.id, favBtn));
-      copyBtn.addEventListener('click', async () => {
-        try { await navigator.clipboard.writeText(new URL(t.href, location.href).href); copyBtn.textContent = '✔'; setTimeout(()=>copyBtn.textContent='⧉', 900); } catch {}
-      });
+    function isFav(id){ return state.favorites.includes(id); }
+    function toggleFav(id){ const favs=new Set(state.favorites); favs.has(id)?favs.delete(id):favs.add(id); state.favorites=[...favs]; renderMasterTools(); }
+    function toolCard(t){
+      const card=document.createElement('div'); card.className='card'; card.dataset.id=t.id;
+      card.innerHTML=`<h3>${t.icon} ${t.name}</h3><p>${t.desc||''}</p>
+      <div class="row">
+        <a class="tool-link" href="${t.href}" target="_blank" rel="noopener">Open</a>
+        <button class="icon-btn favorite" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
+        <button class="icon-btn copy-btn" title="Copy link">⧉</button>
+        <button class="icon-btn" data-preview-html="<iframe src='${t.href}' style='width:100%;height:70vh;border:0;border-radius:12px;'></iframe>" data-preview-title="${t.name} — Preview">Preview</button>
+      </div>`;
+      const favBtn=card.querySelector('.favorite'); favBtn.addEventListener('click', ()=> toggleFav(t.id));
+      const copyBtn=card.querySelector('.copy-btn'); copyBtn.addEventListener('click', async ()=>{ try{ const url=new URL(t.href, location.href).href; await navigator.clipboard.writeText(url); const old=copyBtn.textContent; copyBtn.textContent='✔'; setTimeout(()=>copyBtn.textContent=old,900);}catch{} });
       return card;
     }
+    function renderMasterTools(){ const wrap=$('#masterGrid'); if(!wrap) return; wrap.innerHTML=''; const data=[...MASTER_DATA]; data.sort((a,b)=> (isFav(b.id)-isFav(a.id)) || a.name.localeCompare(b.name)); data.forEach(t=> wrap.appendChild(toolCard(t))); }
+    const masterSearch=$('#masterSearch'); if(masterSearch) masterSearch.addEventListener('input', ()=>{ const q=masterSearch.value.trim().toLowerCase(); $$('#masterGrid .card').forEach(c=>{ const txt=c.textContent.toLowerCase(); c.style.display= q? (txt.includes(q)?'':'none') : ''; }); });
 
-    window.renderMasterTools = function renderMasterTools() {
-      const wrap = $('#masterGrid');
-      if (!wrap) return;
-      wrap.innerHTML = '';
-      const data = [...MASTER_DATA];
-      // favorites first
-      data.sort((a,b) => (isFav(b.id) - isFav(a.id)) || a.name.localeCompare(b.name));
-      data.forEach(t => wrap.appendChild(toolCard(t)));
-    }
+    // ===== Stubs (so Refresh works) =====
+    window.loadReports=window.loadReports||function(){};
+    window.loadGuide=window.loadGuide||function(){};
+    window.loadScripts=window.loadScripts||function(){};
 
-    // search for mastertools
-    const masterSearch = $('#masterSearch');
-    if (masterSearch) masterSearch.addEventListener('input', () => {
-      const q = masterSearch.value.trim().toLowerCase();
-      $$('#masterGrid .card').forEach(card => {
-        const txt = card.textContent.toLowerCase();
-        card.style.display = q ? (txt.includes(q) ? '' : 'none') : '';
-      });
-    });
+    // ===== Refresh (calls section loaders) =====
+    $('#refreshBtn').addEventListener('click', ()=>{ const id=state.activeTab; const map={reports:'loadReports', guide:'loadGuide', scripts:'loadScripts', mastertools:'renderMasterTools'}; const fn=window[map[id]]; if(typeof fn==='function') fn(); });
 
-    // ---------- Stubs for external loaders so Refresh works ----------
-    window.loadReports = window.loadReports || function(){};
-    window.loadGuide   = window.loadGuide   || function(){};
-    window.loadScripts = window.loadScripts || function(){};
+    // ===== Simple contains-filter for generic containers =====
+    function attachSearch(input, container){ if(!input||!container) return; input.addEventListener('input', ()=>{ const q=input.value.trim().toLowerCase(); Array.from(container.children).forEach(el=>{ const text=el.textContent.toLowerCase(); el.style.display= q? (text.includes(q)?'':'none'):''; }); }); }
 
-    // ---------- Init ----------
-    initTabs();
-    syncEmojiToggle();
+    // ===== Init =====
     renderMasterTools();
     attachSearch($('#reportSearch'), $('#reportContainer'));
     attachSearch($('#guideSearch'), $('#guideContainer'));
     attachSearch($('#scriptSearch'), $('#scriptContainer'));
-    updateExpandAllButton();
 
-    // Keyboard nav: Ctrl+ArrowLeft/Right to switch tabs
-    document.addEventListener('keydown', (e) => {
-      if (!e.ctrlKey) return;
-      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-        const tabs = $$('.tab');
-        const idx = tabs.findIndex(t => t.dataset.target === state.activeTab);
-        if (idx < 0) return;
-        const next = e.key === 'ArrowRight' ? (idx + 1) % tabs.length : (idx - 1 + tabs.length) % tabs.length;
-        setActiveTab(tabs[next].dataset.target);
-      }
-    });
+    // Visit details toggle (demo)
+    $('#visitInfo').addEventListener('click', ()=>{ const cs=$('#countryStats'); cs.style.display = cs.style.display==='none'?'inline-flex':'none'; });
 
-    // Accessibility: focus active tab on hash change
-    window.addEventListener('hashchange', () => {
-      const id = location.hash.replace('#','');
-      if (id) setActiveTab(id);
-    });
   })();
   </script>
 </body>
