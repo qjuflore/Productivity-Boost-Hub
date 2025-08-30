@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Trailer Plan Analyzer — BFL2 (EN v19.4)</title>
+  <title>Trailer Plan Analyzer — BFL2 (EN v19.5)</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root{
@@ -16,7 +16,7 @@
     *{box-sizing:border-box}
     body{margin:0;background:linear-gradient(180deg,#0b0f14,#0d131f);color:var(--text);
          font:14px/1.4 system-ui,Segoe UI,Roboto,Ubuntu,sans-serif}
-    header{padding:20px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;
+    header{padding:12px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;
            background:rgba(13,19,31,.85);backdrop-filter: blur(6px);z-index:10}
     h1{margin:0;font-size:18px;letter-spacing:.3px}
     .container{padding:20px;max-width:1200px;margin:0 auto}
@@ -27,7 +27,7 @@
     .drop{border:1.5px dashed #2c3a52;border-radius:12px;padding:16px;text-align:center;color:var(--muted)}
     .drop.drag{outline:2px solid var(--accent2);outline-offset:2px}
     .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:#0e1726;color:var(--text);
-         padding:8px 12px;border-radius:12px;cursor:pointer;user-select:none}
+         padding:8px 12px;border-radius:12px;cursor:pointer;user-select:none;text-decoration:none}
     .btn:hover{border-color:#2b3b56;transform:translateY(-1px)}
     .btn.accent{background:linear-gradient(90deg,#1d3b2b,#0c1f15);border-color:#284a36;color:#c8f5cf}
     .btn.ghost{background:#0b1220;border-color:#26334e}
@@ -118,39 +118,20 @@
     .warn{color:#ffe08a; border-color:#6f5b1b; background:#332a0f}
     .bad{color:#ffb3b3; border-color:#6b1f1f; background:#331212}
 
-    /* === Headcount layout fix === */
-    .hc-grid{
-      display:grid;
-      grid-template-columns: repeat(3, minmax(260px, 1fr));
-      gap:14px;
-    }
-    .hc-group{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:10px;
-    }
-    .hc-control{
-      display:grid;
-      grid-template-columns: 1fr 90px; /* slider grows, number fixed */
-      gap:10px;
-      align-items:center;
-      margin-top:6px;
-    }
-    .hc-number{ min-width: 90px; }
-    .range{ width:100%; }
-
-    @media (max-width:900px){
-      .u-row.cols-2{grid-template-columns:1fr}
-      .grid.cols-4{grid-template-columns:1fr 1fr}
-      .grid.cols-3{grid-template-columns:1fr 1fr}
-      .hc-grid{ grid-template-columns:1fr; }
+    /* Headcount controls anti-overlap */
+    .hcCtl{display:flex; gap:8px; align-items:center; flex-wrap:nowrap}
+    .hcCtl .range{flex:1 1 auto; min-width:0; width:100%}
+    .hcCtl .input{flex:0 0 120px; width:120px}
+    @media (max-width:520px){
+      .hcCtl{flex-wrap:wrap}
+      .hcCtl .input{flex:1 1 140px; width:100%}
     }
   </style>
 </head>
 <body>
   <header>
     <div class="flex">
+      <a href="https://qjuflore.github.io/Productivity-Boost-Hub/" class="btn ghost" id="btnHome">🏠 Back to Hub</a>
       <h1>Trailer Plan Analyzer — BFL2</h1>
       <div class="right chips">
         <span class="chip">CSV/TSV/; supported</span>
@@ -223,46 +204,40 @@
       </div>
     </section>
 
-    <!-- ===== Headcount: layout fixed ===== -->
     <section class="panel" style="margin-top:16px">
       <div class="body">
         <h3 style="margin:0 0 10px 0">Headcount Needed (Decant)</h3>
-
-        <div class="hc-grid">
-          <div class="hc-group">
+        <div class="flex" style="gap:12px; flex-wrap:wrap">
+          <div>
             <div class="k">Workload source</div>
-            <select id="workloadSource" class="select" style="width:100%">
+            <select id="workloadSource" class="select">
               <option value="Units in Cases (computed)" selected>Units in Cases (computed)</option>
               <option value="Total Units">Total Units</option>
               <option value="Units in Palletized Totes">Units in Palletized Totes</option>
             </select>
           </div>
-
-          <div class="hc-group">
+          <div style="min-width:260px">
             <div class="k">Hours remaining</div>
-            <div class="hc-control">
+            <div class="hcCtl">
               <input id="hoursRange" type="range" min="1" max="12" step="1" value="4" class="range">
-              <input id="hoursInput" type="number" min="0.5" max="24" step="0.5" value="4" class="input hc-number">
+              <input id="hoursInput" type="number" min="0.5" max="24" step="0.5" value="4" class="input">
             </div>
             <div class="explain">Headcount = ceil(Workload ÷ (Rate × Hours)).</div>
           </div>
-
-          <div class="hc-group">
+          <div style="min-width:260px">
             <div class="k">Decanter rate (units/hour per person)</div>
-            <div class="hc-control">
+            <div class="hcCtl">
               <input id="rateRange" type="range" min="50" max="1200" step="10" value="350" class="range">
-              <input id="rateInput" type="number" min="10" max="3000" step="10" value="350" class="input hc-number">
+              <input id="rateInput" type="number" min="10" max="3000" step="10" value="350" class="input">
             </div>
           </div>
         </div>
-
         <div class="card" style="margin-top:10px">
           <div class="k">Result</div>
           <div class="v" id="headcountResult">—</div>
           <div class="explain" id="headcountExplain"></div>
         </div>
-      </div>
-    </section>
+      </section>
 
     <section class="panel" style="margin-top:16px">
       <div class="body">
@@ -373,7 +348,6 @@
   <div id="toasts" aria-live="polite"></div>
 
 <script>
-// ===== Config & helpers =====
 const REQUIRED = [
   "VRID","Transship Status","Load Config","Trailer Location",
   "Severity","Status Info","Actual / Expected Arrival Time",
@@ -513,7 +487,6 @@ const btnClearFilters=document.getElementById("btnClearFilters");
 const activeFilters=document.getElementById("activeFilters");
 
 const toasts=document.getElementById("toasts");
-// Strict mode is always ON (control removed from UI)
 const strictMode = { checked: true };
 
 const tblWrap=document.getElementById("tblWrap");
@@ -531,10 +504,17 @@ let PAN_SUPPRESS_CLICK=false;
 // ===== Init =====
 document.addEventListener("DOMContentLoaded", ()=>{
   if(workloadSource) workloadSource.value="Units in Cases (computed)";
-  if(planStrategy) planStrategy.value="ps_strict"; // ensure default selection on refresh
+  if(planStrategy) planStrategy.value="ps_strict";
   tbody.addEventListener("click", onTbodyClick);
   tbody.addEventListener("dblclick", onTbodyDblClick);
   initPanScroll();
+});
+
+// Hub shortcuts
+window.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape' || (e.key.toLowerCase() === 'h' && e.altKey)){
+    window.location.href = 'https://qjuflore.github.io/Productivity-Boost-Hub/';
+  }
 });
 
 btnPaste.onclick=()=> pasteZone.classList.toggle("hidden");
@@ -556,7 +536,7 @@ btnReset.onclick=()=>{
   planOutput.textContent="—"; LAST_PLAN=null;
   STATUS_FILTER=new Set(["INBOUND"]); SORT_BY=null; SORT_DIR='asc'; FILTERS=[]; renderFilterChips();
   if(workloadSource) workloadSource.value="Units in Cases (computed)";
-  if(planStrategy) planStrategy.value="ps_strict"; // also on reset
+  if(planStrategy) planStrategy.value="ps_strict";
   statusFilterBox.innerHTML=""; document.getElementById("strategySummary").textContent="—"; document.getElementById("inspector").textContent="—";
 };
 
@@ -603,7 +583,6 @@ btnCopySlack.onclick=()=>{
   navigator.clipboard.writeText(lines.join("\n")).then(()=>{copyMsg.textContent="Copied ✓"; setTimeout(()=>copyMsg.textContent="",1200);});
 };
 
-// ===== Export =====
 btnExport.onclick=()=>{
   if(!ROWS.length){alert("Nothing to export."); return;}
   const cols=["VRID"].concat(REQUIRED.filter(c=>c!=="VRID"));
@@ -613,14 +592,13 @@ btnExport.onclick=()=>{
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 };
 
-// ===== Toasts =====
 function showToast(msg){
   const t=document.createElement("div"); t.className="toast";
   t.innerHTML=`<span class="dot"></span><div>${msg}</div>`; toasts.appendChild(t);
   setTimeout(()=>{t.classList.add("bye"); setTimeout(()=>t.remove(),380);},2200);
 }
 
-// ===== File handling =====
+// Files
 function handleFile(file){
   const name=file.name.toLowerCase();
   if(name.endsWith(".xlsx")){
@@ -668,7 +646,7 @@ function handleText(text){
   initFilterUI(); computeAndRender();
 }
 
-// ===== Status/YMS merge =====
+// Status/YMS merge
 function handleStatusFile(file){
   const name=file.name.toLowerCase();
   if(name.endsWith(".xlsx")){
@@ -737,7 +715,7 @@ function mergeStatusText(text){
   showToast(`Merged status for ${matched} VRID(s). OK: ${ok}, Yellow/Other: ${warn}, Red: ${red}${updatedLoc?`, Loc updated: ${updatedLoc}`:''}${updatedArr?`, Arrival updated: ${updatedArr}`:''}`);
 }
 
-// ===== Filters & table =====
+// Filters & table
 function initFilterUI(){
   const cols=["VRID"].concat(REQUIRED.filter(c=>c!=="VRID"));
   filterCol.innerHTML=cols.map(c=>`<option value="${c}">${c}</option>`).join("");
@@ -821,7 +799,7 @@ function applySort(arr){
   });
 }
 
-// ===== Aggregations =====
+// Aggregations
 function activeRows(){ return ROWS.filter(r=> r._selected && STATUS_FILTER.has(statusKey(r["Transship Status"]))); }
 function baseRows(){ return ROWS.filter(r=> STATUS_FILTER.has(statusKey(r["Transship Status"]))); }
 function visibleRows(){
@@ -1039,7 +1017,7 @@ function renderHeadcount(agg){
   headcountExplain.textContent=`Headcount = ceil(${fmtNumber(workload)} ÷ (${fmtNumber(rate)} × ${hours})) → Capacity/person: ${fmtNumber(capacity)} units (selected + status filter).`;
 }
 
-// ===== Selection behavior =====
+// Selection
 function onTbodyClick(e){
   if(PAN_SUPPRESS_CLICK){ PAN_SUPPRESS_CLICK=false; return; }
   const tag=(e.target.tagName||"").toLowerCase();
@@ -1053,7 +1031,7 @@ function onTbodyClick(e){
 }
 function onTbodyDblClick(e){ onTbodyClick(e); }
 
-// ===== Candidates & strategies =====
+// Planning
 function getCandidates(useSel){
   const base=useSel? activeRows() : ROWS.filter(r=> STATUS_FILTER.has(statusKey(r["Transship Status"])));
   return base.map(r=>{
@@ -1078,4 +1056,281 @@ function evaluateSubset(sub,target,over){
   const totesUnits=sub.reduce((a,b)=>a + b.totesUnits,0);
   const w_small=smallUnits/units*100, w_med=medUnits/units*100, w_large=largeUnits/units*100;
   const overshoot=(units/target - 1.0);
-  const within=units>=target*(1-over) && units<=target
+  const within=units>=target*(1-over) && units<=target*(1+over);
+  const avgPS = sub.length? sub.reduce((a,b)=>a+b.ps,0)/sub.length : 0;
+  const casesShare = (casesUnits/units)*100;
+  const totesShare = (totesUnits/units)*100;
+  return {units, smallUnits, medUnits, largeUnits, w_small, w_med, w_large, overshoot, within, avgPS, casesUnits, totesUnits, casesShare, totesShare};
+}
+function greedyOrder(strategy, cand){
+  const distanceTo = (c, tgtSmall, tgtMed, tgtLarge) => {
+    return Math.sqrt((c.small-tgtSmall)**2 + (c.med-tgtMed)**2 + (c.large-tgtLarge)**2);
+  };
+  const arr=[...cand];
+  switch(strategy){
+    case 'ps_strict':
+      return arr.sort((a,b)=> (b.ps-a.ps) || (b.units-a.units));
+    case 'max_cases':
+      return arr.sort((a,b)=>{
+        const da=(a.casesUnits/a.units)-(b.casesUnits/b.units);
+        if(da!==0) return da>0?-1:1;
+        if(b.casesUnits!==a.casesUnits) return b.casesUnits-a.casesUnits;
+        return (b.ps-a.ps);
+      });
+    case 'max_totes':
+      return arr.sort((a,b)=>{
+        const da=(a.totesUnits/a.units)-(b.totesUnits/b.units);
+        if(da!==0) return da>0?-1:1;
+        if(b.totesUnits!==a.totesUnits) return b.totesUnits-a.totesUnits;
+        return (b.ps-a.ps);
+      });
+    case 'high_smalls':
+      return arr.sort((a,b)=> (b.small-a.small) || (b.med-a.med) || (a.large-b.large) || (b.units-a.units));
+    case 'high_mediums':
+      return arr.sort((a,b)=> (b.med-a.med) || (b.small-a.small) || (a.large-b.large) || (b.units-a.units));
+    case 'high_large':
+      return arr.sort((a,b)=> (b.large-a.large) || (b.units-a.units));
+    case 'balance_60_39_0':
+      return arr.sort((a,b)=>{
+        const da=distanceTo(a,60,39,0)-distanceTo(b,60,39,0);
+        if(da!==0) return da<0?-1:1;
+        return (b.ps-a.ps);
+      });
+    default:
+      return arr.sort((a,b)=> (b.ps-a.ps) || (b.units-a.units));
+  }
+}
+function isBetter(ev, bestEv, target){
+  if(!bestEv) return true;
+  if(ev.within && !bestEv.within) return true;
+  if(!ev.within && bestEv.within) return false;
+  const gap=Math.abs(ev.overshoot), bgap=Math.abs(bestEv.overshoot);
+  if(gap !== bgap) return gap < bgap;
+  if(ev.units>=target && bestEv.units<target) return true;
+  if(ev.units<target && bestEv.units>=target) return false;
+  if(ev.avgPS !== bestEv.avgPS) return ev.avgPS > bestEv.avgPS;
+  if(ev.units !== bestEv.units) return ev.units > bestEv.units;
+  return false;
+}
+function scoreForStrategy(strategy, ev){
+  if(!ev) return -Infinity;
+  let score = 0;
+  if(ev.within) score += 1_000_000;
+  score += -Math.abs(ev.overshoot)*50_000;
+  switch(strategy){
+    case 'ps_strict':     score += ev.avgPS*10_000 + ev.w_small*10 - ev.w_large*20; break;
+    case 'max_cases':     score += ev.casesShare*10_000 + ev.casesUnits*2 + ev.avgPS*500; break;
+    case 'max_totes':     score += ev.totesShare*10_000 + ev.totesUnits*2 + ev.avgPS*500; break;
+    case 'high_smalls':   score += ev.w_small*800 + ev.w_med*80 - ev.w_large*400 + ev.avgPS*200; break;
+    case 'high_mediums':  score += ev.w_med*800 + ev.w_small*80 - ev.w_large*400 + ev.avgPS*200; break;
+    case 'high_large':    score += ev.w_large*800 + ev.avgPS*200; break;
+    case 'balance_60_39_0': {
+      const d = Math.sqrt((ev.w_small-60)**2 + (ev.w_med-39)**2 + (ev.w_large-0)**2);
+      score += -d*500 + ev.avgPS*300;
+      break;
+    }
+    default: score += ev.avgPS*10_000;
+  }
+  return score;
+}
+function buildPlanGreedy(strategy, target, over, cand){
+  const ordered=greedyOrder(strategy, cand);
+  const windowMin = target*(1-over), windowMax = target*(1+over);
+  let picked=[], sum=0, best=null;
+
+  const consider = (arr) => {
+    const ev=evaluateSubset(arr, target, over);
+    if(!ev) return;
+    if(isBetter(ev, best?.ev, target)){
+      best={sub:[...arr], ev};
+    }
+  };
+
+  for(const c of ordered){
+    picked.push(c); sum+=c.units;
+    consider(picked);
+    if(sum>=windowMin && sum<=windowMax) break;
+  }
+
+  if(best && !best.ev.within && picked.length>1){
+    for(let i=picked.length-1;i>=0;i--){
+      const trial=[...picked]; trial.splice(i,1);
+      consider(trial);
+      if(best.ev.within) break;
+    }
+  }
+  return best;
+}
+function buildPlanSearch(strategy, target, over, cand){
+  const n=cand.length;
+  if(n===0) return null;
+  if(n<=18){
+    let best=null;
+    const total=1<<n;
+    for(let mask=1; mask<total; mask++){
+      const sub=[]; for(let i=0;i<n;i++) if(mask&(1<<i)) sub.push(cand[i]);
+      const ev=evaluateSubset(sub, target, over);
+      const sc=scoreForStrategy(strategy, ev);
+      if(!best || sc>best.score) best={sub,ev,score:sc};
+    }
+    return best;
+  }else{
+    return buildPlanGreedy(strategy, target, over, cand);
+  }
+}
+
+// Recommend & compare
+function recommendPlan(){
+  const strategy = planStrategy.value || 'ps_strict';
+  const target=Number(targetUnits.value)||0, over=(Number(allowedOver.value)||0)/100, useSel=!!useSelected.checked;
+  const cand=getCandidates(useSel);
+  if(!cand.length || target<=0){ planOutput.textContent="Load data and set a positive target."; LAST_PLAN=null; return; }
+
+  const best = strictMode.checked
+    ? buildPlanGreedy(strategy, target, over, cand)
+    : buildPlanSearch(strategy, target, over, cand);
+
+  if(!best){ planOutput.textContent="No feasible combination found."; LAST_PLAN=null; return; }
+
+  const s=best.sub.slice().sort((a,b)=> (b.ps-a.ps) || String(a.VRID||"").localeCompare(String(b.VRID||"")));
+  const lines=[]; const oversPct=(best.ev.overshoot*100);
+  lines.push(`TRAILER PLAN — Strategy: ${strategy.replaceAll('_',' ').toUpperCase()} | Mode: ${strictMode.checked?'STRICT-GREEDY':'BALANCED SEARCH'} | Target: ${fmtNumber(target)} units | Allowed deviation: ${document.getElementById('allowedOver').value}% (±)`);
+  lines.push(`Selected Units: ${fmtNumber(best.ev.units)}  (Deviation vs target: ${oversPct.toFixed(2)}%)`);
+  lines.push(`Weighted PPR → Small: ${fmtPercent(best.ev.w_small)} (≈ ${fmtNumber(best.ev.smallUnits)} units), Medium: ${fmtPercent(best.ev.w_med)} (≈ ${fmtNumber(best.ev.medUnits)} units), Large: ${fmtPercent(best.ev.w_large)} (≈ ${fmtNumber(best.ev.largeUnits)} units)`);
+  lines.push(`Workload split → Cases: ${fmtNumber(best.ev.casesUnits)} (${fmtPercent(best.ev.casesShare)} of plan) | Totes: ${fmtNumber(best.ev.totesUnits)} (${fmtPercent(best.ev.totesShare)} of plan)`);
+  lines.push(`Order: by Priority Score (DESC)`); lines.push(""); lines.push("Trailers:");
+  for(const r of s){
+    const loc=r.loc?` — Location: ${r.loc}`:""; const sevTxt=r.sev && r.sev!=="UNKNOWN"?` — Severity: ${r.sev}`:"";
+    lines.push(`• VRID ${r.VRID}: ${fmtNumber(r.units)} units — Priority Score ${fmtScore(r.ps)} — PPR Small ${fmtPercent(r.small)} | Medium ${fmtPercent(r.med)} | Large ${fmtPercent(r.large)}${loc}${sevTxt}`);
+  }
+  const text=lines.join("\n"); planOutput.textContent=text; LAST_PLAN={text, idxs:s.map(x=>x._globalIndex)};
+
+  renderStrategySummary(strategy, best.ev);
+  renderInspector(strategy, cand);
+  showToast(`Recommended plan using ${strictMode.checked?'STRICT':'SEARCH'} — ${strategy}`);
+}
+function compareStrategies(){
+  const strategies = ["ps_strict","max_cases","max_totes","high_smalls","high_mediums","high_large","balance_60_39_0"];
+  const target=Number(targetUnits.value)||0, over=(Number(allowedOver.value)||0)/100, useSel=!!useSelected.checked;
+  const cand=getCandidates(useSel);
+  if(!cand.length || target<=0){ showToast("Load data first"); return; }
+  const rows = strategies.map(st=>{
+    const best = strictMode.checked ? buildPlanGreedy(st,target,over,cand) : buildPlanSearch(st,target,over,cand);
+    if(!best) return {st, note:"—"};
+    return {
+      st,
+      units: best.ev.units,
+      dev: (best.ev.overshoot*100),
+      wS: best.ev.w_small, wM: best.ev.w_med, wL: best.ev.w_large,
+      cases: best.ev.casesShare, totes: best.ev.totesShare,
+      note: best.ev.within ? "within window" : "closest"
+    };
+  });
+  let html = `<table class="miniTable"><thead><tr>
+    <th>Strategy</th><th>Units</th><th>Dev %</th><th>PPR S/M/L</th><th>Cases %</th><th>Totes %</th><th>Note</th></tr></thead><tbody>`;
+  for(const r of rows){
+    html += `<tr>
+      <td>${r.st?.replaceAll('_',' ')||'—'}</td>
+      <td>${r.units?fmtNumber(r.units):'—'}</td>
+      <td>${isFinite(r.dev)?r.dev.toFixed(2)+'%':'—'}</td>
+      <td>${isFinite(r.wS)?fmtPercent(r.wS):'—'} / ${isFinite(r.wM)?fmtPercent(r.wM):'—'} / ${isFinite(r.wL)?fmtPercent(r.wL):'—'}</td>
+      <td>${isFinite(r.cases)?fmtPercent(r.cases):'—'}</td>
+      <td>${isFinite(r.totes)?fmtPercent(r.totes):'—'}</td>
+      <td>${r.note||'—'}</td>
+    </tr>`;
+  }
+  html += `</tbody></table>`;
+  document.getElementById("strategySummary").innerHTML = html;
+  showToast("Compared strategies (see Strategy summary)");
+}
+function renderStrategySummary(strategy, ev){
+  const box=document.getElementById("strategySummary");
+  const badge = ev.within ? '<span class="badge ok">within window</span>' : '<span class="badge warn">closest</span>';
+  box.innerHTML = `
+    <div>Strategy: <b>${strategy.replaceAll('_',' ').toUpperCase()}</b> · ${badge}</div>
+    <div style="margin-top:6px">Units: <b>${fmtNumber(ev.units)}</b> · Deviation: <b>${(ev.overshoot*100).toFixed(2)}%</b></div>
+    <div>PPR → Small: <b>${fmtPercent(ev.w_small)}</b>, Medium: <b>${fmtPercent(ev.w_med)}</b>, Large: <b>${fmtPercent(ev.w_large)}</b></div>
+    <div>Workload split → Cases: <b>${fmtPercent(ev.casesShare)}</b>, Totes: <b>${fmtPercent(ev.totesShare)}</b></div>
+  `;
+}
+function renderInspector(strategy, cand){
+  const ordered = greedyOrder(strategy, cand).slice(0,10);
+  let html = `<table class="miniTable"><thead><tr>
+    <th>#</th><th>VRID</th><th>PS</th><th>Units</th><th>PPR S/M/L</th><th>Cases%</th><th>Totes%</th><th>Location</th><th>Sev</th>
+  </tr></thead><tbody>`;
+  let i=1;
+  for(const c of ordered){
+    const casesPct = c.units? (c.casesUnits/c.units*100) : 0;
+    const totesPct = c.units? (c.totesUnits/c.units*100) : 0;
+    const sevClass = c.sev==="RED"?"bad":(c.sev==="OK"?"ok":"warn");
+    html += `<tr>
+      <td>${i++}</td>
+      <td>${c.VRID}</td>
+      <td>${fmtScore(c.ps)}</td>
+      <td>${fmtNumber(c.units)}</td>
+      <td>${fmtPercent(c.small)} / ${fmtPercent(c.med)} / ${fmtPercent(c.large)}</td>
+      <td>${fmtPercent(casesPct)}</td>
+      <td>${fmtPercent(totesPct)}</td>
+      <td>${c.loc||''}</td>
+      <td><span class="badge ${sevClass}">${c.sev}</span></td>
+    </tr>`;
+  }
+  html += `</tbody></table>`;
+  document.getElementById("inspector").innerHTML = html;
+}
+
+// Scroll UX
+function updateShadows(){
+  const el=tblWrap; if(!el) return;
+  const atStart = el.scrollLeft <= 1;
+  const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1;
+  shadowL.style.opacity = atStart ? 0 : 1;
+  shadowR.style.opacity = atEnd ? 0 : 1;
+  if(btnScrollL){ btnScrollL.disabled = atStart; }
+  if(btnJumpL){ btnJumpL.disabled = atStart; }
+  if(btnScrollR){ btnScrollR.disabled = atEnd; }
+  if(btnJumpR){ btnJumpR.disabled = atEnd; }
+}
+function initPanScroll(){
+  if(!tblWrap) return;
+  let isDown=false, startX=0, scrollStart=0, moved=false;
+
+  const onDown = (x)=>{ isDown=true; startX=x; scrollStart=tblWrap.scrollLeft; moved=false; tblWrap.classList.add("dragging"); };
+  const onMove = (x)=>{ if(!isDown) return; const dx=x-startX; if(Math.abs(dx)>3) moved=true; tblWrap.scrollLeft = scrollStart - dx; updateShadows(); };
+  const onUp = ()=>{ if(!isDown) return; isDown=false; tblWrap.classList.remove("dragging"); if(moved){ PAN_SUPPRESS_CLICK=true; setTimeout(()=> PAN_SUPPRESS_CLICK=false, 80); } };
+
+  tblWrap.addEventListener("mousedown", e=> onDown(e.clientX));
+  document.addEventListener("mousemove", e=> onMove(e.clientX));
+  document.addEventListener("mouseup", onUp);
+  tblWrap.addEventListener("mouseleave", onUp);
+
+  tblWrap.addEventListener("touchstart", e=>{ if(e.touches.length!==1) return; onDown(e.touches[0].clientX); }, {passive:true});
+  tblWrap.addEventListener("touchmove", e=>{ if(!isDown) return; onMove(e.touches[0].clientX); e.preventDefault(); }, {passive:false});
+  tblWrap.addEventListener("touchend", onUp, {passive:true});
+  tblWrap.addEventListener("touchcancel", onUp, {passive:true});
+
+  tblWrap.addEventListener("wheel", e=>{
+    const hasVOverflow = tblWrap.scrollHeight > (tblWrap.clientHeight + 1);
+    const wantH = e.shiftKey || (!hasVOverflow && Math.abs(e.deltaY) > Math.abs(e.deltaX));
+    if(wantH){ tblWrap.scrollLeft += e.deltaY; e.preventDefault(); updateShadows(); }
+  }, {passive:false});
+
+  const page=()=> Math.max(200, Math.floor(tblWrap.clientWidth*0.7));
+  btnScrollL.addEventListener("click", ()=>{ tblWrap.scrollBy({left:-page(), behavior:"smooth"}); setTimeout(updateShadows, 120); });
+  btnScrollR.addEventListener("click", ()=>{ tblWrap.scrollBy({left: page(), behavior:"smooth"}); setTimeout(updateShadows, 120); });
+  btnJumpL.addEventListener("click", ()=>{ tblWrap.scrollTo({left:0, behavior:"smooth"}); setTimeout(updateShadows, 120); });
+  btnJumpR.addEventListener("click", ()=>{ tblWrap.scrollTo({left: tblWrap.scrollWidth, behavior:"smooth"}); setTimeout(updateShadows, 120); });
+
+  tblWrap.addEventListener("keydown", e=>{
+    if(e.key==="ArrowLeft"){ tblWrap.scrollBy({left:-120, behavior:"smooth"}); }
+    if(e.key==="ArrowRight"){ tblWrap.scrollBy({left:120, behavior:"smooth"}); }
+    if(e.key==="Home"){ e.preventDefault(); tblWrap.scrollTo({left:0, behavior:"smooth"}); }
+    if(e.key==="End"){ e.preventDefault(); tblWrap.scrollTo({left: tblWrap.scrollWidth, behavior:"smooth"}); }
+  });
+
+  tblWrap.addEventListener("scroll", updateShadows, {passive:true});
+  updateShadows();
+}
+</script>
+</body>
+</html>
