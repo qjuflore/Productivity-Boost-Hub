@@ -37,7 +37,7 @@
     }
     .card h3{margin:0 0 12px 0;font-size:18px}
     .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
-    .btn{border:1px solid var(--border);background:var(--pill-muted);color:#fff;padding:10px 14px;border-radius:12px;cursor:pointer}
+    .btn{border:1px solid var(--border);background:var(--pill-muted);color:#fff;padding:10px 14px;border-radius:12px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
     .btn:hover{filter:brightness(1.1)}
     .btn.primary{background:#fff;color:#000;font-weight:600}
     label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
@@ -73,6 +73,10 @@
         <p class="sub">Plan decanters vs stowers, trailer injection, and EOS WIP — built for Flow (<b>BFL2</b>).</p>
       </div>
       <div class="right">
+        <!-- NUEVO: Back to Hub -->
+        <a class="btn" id="btnHome" href="https://qjuflore.github.io/Productivity-Boost-Hub/">🏠 Back to Hub</a>
+        <!-- NUEVO: chip de vistas de esta tool -->
+        <span class="pill muted" id="toolViewChip" title="Views for this tool">👁️ 0</span>
         <button class="btn" id="resetBtn">Reset</button>
         <button class="btn primary" id="copyBtn">Copy Plan</button>
       </div>
@@ -583,6 +587,40 @@
     }
     attachHandlers();
     render();
+  </script>
+
+  <!-- ========= NUEVO: Módulo de vistas compartidas ========= -->
+  <script>
+    (function(w){
+      const N=(x)=>{const n=parseInt(x,10);return isNaN(n)?0:n;};
+      const g=(k)=>{try{return localStorage.getItem(k);}catch(e){return null;}};
+      const s=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
+      const KEY_TOTAL='pb.views.total', P_TOOL='pb.views.tool.', P_AREA='pb.views.area.';
+      function bump(key,n=1){const cur=N(g(key));const val=cur+(n|0);s(key,String(val));return val;}
+      w.PBViews={bumpTotal(n=1){return bump(KEY_TOTAL,n);},getTotal(){return N(g(KEY_TOTAL));},
+                 bumpTool(id,n=1){return bump(P_TOOL+String(id),n);},getTool(id){return N(g(P_TOOL+String(id)));},
+                 bumpArea(id,n=1){return bump(P_AREA+String(id),n);},getArea(id){return N(g(P_AREA+String(id)));}};
+    })(window);
+  </script>
+
+  <!-- ========= NUEVO: Inicializar vistas para ESTA tool ========= -->
+  <script>
+    (function(){
+      const TOOL_ID = 'inbound-flow-planner';
+      try{
+        PBViews.bumpTotal(1);
+        PBViews.bumpTool(TOOL_ID,1);
+        PBViews.bumpArea('MasterTools',1);
+      }catch(e){}
+      function renderChip(){
+        const el=document.getElementById('toolViewChip');
+        if(el) el.textContent = `👁️ ${PBViews.getTool(TOOL_ID).toLocaleString()}`;
+      }
+      renderChip();
+      window.addEventListener('storage',(e)=>{
+        if(e.key==='pb.views.tool.'+TOOL_ID) renderChip();
+      });
+    })();
   </script>
 </body>
 </html>
