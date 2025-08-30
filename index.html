@@ -189,16 +189,17 @@
       background: var(--card-bg);
     }
 
-    /* Badge de vistas por tool */
+    /* Badge de vistas por tool (compacto) */
     .tool-views {
       margin-left: auto;
       font-size: .9rem;
       color: var(--muted);
-      padding: .2rem .5rem;
+      padding: .15rem .45rem;
       border: 1px solid var(--border);
       border-radius: 999px;
       background: rgba(255,255,255,0.03);
       white-space: nowrap;
+      line-height: 1.1;
     }
   </style>
 </head>
@@ -306,7 +307,7 @@
           const span = document.querySelector(`.tool-views[data-id="${id}"]`);
           if(span){
             const n = parseInt(e.newValue || '0', 10) || 0;
-            span.textContent = `👁️ Views: ${n.toLocaleString()}`;
+            span.textContent = `👁️ ${n.toLocaleString()}`;
           }
         }
       });
@@ -349,7 +350,7 @@
     })();
   </script>
 
-  <!-- Lógica MasterTools con badge de vistas por tool -->
+  <!-- Lógica MasterTools con badge de vistas por tool (👁️ N) -->
   <script>
     const LS_FAVS = 'pb.master.favorites';
     const tools = [
@@ -386,7 +387,7 @@
             <a class="tool-link" href="${t.href}" target="_blank" rel="noopener">Open</a>
             <button class="icon-btn favorite" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
             <button class="icon-btn copy-btn" title="Copy link">⧉</button>
-            <span class="tool-views" data-id="${t.id}">👁️ Views: ${toolViews}</span>
+            <span class="tool-views" data-id="${t.id}">👁️ ${toolViews}</span>
           </div>`;
 
         const favBtn = card.querySelector('.favorite');
@@ -425,7 +426,7 @@
         const span = document.querySelector(`.tool-views[data-id="${id}"]`);
         if(span){
           const n = parseInt(e.newValue || '0', 10) || 0;
-          span.textContent = `👁️ Views: ${n.toLocaleString()}`;
+          span.textContent = `👁️ ${n.toLocaleString()}`;
         }
       }
     });
