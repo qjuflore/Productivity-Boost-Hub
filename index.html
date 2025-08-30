@@ -130,7 +130,18 @@
     ];
     function isFav(id){ return state.favorites.includes(id); }
     function toggleFav(id){ const favs=new Set(state.favorites); favs.has(id)?favs.delete(id):favs.add(id); state.favorites=[...favs]; renderMasterTools(); }
-    function toolCard(t){ const card=document.createElement('div'); card.className='card'; card.dataset.id=t.id; card.innerHTML=`<h3>${t.icon} ${t.name}</h3><p>${t.desc||''}</p><div class=\"row\"><a class=\"tool-link\" href=\"${t.href}\" target=\"_blank\" rel=\"noopener\">Open</a><button class=\"icon-btn favorite\" aria-pressed=\"${isFav(t.id)}\" title=\"Favorite\">★</button><button class=\"icon-btn copy-btn\" title=\"Copy link\">⧉</button><button class=\"icon-btn\" data-preview-html=\"<iframe src='${t.href}' style='width:100%;height:70vh;border:0;border-radius:12px;'></iframe>\" data-preview-title=\"${t.name} — Preview\">Preview</button></div>`; const favBtn=card.querySelector('.favorite'); favBtn.addEventListener('click', ()=> toggleFav(t.id)); const copyBtn=card.querySelector('.copy-btn'); copyBtn.addEventListener('click', async ()=>{ try{ const url=new URL(t.href, location.href).href; await navigator.clipboard.writeText(url); const old=copyBtn.textContent; copyBtn.textContent='✔'; setTimeout(()=>copyBtn.textContent=old, 900);}catch{} }); return card; }
+    function toolCard(t){ const card=document.createElement('div'); card.className='card'; card.dataset.id=t.id; card.innerHTML=\`
+        <h3>\${t.icon} \${t.name}</h3>
+        <p>\${t.desc||''}</p>
+        <div class="row">
+          <a class="tool-link" href="\${t.href}" target="_blank" rel="noopener">Open</a>
+          <button class="icon-btn favorite" aria-pressed="\${isFav(t.id)}" title="Favorite">★</button>
+          <button class="icon-btn copy-btn" title="Copy link">⧉</button>
+          <button class="icon-btn" data-preview-html="<iframe src='\${t.href}' style='width:100%;height:70vh;border:0;border-radius:12px;'></iframe>" data-preview-title="\${t.name} — Preview">Preview</button>
+        </div>\`;
+      const favBtn=card.querySelector('.favorite'); favBtn.addEventListener('click', ()=> toggleFav(t.id));
+      const copyBtn=card.querySelector('.copy-btn'); copyBtn.addEventListener('click', async ()=>{ try{ const url=new URL(t.href, location.href).href; await navigator.clipboard.writeText(url); const old=copyBtn.textContent; copyBtn.textContent='✔'; setTimeout(()=>copyBtn.textContent=old, 900);}catch{} });
+      return card; }
     function renderMasterTools(){ const wrap=$('#masterGrid'); if(!wrap) return; wrap.innerHTML=''; const data=[...MASTER_DATA]; data.sort((a,b)=> (isFav(b.id)-isFav(a.id)) || a.name.localeCompare(b.name)); data.forEach(t=> wrap.appendChild(toolCard(t))); }
     const masterSearch=$('#masterSearch'); if(masterSearch) masterSearch.addEventListener('input', ()=>{ const q=masterSearch.value.trim().toLowerCase(); $$('#masterGrid .card').forEach(c=>{ const txt=c.textContent.toLowerCase(); c.style.display= q? (txt.includes(q)?'':'none') : ''; }); });
 
