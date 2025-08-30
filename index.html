@@ -173,8 +173,22 @@
       border: none;
       box-shadow: var(--button-glow);
       transition: transform .2s ease;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
     }
     .tool-link:hover { transform: scale(1.05); }
+
+    /* Unified search bars */
+    .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch {
+      margin-bottom: 1rem;
+      padding: 0.7rem 1rem;
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -195,18 +209,18 @@
   </div>
 
   <div id="reports" class="section active">
-    <input type="text" id="reportSearch" placeholder="🔍 Search reports..." style="margin-bottom: 1rem; padding: 0.5rem; width: 100%; border-radius: 10px; border: none;">
+    <input type="text" id="reportSearch" placeholder="🔍 Search reports..." class="search">
     <div id="reportContainer"></div>
     <div id="error" class="error-msg"></div>
   </div>
 
   <div id="guide" class="section">
-    <input type="text" id="guideSearch" placeholder="🔍 Search guide..." style="margin-bottom: 1rem; padding: 0.5rem; width: 100%; border-radius: 10px; border: none;">
+    <input type="text" id="guideSearch" placeholder="🔍 Search guide..." class="search">
     <div id="guideContainer"></div>
   </div>
 
   <div id="scripts" class="section">
-    <input type="text" id="scriptSearch" placeholder="🔍 Search scripts..." style="margin-bottom: 1rem; padding: 0.5rem; width: 100%; border-radius: 10px; border: none;">
+    <input type="text" id="scriptSearch" placeholder="🔍 Search scripts..." class="search">
     <div class="submit-card">
       📝 Want to share your script? <a href="https://docs.google.com/forms/d/e/1FAIpQLSdVhvhkmE28nIxDH2DAo4FR7W14zqUxp2KlGHvib6baAMplEQ/viewform" target="_blank">Submit it here</a>
     </div>
