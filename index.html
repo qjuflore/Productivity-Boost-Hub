@@ -246,7 +246,7 @@
 
   <script src="script.js"></script>
 
-  <!-- ===== PB Views (módulo local + opcional sendBeacon) ===== -->
+  <!-- ===== PB Views (módulo de vistas: total + por herramienta) ===== -->
   <script>
   (function(){
     const TOTAL_KEY = 'pb.views.total';
@@ -300,9 +300,11 @@
       onChange(cb){
         if(typeof cb!=='function') return;
         window.addEventListener(CHANGE_EVT, cb);
-        window.addEventListener('storage', (e)=>{
+        window.addEventListener('storage', (e)=>{ // cambios desde otras pestañas
           if(!e || !e.key) return;
-          if(e.key===TOTAL_KEY || e.key.startsWith(TOOL_PREFIX)){ cb(); }
+          if(e.key===TOTAL_KEY || e.key.startsWith(TOOL_PREFIX)){
+            cb();
+          }
         });
       }
     };
@@ -311,7 +313,7 @@
   })();
   </script>
 
-  <!-- Tabs persistentes -->
+  <!-- Parche: asegurar que MasterTools también quede seleccionado visualmente -->
   <script>
     (function(){
       const tabs = document.querySelectorAll('.tab');
@@ -351,7 +353,7 @@
     })();
   </script>
 
-  <!-- MasterTools + vistas -->
+  <!-- Lógica MasterTools -->
   <script>
     const LS_FAVS = 'pb.master.favorites';
     const tools = [
@@ -389,7 +391,12 @@
           </div>`;
 
         const favBtn = card.querySelector('.favorite');
-        favBtn.addEventListener('click', ()=> { const s=new Set(getFavs()); s.has(t.id)?s.delete(t.id):s.add(t.id); setFavs([...s]); renderMasterTools(); });
+        favBtn.addEventListener('click', ()=> {
+          const s=new Set(getFavs());
+          s.has(t.id)?s.delete(t.id):s.add(t.id);
+          setFavs([...s]);
+          renderMasterTools();
+        });
 
         const copyBtn = card.querySelector('.copy-btn');
         copyBtn.addEventListener('click', async ()=>{
@@ -437,7 +444,7 @@
     }
     window.PBViews?.onChange(refreshToolChips);
 
-    // Suma una vista al Hub
+    // Suma una vista al Hub (cuenta visitas de la portada)
     window.PBViews?.bumpTotal(1);
   </script>
 </body>
