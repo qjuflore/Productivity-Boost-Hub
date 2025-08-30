@@ -1,0 +1,1156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Trailer Plan Analyzer — BFL2 (EN v19)</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#111826; --card:#0f1623; --muted:#7b8aa1;
+      --text:#e6edf7; --accent:#6be675; --accent2:#7aa2f7; --bad:#ff6b6b;
+      --chip:#1b2536; --border:#1e293b; --neon:#4ef1a1; --highlight:#1f2a44;
+      --sevGreen:#18422a; --sevYellow:#3b3419; --sevRed:#3b1919;
+      --sevYBorder:#937b2f; --sevRBorder:#9b3131; --sevGBorder:#2d7750;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#0b0f14,#0d131f);color:var(--text);
+         font:14px/1.4 system-ui,Segoe UI,Roboto,Ubuntu,sans-serif}
+    header{padding:20px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;
+           background:rgba(13,19,31,.85);backdrop-filter: blur(6px);z-index:10}
+    h1{margin:0;font-size:18px;letter-spacing:.3px}
+    .container{padding:20px;max-width:1200px;margin:0 auto}
+    .u-row{display:grid;gap:16px}
+    .u-row.cols-2{grid-template-columns: repeat(2, minmax(0,1fr))}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .panel .body{padding:16px}
+    .drop{border:1.5px dashed #2c3a52;border-radius:12px;padding:16px;text-align:center;color:var(--muted)}
+    .drop.drag{outline:2px solid var(--accent2);outline-offset:2px}
+    .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:#0e1726;color:var(--text);
+         padding:8px 12px;border-radius:12px;cursor:pointer;user-select:none}
+    .btn:hover{border-color:#2b3b56;transform:translateY(-1px)}
+    .btn.accent{background:linear-gradient(90deg,#1d3b2b,#0c1f15);border-color:#284a36;color:#c8f5cf}
+    .btn.ghost{background:#0b1220;border-color:#26334e}
+    .btn[disabled]{opacity:.45;cursor:not-allowed}
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{background:var(--chip);border:1px solid var(--border);padding:6px 10px;border-radius:999px;color:#cbd5e1}
+    .grid{display:grid;gap:12px}
+    .grid.cols-4{grid-template-columns: repeat(4, minmax(0,1fr))}
+    .grid.cols-3{grid-template-columns: repeat(3, minmax(0,1fr))}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
+    .k{font-size:12px;color:#a8b3c7}
+    .v{font-weight:600;font-size:18px}
+    .explain{font-size:12px;color:#93a0b4;margin-top:6px}
+    .flex{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .right{margin-left:auto}
+    input[type=file]{display:none}
+    textarea{width:100%;min-height:120px;background:#0b1220;color:#e6edf7;border:1px solid var(--border);border-radius:12px;padding:10px;resize:vertical}
+    pre{white-space:pre-wrap;background:#0b1220;border:1px dashed #2c3a52;color:#dce6ff;border-radius:12px;padding:10px}
+    table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    thead th{font-size:12px;color:#94a3b8;text-align:left;padding:6px 8px;position:sticky;top:0;background:#0d1522;z-index:1}
+    thead th.sortable{cursor:pointer;user-select:none}
+    thead th.sortable .arrow{opacity:.5;margin-left:6px}
+    thead th.sortable.sorted{background:linear-gradient(90deg, rgba(122,162,247,.15), transparent);}
+    thead th.sortable.sorted .arrow{opacity:1}
+    tbody td{background:var(--card);border:1px solid var(--border);padding:8px;border-left:none;border-right:none;white-space:nowrap}
+    tbody tr td:first-child{border-left:1px solid var(--border);border-top-left-radius:12px;border-bottom-left-radius:12px}
+    tbody tr td:last-child{border-right:1px solid var(--border);border-top-right-radius:12px;border-bottom-right-radius:12px}
+    tbody tr:hover td{background:linear-gradient(90deg, rgba(122,162,247,.08), transparent)}
+
+    /* Pill filters */
+    .pill{padding:4px 10px;border-radius:999px;font-size:12px;border:1px solid var(--border);cursor:pointer}
+    .pill.on{background:#0f2b19;color:#b4f0bf;border-color:#1c4730;box-shadow:0 0 12px rgba(78,241,161,0.25) inset}
+    .pill.off{background:#221619;color:#ffb3b3;border-color:#4a1e1e}
+
+    .foot{color:#6b7280;font-size:12px;padding:12px 0}
+    .hidden{display:none}
+    .control{display:grid;grid-template-columns: 1fr 60px; gap:8px; align-items:center}
+    .range{width:100%}
+    .select,.input{background:#0b1220;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 10px;min-width:160px}
+    .selBtn{font-size:12px;padding:6px 10px;border:1px dashed #37507f;cursor:pointer}
+
+    /* Plan cell visuals */
+    .planCell{cursor:pointer; position:relative; user-select:none;}
+    .planTag{display:inline-block; margin-left:8px; padding:4px 10px; border-radius:999px; border:1px solid var(--border);
+             color:#cfe7ff; font-size:12px; background:linear-gradient(90deg,#0b1424,#0c1a2d)}
+    .planCell.selected .planTag{
+      border-color: rgba(78,241,161,0.55); color:#dfffef;
+      box-shadow: 0 0 12px rgba(78,241,161,0.35), inset 0 0 8px rgba(78,241,161,0.18);
+      background: linear-gradient(90deg, rgba(78,241,161,0.15), #0c1a2d);
+    }
+    th.planHead{cursor:pointer}
+
+    /* Severity highlighting */
+    tr.sev-ok td{ box-shadow: inset 3px 0 0 0 var(--sevGBorder); background-image: linear-gradient(90deg, rgba(46,139,87,.08), transparent); }
+    tr.sev-yellow td{ box-shadow: inset 3px 0 0 0 var(--sevYBorder); background-image: linear-gradient(90deg, rgba(255,215,0,.10), transparent); }
+    tr.sev-red td{ box-shadow: inset 3px 0 0 0 var(--sevRBorder); background-image: linear-gradient(90deg, rgba(255,0,0,.10), transparent); }
+    .sevBadge{padding:2px 8px;border-radius:999px;border:1px solid var(--border);font-size:12px}
+    .sev-ok .sevBadge{background:#0f2b19;color:#b4f0bf;border-color:#1c4730}
+    .sev-yellow .sevBadge{background:#332a0f;color:#ffe08a;border-color:#6f5b1b}
+    .sev-red .sevBadge{background:#331212;color:#ffb3b3;border-color:#6b1f1f}
+
+    /* ✅ Neon selection overlay (works for ALL rows, even with severity) */
+    tr.selRow td{
+      position: relative;
+      box-shadow: 0 0 0 1px rgba(78,241,161,0.35) inset, 0 0 18px rgba(78,241,161,0.18) inset;
+    }
+    tr.selRow td::after{
+      content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+      background: radial-gradient(120% 120% at 0% 0%, rgba(78,241,161,0.18), transparent 60%);
+      mix-blend-mode: screen; /* overlays on top of any background */
+    }
+
+    /* Scroll area: fixed max-height and internal vertical scroll */
+    .scrollWrap{
+      position:relative; 
+      overflow:auto;
+      max-height:62vh;
+      margin-top:10px; 
+      border-radius:12px;
+      outline:1px solid var(--border); 
+      cursor:grab; user-select:none; touch-action:none;
+      background:#0b1220;
+    }
+    .scrollWrap.dragging{cursor:grabbing}
+    .scrollShadow{position:absolute; top:0; bottom:0; width:28px; pointer-events:none; opacity:0; transition:opacity .18s}
+    .scrollShadow.left{left:0; background:linear-gradient(90deg, rgba(13,21,34,.9), transparent)}
+    .scrollShadow.right{right:0; background:linear-gradient(270deg, rgba(13,21,34,.9), transparent)}
+
+    /* External horizontal controls */
+    .hControls{display:flex; gap:6px; align-items:center; margin:8px 0 4px 0}
+    .hControls .btn{padding:6px 10px}
+
+    #toasts{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:1000}
+    .toast{display:flex;align-items:center;gap:10px;background:linear-gradient(180deg,#0d1a2b,#0a1322);
+           border:1px solid var(--border); border-radius:12px; padding:10px 12px; box-shadow:0 8px 30px rgba(0,0,0,.35);
+           animation:toastIn .18s ease-out; color:#cfe7ff; font-size:13px}
+    .toast .dot{width:8px;height:8px;border-radius:999px;background:var(--neon);box-shadow:0 0 10px rgba(78,241,161,.7)}
+    .toast.bye{opacity:0; transform: translateY(8px); transition: opacity .35s ease, transform .35s ease}
+    @keyframes toastIn{from{opacity:0; transform: translateY(6px)} to{opacity:1; transform: translateY(0)}}
+    @media (max-width:900px){
+      .u-row.cols-2{grid-template-columns:1fr}
+      .grid.cols-4{grid-template-columns:1fr 1fr}
+      .grid.cols-3{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="flex">
+      <h1>Trailer Plan Analyzer — BFL2</h1>
+      <div class="right chips">
+        <span class="chip">CSV/TSV/; supported</span>
+        <span class="chip">Excel: XLSX supported</span>
+      </div>
+      <div class="right flex">
+        <button class="btn" id="btnExport">Export .csv</button>
+        <button class="btn" id="btnReset">Reset</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="u-row cols-2">
+      <section class="panel">
+        <div class="body">
+          <div class="flex">
+            <label class="btn" for="filePick">📂 Upload CSV/XLSX (Trailer plan)</label>
+            <input id="filePick" type="file" accept=".csv,.tsv,.txt,.xlsx" />
+            <button id="btnPaste" class="btn">📋 Paste data</button>
+          </div>
+          <div id="pasteZone" class="hidden" style="margin-top:12px">
+            <textarea id="pasteInput" placeholder="Paste CSV/TSV (headers in first row)…"></textarea>
+            <div class="flex" style="margin-top:8px">
+              <button class="btn accent" id="btnParsePaste">Analyze pasted data</button>
+              <span id="pasteMsg" class="k"></span>
+            </div>
+          </div>
+          <div id="drop" class="drop" style="margin-top:12px">Drag & drop CSV/XLSX here</div>
+
+          <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
+          <div class="flex">
+            <label class="btn" for="fileStatusPick">🛠️ Import status (YMS)</label>
+            <input id="fileStatusPick" type="file" accept=".csv,.tsv,.txt,.xlsx" />
+            <span class="k">Maps by VRID (col E) → updates <b>Severity</b> (A), <b>Status Info</b> (B), fresher <b>Trailer Location</b> and <b>Actual / Expected Arrival Time</b> if present.</span>
+          </div>
+          <div class="chips" id="sevLegend" style="margin-top:10px">
+            <span class="chip">Legend:</span>
+            <span class="chip" style="background:#0f2b19;border-color:#1c4730;color:#b4f0bf">OK</span>
+            <span class="chip" style="background:#332a0f;border-color:#6f5b1b;color:#ffe08a">Yellow / Other</span>
+            <span class="chip" style="background:#331212;border-color:#6b1f1f;color:#ffb3b3">Red</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="body">
+          <div class="chips" id="metaChips"></div>
+          <div id="statusFilterBox" style="margin-top:12px"></div>
+          <div class="grid cols-3" style="margin-top:12px" id="breakdowns"></div>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel" style="margin-top:16px">
+      <div class="body">
+        <h3 style="margin:0 0 10px 0">Totals (counts) & Weighted shares (percentages)</h3>
+        <div class="grid cols-4" id="totalsGrid"></div>
+        <div class="foot">
+          <button class="btn" id="btnCopySlack">Copy totals (Slack message)</button>
+          <span id="copyMsg" class="k"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top:16px">
+      <div class="body">
+        <h3 style="margin:0 0 10px 0">Derived metrics</h3>
+        <div class="grid cols-4" id="derivedGrid"></div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top:16px">
+      <div class="body">
+        <h3 style="margin:0 0 10px 0">Headcount Needed (Decant)</h3>
+        <div class="flex" style="gap:12px; flex-wrap:wrap">
+          <div>
+            <div class="k">Workload source</div>
+            <select id="workloadSource" class="select">
+              <option value="Units in Cases (computed)" selected>Units in Cases (computed)</option>
+              <option value="Total Units">Total Units</option>
+              <option value="Units in Palletized Totes">Units in Palletized Totes</option>
+            </select>
+          </div>
+          <div style="min-width:260px">
+            <div class="k">Hours remaining</div>
+            <div class="control">
+              <input id="hoursRange" type="range" min="1" max="12" step="1" value="4" class="range">
+              <input id="hoursInput" type="number" min="0.5" max="24" step="0.5" value="4" class="input">
+            </div>
+            <div class="explain">Headcount = ceil(Workload ÷ (Rate × Hours)).</div>
+          </div>
+          <div style="min-width:260px">
+            <div class="k">Decanter rate (units/hour per person)</div>
+            <div class="control">
+              <input id="rateRange" type="range" min="50" max="1200" step="10" value="350" class="range">
+              <input id="rateInput" type="number" min="10" max="3000" step="10" value="350" class="input">
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:10px">
+          <div class="k">Result</div>
+          <div class="v" id="headcountResult">—</div>
+          <div class="explain" id="headcountExplain"></div>
+        </div>
+      </section>
+
+    <section class="panel" style="margin-top:16px">
+      <div class="body">
+        <div class="flex" style="align-items:center; gap:10px">
+          <h3 style="margin:0">Per-VRID detail</h3>
+          <input id="search" placeholder="Search VRID…" class="input" style="margin-left:auto;min-width:220px">
+          <button class="selBtn" id="btnResetSort">Reset sort</button>
+          <button class="selBtn" id="btnSelectAll">Select all</button>
+          <button class="selBtn" id="btnSelectNone">Select none</button>
+        </div>
+
+        <!-- Filters UI -->
+        <div class="filters">
+          <div>
+            <div class="k">Column</div>
+            <select id="filterCol" class="select"></select>
+          </div>
+          <div>
+            <div class="k">Operator</div>
+            <select id="filterOp" class="select"></select>
+          </div>
+          <div id="valBox1">
+            <div class="k">Value</div>
+            <input id="filterVal1" class="input" placeholder="e.g., 100 or INBOUND">
+          </div>
+          <div id="valBox2" class="hidden">
+            <div class="k">And</div>
+            <input id="filterVal2" class="input" placeholder="e.g., 500 (for between)">
+          </div>
+          <button class="btn" id="btnAddFilter">Add filter</button>
+          <button class="btn" id="btnClearFilters">Clear filters</button>
+        </div>
+        <div class="filter-chips" id="activeFilters"></div>
+
+        <!-- External horizontal controls -->
+        <div class="hControls" aria-label="Horizontal controls for VRID table">
+          <button class="btn ghost" id="btnJumpL" title="Jump to start">⏮</button>
+          <button class="btn ghost" id="btnScrollL" title="Scroll left">◀</button>
+          <button class="btn ghost" id="btnScrollR" title="Scroll right">▶</button>
+          <button class="btn ghost" id="btnJumpR" title="Jump to end">⏭</button>
+          <span class="k">Tip: drag inside the table, Shift+wheel = horizontal, Home/End keys.</span>
+        </div>
+
+        <!-- Scrollable table with vertical overflow -->
+        <div class="scrollWrap" id="tblWrap" tabindex="0" aria-label="Scroll area for VRID table">
+          <div class="scrollShadow left" id="shadowL"></div>
+          <div class="scrollShadow right" id="shadowR"></div>
+          <table id="tbl">
+            <thead id="thead"></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div class="k" id="selectionMsg" style="margin-top:8px"></div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top:16px">
+      <div class="body">
+        <h3 style="margin:0 0 10px 0">Auto Plan (Smart selector)</h3>
+        <div class="flex" style="gap:12px; flex-wrap:wrap">
+          <div>
+            <div class="k">Target units</div>
+            <input id="targetUnits" type="number" class="input" value="100000" min="1" step="100">
+          </div>
+          <div>
+            <div class="k">Allowed deviation (±%)</div>
+            <input id="allowedOver" type="number" class="input" value="5" min="0" max="50" step="0.5">
+          </div>
+          <div>
+            <div class="k">High-small threshold % (to exceed +deviation)</div>
+            <input id="smallThresh" type="number" class="input" value="60" min="0" max="100" step="1">
+          </div>
+          <div class="flex" style="align-items:center;gap:6px">
+            <input type="checkbox" id="useSelected" checked>
+            <label class="k" for="useSelected">Use currently selected rows only</label>
+          </div>
+        </div>
+        <div class="explain" style="margin-top:8px">
+          Deviation applies both above and below the target. Exceeding the <b>upper</b> bound is only allowed if weighted <b>PPR Small</b> ≥ threshold.
+        </div>
+        <div class="flex" style="gap:8px;margin-top:10px">
+          <button class="btn accent" id="btnRecommend">Recommend plan</button>
+          <button class="btn" id="btnApplyPlan">Apply to table selection</button>
+          <button class="btn" id="btnCopyPlan">Copy plan text</button>
+        </div>
+        <pre id="planOutput" style="margin-top:10px;min-height:100px">—</pre>
+      </div>
+    </section>
+  </div>
+
+  <!-- Toasts -->
+  <div id="toasts" aria-live="polite"></div>
+
+<script>
+// ===== Configuration =====
+const REQUIRED = [
+  "VRID","Transship Status","Load Config","Trailer Location",
+  "Severity","Status Info","Actual / Expected Arrival Time",
+  "Priority Score",
+  "Single ASIN Pallets","Mixed ASIN Pallets","FL Cases","FL Totes","Palletized Totes",
+  "Apparel","Shoes","Library","Library Deep","HRV",
+  "PPR Small","PPR Medium","PPR Large",
+  "Palletized Single ASIN Cases","Palletized Mixed ASIN Cases",
+  "Units in FL Totes","Units in Palletized Totes","Units in Palletized Single ASIN Cases","Units in Palletized Mixed ASIN Cases",
+  "Total Units"
+];
+const PERCENT_HINT = ["PPR Small","PPR Medium","PPR Large"];
+const TOTALS_COLUMNS = [
+  "Single ASIN Pallets","Mixed ASIN Pallets","FL Cases","FL Totes","Palletized Totes",
+  "Apparel","Shoes","Library","Library Deep","HRV",
+  "PPR Small","PPR Medium","PPR Large",
+  "Palletized Single ASIN Cases","Palletized Mixed ASIN Cases",
+  "Units in FL Totes","Units in Palletized Totes","Units in Palletized Single ASIN Cases","Units in Palletized Mixed ASIN Cases",
+  "Total Units"
+];
+const NON_NUMERIC = ["VRID","Transship Status","Load Config","Trailer Location","Severity","Status Info","Actual / Expected Arrival Time"];
+const NUMERIC = REQUIRED.filter(c => !NON_NUMERIC.includes(c));
+const normalize = s => String(s||"").trim().toLowerCase().replace(/[_%-]/g," ").replace(/\s+/g," ");
+const up = s => String(s||"").trim().toUpperCase();
+
+/* Rename MISSING (and blanks) → ARRIVAL_SCHEDULED */
+function toStatusLabel(raw){
+  const s=String(raw||"").trim();
+  if(!s) return "ARRIVAL_SCHEDULED";
+  const u=s.toUpperCase();
+  if(u==="MISSING") return "ARRIVAL_SCHEDULED";
+  return s;
+}
+function statusKey(raw){ return up(toStatusLabel(raw)); }
+
+// ===== CSV/TSV parsing =====
+function guessDelimiter(text){
+  const line = (text.match(/^[^\r\n]+/)||[""])[0];
+  const counts = {",":(line.match(/,/g)||[]).length,"\t":(line.match(/\t/g)||[]).length,";":(line.match(/;/g)||[]).length};
+  let best=",",max=-1; for(const [d,c] of Object.entries(counts)){ if(c>max){max=c;best=d;} } return best;
+}
+function parseDelimited(text, delim=","){
+  const rows=[]; let i=0,field="",row=[],inQ=false; const n=text.length;
+  while(i<n){ const c=text[i];
+    if(inQ){ if(c === '"'){ if(text[i+1] === '"'){ field+='"'; i++; } else inQ=false; } else field+=c; }
+    else{ if(c === '"') inQ=true; else if(c===delim){row.push(field);field="";}
+          else if(c==='\n'){row.push(field);rows.push(row);row=[];field="";}
+          else if(c!=='\r'){field+=c;} }
+    i++;
+  }
+  if(field.length||row.length){row.push(field);rows.push(row);}
+  return rows;
+}
+function parseAnyTable(text){ return parseDelimited(text, guessDelimiter(text)); }
+function arrayToCSV(rows){
+  return rows.map(r => r.map(v => {
+    const s=String(v??""); return /[,"\n]/.test(s)? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(",")).join("\n");
+}
+
+// ===== Formatting =====
+function toNum(v){ if(v==null) return 0; let s=String(v).replace(/,/g,"").replace(/%/g,"").trim(); if(s==="") return 0; const x=Number(s); return isFinite(x)?x:0; }
+function fmtNumber(n){const f=Number(n); return isFinite(f)? f.toLocaleString(undefined,{maximumFractionDigits:0}) : ""; }
+function fmtScore(n){const f=Number(n); return isFinite(f)? f.toLocaleString(undefined,{maximumFractionDigits:2}) : ""; }
+function fmtPercent(n){const f=Number(n); return isFinite(f)? f.toLocaleString(undefined,{maximumFractionDigits:2})+"%" : ""; }
+function parseWhen(s){ const t=Date.parse(String(s||"").replaceAll("  "," ")); return isNaN(t)? null : t; }
+
+// ===== Header mapping =====
+function mapHeaders(headers){
+  const map = {}, normToReal = {}; headers.forEach(h => normToReal[normalize(h)] = h);
+  const arrivalSyns = ["actual / expected arrival time","arrival time","expected arrival","actual arrival","eta","ata","scheduled arrival","appt time","appointment time"];
+  for(const syn of arrivalSyns){ const k=Object.keys(normToReal).find(x=>x.includes(syn)); if(k){ map["Actual / Expected Arrival Time"]=normToReal[k]; break; } }
+  REQUIRED.forEach(label => {
+    if(label==="Actual / Expected Arrival Time" && map[label]) return;
+    const n=normalize(label);
+    if(normToReal[n]) map[label]=normToReal[n];
+    else{ const hit=Object.keys(normToReal).find(k=>k.includes(n)); if(hit) map[label]=normToReal[hit]; }
+  });
+  if(!map["Total Units"]){
+    for(const k in normToReal){ if(k.includes("total")&&(k.includes("units")||k.includes("totes")||k.includes("cases"))){ map["Total Units"]=normToReal[k]; break; } }
+  }
+  return map;
+}
+function detectPercentColumn(values,label){
+  if(PERCENT_HINT.includes(label)) return true;
+  let nonEmpty=0, withPct=0; for(const v of values){ if(String(v??"").trim()!==""){nonEmpty++; if(String(v).includes("%")) withPct++; } }
+  return nonEmpty>0 && (withPct/nonEmpty)>=0.30;
+}
+
+// ===== State & DOM =====
+const drop=document.getElementById("drop");
+const filePick=document.getElementById("filePick");
+const btnPaste=document.getElementById("btnPaste");
+const pasteZone=document.getElementById("pasteZone");
+const pasteInput=document.getElementById("pasteInput");
+const btnParsePaste=document.getElementById("btnParsePaste");
+const fileStatusPick=document.getElementById("fileStatusPick");
+
+const metaChips=document.getElementById("metaChips");
+const statusFilterBox=document.getElementById("statusFilterBox");
+const breakdowns=document.getElementById("breakdowns");
+const totalsGrid=document.getElementById("totalsGrid");
+const derivedGrid=document.getElementById("derivedGrid");
+const thead=document.getElementById("thead");
+const tbody=document.getElementById("tbody");
+const btnCopySlack=document.getElementById("btnCopySlack");
+const copyMsg=document.getElementById("copyMsg");
+const btnExport=document.getElementById("btnExport");
+const btnReset=document.getElementById("btnReset");
+const search=document.getElementById("search");
+const btnSelectAll=document.getElementById("btnSelectAll");
+const btnSelectNone=document.getElementById("btnSelectNone");
+const btnResetSort=document.getElementById("btnResetSort");
+const selectionMsg=document.getElementById("selectionMsg");
+
+const hoursRange=document.getElementById("hoursRange");
+const hoursInput=document.getElementById("hoursInput");
+const rateRange=document.getElementById("rateRange");
+const rateInput=document.getElementById("rateInput");
+const workloadSource=document.getElementById("workloadSource");
+const headcountResult=document.getElementById("headcountResult");
+const headcountExplain=document.getElementById("headcountExplain");
+
+const targetUnits=document.getElementById("targetUnits");
+const allowedOver=document.getElementById("allowedOver");
+const smallThresh=document.getElementById("smallThresh");
+const useSelected=document.getElementById("useSelected");
+const btnRecommend=document.getElementById("btnRecommend");
+const btnApplyPlan=document.getElementById("btnApplyPlan");
+const btnCopyPlan=document.getElementById("btnCopyPlan");
+const planOutput=document.getElementById("planOutput");
+
+const filterCol=document.getElementById("filterCol");
+const filterOp=document.getElementById("filterOp");
+const filterVal1=document.getElementById("filterVal1");
+const filterVal2=document.getElementById("filterVal2");
+const valBox2=document.getElementById("valBox2");
+const btnAddFilter=document.getElementById("btnAddFilter");
+const btnClearFilters=document.getElementById("btnClearFilters");
+const activeFilters=document.getElementById("activeFilters");
+
+const toasts=document.getElementById("toasts");
+
+// External horizontal controls
+const tblWrap=document.getElementById("tblWrap");
+const btnScrollL=document.getElementById("btnScrollL");
+const btnScrollR=document.getElementById("btnScrollR");
+const btnJumpL=document.getElementById("btnJumpL");
+const btnJumpR=document.getElementById("btnJumpR");
+const shadowL=document.getElementById("shadowL");
+const shadowR=document.getElementById("shadowR");
+
+let ROWS=[], IS_PERCENT={}, PCT_UNITS={}, LAST_PLAN=null;
+let STATUS_FILTER=new Set(), SORT_BY=null, SORT_DIR='asc', FILTERS=[];
+let PAN_SUPPRESS_CLICK=false;
+
+// Default workload source
+document.addEventListener("DOMContentLoaded", ()=>{
+  if(workloadSource) workloadSource.value="Units in Cases (computed)";
+  tbody.addEventListener("click", onTbodyClick);
+  tbody.addEventListener("dblclick", onTbodyDblClick);
+  initPanScroll();
+});
+
+btnPaste.onclick=()=> pasteZone.classList.toggle("hidden");
+btnParsePaste.onclick=()=> handleText(pasteInput.value);
+
+filePick.onchange=e=>{const f=e.target.files[0]; if(f) handleFile(f);};
+fileStatusPick.onchange=e=>{const f=e.target.files[0]; if(f) handleStatusFile(f);};
+
+["dragenter","dragover"].forEach(evt=>drop.addEventListener(evt,e=>{e.preventDefault();e.stopPropagation();drop.classList.add("drag");}));
+["dragleave","drop"].forEach(evt=>drop.addEventListener(evt,e=>{e.preventDefault();e.stopPropagation();drop.classList.remove("drag");}));
+drop.addEventListener("drop",e=>{const f=e.dataTransfer.files?.[0]; if(f) handleFile(f);});
+
+btnReset.onclick=()=>{
+  ROWS=[]; IS_PERCENT={}; PCT_UNITS={};
+  metaChips.innerHTML=""; breakdowns.innerHTML=""; totalsGrid.innerHTML=""; derivedGrid.innerHTML="";
+  thead.innerHTML=""; tbody.innerHTML="";
+  copyMsg.textContent=""; pasteInput.value="";
+  selectionMsg.textContent=""; headcountResult.textContent="—"; headcountExplain.textContent="";
+  planOutput.textContent="—"; LAST_PLAN=null;
+  STATUS_FILTER=new Set(["INBOUND"]); SORT_BY=null; SORT_DIR='asc'; FILTERS=[]; renderFilterChips();
+  if(workloadSource) workloadSource.value="Units in Cases (computed)";
+  statusFilterBox.innerHTML="";
+};
+
+search.oninput=()=> renderTable();
+hoursRange.oninput=()=>{hoursInput.value=hoursRange.value; computeAndRender();};
+hoursInput.oninput=()=>{hoursRange.value=hoursInput.value; computeAndRender();};
+rateRange.oninput=()=>{rateInput.value=rateRange.value; computeAndRender();};
+rateInput.oninput=()=>{rateRange.value=rateInput.value; computeAndRender();};
+workloadSource.onchange=()=> computeAndRender();
+btnSelectAll.onclick=()=>{const vis=visibleRows(); vis.forEach(r=>r._selected=true); showToast(`Selected ${vis.length} visible row(s)`); computeAndRender();};
+btnSelectNone.onclick=()=>{const vis=visibleRows(); vis.forEach(r=>r._selected=false); showToast(`Cleared selection for ${vis.length} visible row(s)`); computeAndRender();};
+btnResetSort.onclick=()=>{SORT_BY=null; SORT_DIR='asc'; renderTable();};
+
+btnRecommend.onclick=()=> recommendPlan();
+btnApplyPlan.onclick=()=>{
+  if(!LAST_PLAN){alert("No plan yet. Click 'Recommend plan' first."); return;}
+  const selSet=new Set(LAST_PLAN.idxs); ROWS.forEach((r,i)=> r._selected = selSet.has(i));
+  showToast(`Applied recommended plan to table selection`); computeAndRender();
+};
+btnCopyPlan.onclick=()=>{
+  if(!LAST_PLAN){alert("No plan yet."); return;}
+  navigator.clipboard.writeText(LAST_PLAN.text||"").then(()=>{btnCopyPlan.textContent="Copied ✓"; setTimeout(()=>btnCopyPlan.textContent="Copy plan text",1200);});
+};
+
+btnAddFilter.onclick=()=> addFilterFromUI();
+btnClearFilters.onclick=()=>{FILTERS=[]; renderFilterChips(); renderTable();};
+filterCol.onchange=syncOpChoices;
+
+btnCopySlack.onclick=()=>{
+  const agg=aggregate(activeRows()); const d=derive(agg); const lines=[];
+  lines.push(`Totals — Selected & Status-filtered:`);
+  for(const key of TOTALS_COLUMNS){
+    const isPct=!!IS_PERCENT[key];
+    const val=isPct ? (PCT_UNITS[key]?.pct||0) : (agg[key]?.value||0);
+    const pretty=isPct ? fmtPercent(val) : (key==="Priority Score"? fmtScore(val) : fmtNumber(val));
+    if(isPct){
+      const u=PCT_UNITS[key]?.units||0, totalUnits=agg["Total Units"]?.value||0;
+      lines.push(`• ${key}: ${pretty} (≈ ${fmtNumber(u)} of ${fmtNumber(totalUnits)} units)`);
+    }else lines.push(`• ${key}: ${pretty}`);
+  }
+  lines.push(`Derived → Units in Cases: ${fmtNumber(d.unitsInCases)} | Case %: ${fmtPercent(d.casePct)} | Tote Density (all totes): ${fmtNumber(d.toteDensityAll)}`);
+  navigator.clipboard.writeText(lines.join("\n")).then(()=>{copyMsg.textContent="Copied ✓"; setTimeout(()=>copyMsg.textContent="",1200);});
+};
+
+// ===== Export =====
+btnExport.onclick=()=>{
+  if(!ROWS.length){alert("Nothing to export."); return;}
+  const cols=["VRID"].concat(REQUIRED.filter(c=>c!=="VRID"));
+  const rows=[cols]; visibleRows().forEach(r=> rows.push(cols.map(c=> r[c]??"")));
+  const csv=arrayToCSV(rows); const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="trailer_plan_export.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+};
+
+// ===== Toasts =====
+function showToast(msg){
+  const t=document.createElement("div"); t.className="toast";
+  t.innerHTML=`<span class="dot"></span><div>${msg}</div>`; toasts.appendChild(t);
+  setTimeout(()=>{t.classList.add("bye"); setTimeout(()=>t.remove(),380);},2200);
+}
+
+// ===== File handling (plan) =====
+function handleFile(file){
+  const name=file.name.toLowerCase();
+  if(name.endsWith(".xlsx")){
+    if(typeof XLSX==="undefined"){alert("XLSX library not loaded."); return;}
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const data=new Uint8Array(ev.target.result);
+      const wb=XLSX.read(data,{type:"array"});
+      const sheet=wb.Sheets[wb.SheetNames[0]];
+      const csv=XLSX.utils.sheet_to_csv(sheet);
+      handleText(csv);
+    };
+    reader.readAsArrayBuffer(file);
+  }else{
+    const reader=new FileReader();
+    reader.onload=ev=>handleText(ev.target.result);
+    reader.readAsText(file);
+  }
+}
+function handleText(text){
+  if(!text||text.trim()==="") return;
+  const rows=parseAnyTable(text).filter(r=> r.length && r.some(c=> String(c).trim()!==''));
+  if(!rows.length){alert("No rows detected."); return;}
+  const headers=rows[0];
+  const map=mapHeaders(headers);
+  const idx=Object.fromEntries(headers.map((h,i)=>[h,i]));
+  const body=rows.slice(1);
+
+  let idCounter=0;
+  const rawRows=body.map(r=>{
+    const obj={_id:(idCounter++), _selected:true};
+    REQUIRED.forEach(label=>{
+      const real=map[label]; const val=real ? r[idx[real]] : "";
+      obj[label]=val;
+    });
+    // Normalize Transship Status
+    obj["Transship Status"]=toStatusLabel(obj["Transship Status"]);
+    return obj;
+  });
+
+  IS_PERCENT={}; for(const col of NUMERIC){ IS_PERCENT[col]=detectPercentColumn(rawRows.map(x=>x[col]), col); }
+  ROWS=rawRows;
+  const universe=new Set(ROWS.map(r=> statusKey(r["Transship Status"])));
+  STATUS_FILTER=universe.has("INBOUND")? new Set(["INBOUND"]) : new Set([...universe]);
+
+  initFilterUI(); computeAndRender();
+}
+
+// ---- Status/YMS file handling ----
+function handleStatusFile(file){
+  const name=file.name.toLowerCase();
+  if(name.endsWith(".xlsx")){
+    if(typeof XLSX==="undefined"){alert("XLSX library not loaded."); return;}
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const data=new Uint8Array(ev.target.result);
+      const wb=XLSX.read(data,{type:"array"});
+      const sheet=wb.Sheets[wb.SheetNames[0]];
+      const csv=XLSX.utils.sheet_to_csv(sheet);
+      mergeStatusText(csv);
+    };
+    reader.readAsArrayBuffer(file);
+  }else{
+    const reader=new FileReader();
+    reader.onload=ev=>mergeStatusText(ev.target.result);
+    reader.readAsText(file);
+  }
+}
+function detectStatusMapping(headerRow){
+  const normMap={}; headerRow.forEach((h,i)=> normMap[normalize(h)]=i);
+  const hasHeaders=Object.keys(normMap).some(k=>k.includes("severity")||k.includes("vrid"));
+  let idxSev=null, idxInfo=null, idxVRID=null, idxLoc=null, idxArr=null;
+  if(hasHeaders){
+    for(const [k,i] of Object.entries(normMap)){
+      if(idxSev===null && (k==="severity"||k.includes("severity"))) idxSev=i;
+      if(idxVRID===null && (k==="vrid"||k.includes("vrid"))) idxVRID=i;
+      if(idxInfo===null && (k.includes("comment")||k.includes("detail")||k.includes("note")||k==="info")) idxInfo=i;
+      if(idxLoc===null && (k.includes("trailer location")||k==="location"||k.includes("yard")||k.includes("spot")||k.includes("door")||k.includes("dock"))) idxLoc=i;
+      if(idxArr===null && (k.includes("arrival")||k==="eta"||k==="ata"||k.includes("expected")||k.includes("actual")||k.includes("appt"))) idxArr=i;
+    }
+  }
+  if(idxSev===null) idxSev=0;
+  if(idxInfo===null) idxInfo=1;
+  if(idxVRID===null) idxVRID=hasHeaders ? (normMap["vrid"] ?? 4) : 4;
+  return {idxSev, idxInfo, idxVRID, idxLoc, idxArr, hasHeaders};
+}
+function mergeStatusText(text){
+  const rows=parseAnyTable(text).filter(r=> r.length && r.some(c=> String(c).trim()!==''));
+  if(!rows.length){alert("No rows in status file."); return;}
+  const mapping=detectStatusMapping(rows[0]);
+  const start=mapping.hasHeaders ? 1 : 0;
+  const map=new Map();
+  for(let i=start;i<rows.length;i++){
+    const r=rows[i];
+    const vrid=String(r[mapping.idxVRID]||"").trim(); if(!vrid) continue;
+    const sev=String(r[mapping.idxSev]||"").trim();
+    const info=String(r[mapping.idxInfo]||"").trim();
+    const loc=(mapping.idxLoc!=null)? String(r[mapping.idxLoc]||"").trim() : "";
+    const arr=(mapping.idxArr!=null)? String(r[mapping.idxArr]||"").trim() : "";
+    map.set(up(vrid), {sev, info, loc, arr});
+  }
+  let matched=0, updatedLoc=0, ok=0, warn=0, red=0, updatedArr=0;
+  ROWS.forEach(row=>{
+    const key=up(String(row["VRID"]||""));
+    const hit=map.get(key); if(!hit) return;
+    matched++;
+    row["Severity"]=hit.sev || row["Severity"] || "";
+    row["Status Info"]=hit.info || row["Status Info"] || "";
+    if(hit.loc){ row["Trailer Location"]=hit.loc; updatedLoc++; }
+    if(hit.arr){ row["Actual / Expected Arrival Time"]=hit.arr; updatedArr++; }
+    const cl=severityClass(hit.sev);
+    if(cl==="sev-red") red++; else if(cl==="sev-yellow") warn++; else ok++;
+  });
+  computeAndRender();
+  showToast(`Merged status for ${matched} VRID(s). OK: ${ok}, Yellow/Other: ${warn}, Red: ${red}${updatedLoc?`, Loc updated: ${updatedLoc}`:''}${updatedArr?`, Arrival updated: ${updatedArr}`:''}`);
+}
+
+// ===== Filters & Sorting =====
+function initFilterUI(){
+  const cols=["VRID"].concat(REQUIRED.filter(c=>c!=="VRID"));
+  filterCol.innerHTML=cols.map(c=>`<option value="${c}">${c}</option>`).join("");
+  filterCol.value="VRID"; syncOpChoices();
+}
+function syncOpChoices(){
+  const col=filterCol.value, isNum=NUMERIC.includes(col);
+  if(isNum){
+    filterOp.innerHTML=[["gt",">"],["ge","≥"],["lt","<"],["le","≤"],["eq","="],["between","between"]]
+      .map(([v,t])=>`<option value="${v}">${t}</option>`).join("");
+  }else{
+    filterOp.innerHTML=[["contains","contains"],["is","is"],["starts","starts with"],["ends","ends with"],["not","not contains"]]
+      .map(([v,t])=>`<option value="${v}">${t}</option>`).join("");
+  }
+  filterVal1.value=""; filterVal2.value="";
+  valBox2.classList.toggle("hidden", !(isNum && filterOp.value==="between"));
+  filterOp.onchange=()=>{ const need2=(NUMERIC.includes(filterCol.value) && filterOp.value==="between"); valBox2.classList.toggle("hidden", !need2); };
+}
+function addFilterFromUI(){
+  const col=filterCol.value, op=filterOp.value, v1=filterVal1.value.trim(), v2=filterVal2.value.trim();
+  if(!col||!op||!v1){alert("Pick column, operator and value."); return;}
+  const type=NUMERIC.includes(col) ? "num" : "text";
+  FILTERS.push({col,type,op,v1,v2:(op==="between"?v2:"")}); renderFilterChips(); renderTable();
+  filterVal1.value=""; filterVal2.value="";
+}
+function renderFilterChips(){
+  if(!FILTERS.length){activeFilters.innerHTML=""; return;}
+  activeFilters.innerHTML=FILTERS.map((f,i)=>{
+    const txt=(f.type==="num") ? (f.op==="between"?`${f.col} between ${f.v1} and ${f.v2}`:`${f.col} ${f.op} ${f.v1}`) : `${f.col} ${f.op} "${f.v1}"`;
+    return `<span class="chip filter" data-i="${i}"><b>Filter</b>: ${txt} ✕</span>`;
+  }).join("");
+  activeFilters.querySelectorAll(".chip.filter").forEach(ch=>{
+    ch.addEventListener("click", ()=>{const i=Number(ch.getAttribute("data-i")); FILTERS.splice(i,1); renderFilterChips(); renderTable();});
+  });
+}
+function applyFilters(arr){
+  let out=arr.slice();
+  for(const f of FILTERS){
+    if(f.type==="num"){
+      const v1=Number(String(f.v1).replace(/[,%]/g,"")); const v2=Number(String(f.v2).replace(/[,%]/g,""));
+      out=out.filter(r=>{
+        const val=toNum(r[f.col]);
+        if(f.op==="gt") return val>v1;
+        if(f.op==="ge") return val>=v1;
+        if(f.op==="lt") return val<v1;
+        if(f.op==="le") return val<=v1;
+        if(f.op==="eq") return val===v1;
+        if(f.op==="between") return isFinite(v1)&&isFinite(v2) ? (val>=v1 && val<=v2) : true;
+        return true;
+      });
+    }else{
+      const needle=f.v1.toLowerCase();
+      out=out.filter(r=>{
+        const val=String(r[f.col]??"").toLowerCase();
+        if(f.op==="contains") return val.includes(needle);
+        if(f.op==="is") return val===needle;
+        if(f.op==="starts") return val.startsWith(needle);
+        if(f.op==="ends") return val.endsWith(needle);
+        if(f.op==="not") return !val.includes(needle);
+        return true;
+      });
+    }
+  }
+  return out;
+}
+function applySort(arr){
+  if(!SORT_BY) return arr;
+  const dir=SORT_DIR==='asc'?1:-1;
+  if(SORT_BY==="Actual / Expected Arrival Time"){
+    return arr.slice().sort((a,b)=>{
+      const at=parseWhen(a[SORT_BY]), bt=parseWhen(b[SORT_BY]);
+      if(at===null && bt===null) return 0; if(at===null) return 1; if(bt===null) return -1;
+      return dir*(at-bt);
+    });
+  }
+  const isNum=NUMERIC.includes(SORT_BY);
+  return arr.slice().sort((a,b)=>{
+    if(isNum){ return dir*(toNum(a[SORT_BY]) - toNum(b[SORT_BY])); }
+    const av=String(a[SORT_BY]??""), bv=String(b[SORT_BY]??"");
+    return dir*av.localeCompare(bv, undefined, {numeric:true, sensitivity:"base"});
+  });
+}
+
+// ===== Core compute & render =====
+function activeRows(){ return ROWS.filter(r=> r._selected && STATUS_FILTER.has(statusKey(r["Transship Status"]))); }
+function baseRows(){ return ROWS.filter(r=> STATUS_FILTER.has(statusKey(r["Transship Status"]))); }
+function visibleRows(){
+  const q=normalize(search.value||"");
+  let arr=baseRows().filter(r=> !q || normalize(r["VRID"]).includes(q));
+  arr=applyFilters(arr); arr=applySort(arr); return arr;
+}
+
+function renderStatusFilterUI(){
+  const counts=countBy(ROWS.map(r=> statusKey(r["Transship Status"])));
+  const allStatuses=Object.keys(counts).sort();
+  const pills=allStatuses.map(st=>{
+    const on=STATUS_FILTER.has(st), cls=on?"pill on":"pill off";
+    return `<span class="${cls}" data-st="${st}">${st} · <b>${counts[st]}</b></span>`;
+  }).join(" ");
+  statusFilterBox.innerHTML = `
+    <div class="k">Transship Status — filter (default: INBOUND only)</div>
+    <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap">${pills}</div>
+    <div class="flex" style="margin-top:8px; gap:8px">
+      <button class="selBtn" id="btnOnlyInbound">Only INBOUND</button>
+      <button class="selBtn" id="btnAllStatus">All statuses</button>
+      <button class="selBtn" id="btnNoneStatus">None</button>
+    </div>`;
+  statusFilterBox.querySelectorAll(".pill").forEach(el=>{
+    el.addEventListener("click", ()=>{ const st=el.getAttribute("data-st");
+      if(STATUS_FILTER.has(st)) STATUS_FILTER.delete(st); else STATUS_FILTER.add(st); computeAndRender();
+    });
+  });
+  document.getElementById("btnOnlyInbound").onclick=()=>{STATUS_FILTER=new Set(["INBOUND"]); computeAndRender();};
+  document.getElementById("btnAllStatus").onclick=()=>{STATUS_FILTER=new Set(allStatuses); computeAndRender();};
+  document.getElementById("btnNoneStatus").onclick=()=>{STATUS_FILTER=new Set(); computeAndRender();};
+}
+
+function computeAndRender(){
+  const totalVRIDs=new Set(ROWS.map(r=>r["VRID"])).size;
+  const selectedVRIDs=new Set(activeRows().map(r=>r["VRID"])).size;
+  const counts=countBy(ROWS.map(r=> statusKey(r["Transship Status"])));
+  const enabled=[...STATUS_FILTER].sort();
+  const sevCounts=countBy(ROWS.map(r=> sevLabel(r["Severity"])));
+  metaChips.innerHTML = `
+    <span class="chip">VRIDs: <b>${totalVRIDs}</b></span>
+    <span class="chip">Selected (after status filter): <b>${selectedVRIDs}</b></span>
+    <span class="chip">Status enabled: <b>${enabled.length}</b></span>
+    <span class="chip">Severity — OK: <b>${sevCounts["OK"]||0}</b> · Yellow/Other: <b>${sevCounts["YELLOW"]||0}</b> · Red: <b>${sevCounts["RED"]||0}</b></span>`;
+
+  renderStatusFilterUI();
+
+  breakdowns.innerHTML="";
+  breakdowns.appendChild(makeBreakCard("Transship Status (all)", counts));
+  const loads=countBy(ROWS.map(r=> r["Load Config"]||"Missing")); breakdowns.appendChild(makeBreakCard("Load Config (all)", loads));
+  const locs=countBy(ROWS.map(r=> r["Trailer Location"]||"Missing")); breakdowns.appendChild(makeBreakCard("Trailer Location (all)", locs));
+  const sevs=countBy(ROWS.map(r=> sevLabel(r["Severity"]))); breakdowns.appendChild(makeBreakCard("Severity (merged)", sevs));
+
+  totalsGrid.innerHTML="";
+  const agg=aggregate(activeRows()); PCT_UNITS=computePercentUnits(activeRows());
+  for(const key of TOTALS_COLUMNS){
+    const isPct=!!IS_PERCENT[key];
+    let explain=isPct ? "Weighted by Total Units (selected & status-filtered): sum(Unitsᵢ × %ᵢ) ÷ sum(Unitsᵢ)" : "Sum across selected & status-filtered rows";
+    let sub=""; if(isPct){ const u=PCT_UNITS[key]?.units||0, totalUnits=agg["Total Units"]?.value||0; sub=`≈ ${fmtNumber(u)} of ${fmtNumber(totalUnits)} units`; }
+    const value=isPct ? (PCT_UNITS[key]?.pct||0) : (agg[key]?.value||0);
+    totalsGrid.appendChild(makeTotalCard(key, value, isPct, explain, sub));
+  }
+
+  renderDerived(agg);
+  renderTable();
+  renderHeadcount(agg);
+}
+
+function sevLabel(s){
+  const c=severityClass(s); if(c==="sev-red") return "RED"; if(c==="sev-ok") return "OK"; if(!s) return "UNKNOWN"; return "YELLOW";
+}
+function severityClass(sevRaw){
+  const s=String(sevRaw||"").toLowerCase();
+  if(!s) return ""; if(s.includes("red")) return "sev-red"; if(s==="ok"||s.includes("green")||s.includes("good")) return "sev-ok"; return "sev-yellow";
+}
+
+function aggregate(rows){
+  const out={}; for(const col of TOTALS_COLUMNS.concat(["Priority Score"])){ let sum=0; for(const r of rows){sum+=toNum(r[col]);} out[col]={value:sum}; }
+  return out;
+}
+function computePercentUnits(rows){
+  const m={}, totalUnitsAll=rows.reduce((a,r)=>a+toNum(r["Total Units"]),0);
+  for(const col of TOTALS_COLUMNS){
+    if(!IS_PERCENT[col]) continue;
+    let unitsWeighted=0; for(const r of rows){ unitsWeighted += (toNum(r[col])/100) * toNum(r["Total Units"]); }
+    const pctWeighted= totalUnitsAll ? (unitsWeighted/totalUnitsAll*100) : 0;
+    m[col]={units:unitsWeighted, pct:pctWeighted};
+  }
+  return m;
+}
+
+function derive(agg){
+  const unitsInCases=toNum(agg["Units in Palletized Single ASIN Cases"]?.value)+toNum(agg["Units in Palletized Mixed ASIN Cases"]?.value);
+  const totalUnits=toNum(agg["Total Units"]?.value);
+  const casePct= totalUnits ? (unitsInCases/totalUnits*100) : 0;
+
+  const unitsInTotesPal=toNum(agg["Units in Palletized Totes"]?.value);
+  const unitsInTotesFL =toNum(agg["Units in FL Totes"]?.value);
+  const palTotes=toNum(agg["Palletized Totes"]?.value);
+  const flTotes =toNum(agg["FL Totes"]?.value);
+
+  const toteDensityPal = palTotes ? (unitsInTotesPal/palTotes) : 0;
+  const toteDensityAll = (palTotes+flTotes) ? ((unitsInTotesPal+unitsInTotesFL)/(palTotes+flTotes)) : 0;
+
+  return {unitsInCases, casePct, toteDensityPal, toteDensityAll, totalUnits,
+          unitsInTotesPal, unitsInTotesFL, palTotes, flTotes};
+}
+
+function makeBreakCard(title,obj){
+  const d=document.createElement("div"); d.className="card";
+  const parts=Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
+    const active=STATUS_FILTER.has(k), pillClass=active?"pill on":"pill off";
+    return `<span class="${pillClass}" data-st="${k}">${k}: <b>${v}</b></span>`;
+  }).join(" ");
+  d.innerHTML=`<div class="k">${title}</div><div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">${parts}</div>`;
+  setTimeout(()=>{ d.querySelectorAll(".pill").forEach(el=>{
+    el.addEventListener("click",()=>{const st=el.getAttribute("data-st"); if(STATUS_FILTER.has(st)) STATUS_FILTER.delete(st); else STATUS_FILTER.add(st); computeAndRender();});
+  }); },0);
+  return d;
+}
+function makeTotalCard(k,v,isPercent,explain="",sub=""){
+  const d=document.createElement("div"); d.className="card";
+  const pretty=isPercent?fmtPercent(v):(k==="Priority Score"?fmtScore(v):fmtNumber(v));
+  d.innerHTML=`
+    <div class="k">${k} ${isPercent?"(weighted %)":"(sum)"}</div>
+    <div class="flex" style="margin-top:4px">
+      <div class="v">${pretty}</div>
+      ${sub?`<div class="k" style="margin-left:8px">${sub}</div>`:""}
+      <span class="right copy" title="Copy" data-copy="${pretty}${sub?' '+sub:''}">copy</span>
+    </div>
+    ${explain?`<div class="explain">${explain}</div>`:""}`;
+  d.querySelector(".copy").onclick=(e)=>{const val=e.target.getAttribute("data-copy"); navigator.clipboard.writeText(val).then(()=>{e.target.textContent="copied ✓"; setTimeout(()=> e.target.textContent="copy",1200);});};
+  return d;
+}
+
+function renderTable(){
+  const cols=["(Plan)","VRID"].concat(REQUIRED.filter(c=>c!=="VRID"));
+  thead.innerHTML="<tr>"+cols.map((c,i)=>{
+    if(i===0) return `<th class="planHead"><input id="chkAll" type="checkbox" /></th>`;
+    const sortable="sortable"; const sorted=(SORT_BY===c)?"sorted":""; const arrow=(SORT_BY===c)?(SORT_DIR==='asc'?'▲':'▼'):'↕';
+    return `<th class="${sortable} ${sorted}" data-col="${c}"><span>${c}</span><span class="arrow">${arrow}</span></th>`;
+  }).join("")+"</tr>";
+
+  thead.querySelectorAll("th.sortable").forEach(th=>{
+    th.addEventListener("click",()=>{ const col=th.getAttribute("data-col"); if(SORT_BY===col){SORT_DIR=(SORT_DIR==='asc'?'desc':'asc');} else {SORT_BY=col; SORT_DIR='asc';} renderTable();});
+  });
+
+  const chkAll=document.getElementById("chkAll");
+  const headPlan=document.querySelector("th.planHead");
+  const filtered=visibleRows();
+
+  const rows=filtered.map(r=>{
+    const isSel=!!r._selected; const sevCls=severityClass(r["Severity"]); const rowCls=[isSel?'selRow':'', sevCls].filter(Boolean).join(' ');
+    const cells=[]; const planCellClass="planCell"+(isSel?" selected":"");
+    cells.push(`<td class="${planCellClass}" data-id="${r._id}">
+        <input type="checkbox" class="rowChk" data-id="${r._id}" ${isSel?"checked":""}>
+        <span class="planTag">${isSel?"IN PLAN":"SKIP"}</span>
+      </td>`);
+    cells.push(`<td>${r["VRID"]??""}</td>`);
+    for(const c of REQUIRED.filter(c=>c!=="VRID")){
+      let v=r[c];
+      if(NUMERIC.includes(c)){
+        const n=toNum(v); const percent=IS_PERCENT[c];
+        v=percent?fmtPercent(n):(c==="Priority Score"?fmtScore(n):fmtNumber(n));
+      }
+      if(c==="Severity"){ v=`<span class="sevBadge">${v||""}</span>`; }
+      cells.push(`<td>${v??""}</td>`);
+    }
+    return `<tr class="${rowCls}" data-id="${r._id}">`+cells.join("")+`</tr>`;
+  }).join("");
+  tbody.innerHTML=rows;
+
+  const selAfterStatus=activeRows().length;
+  selectionMsg.textContent=`Visible rows: ${filtered.length}. Selected (after status filter): ${selAfterStatus} of ${ROWS.length}. Sort: ${SORT_BY? SORT_BY+' '+SORT_DIR.toUpperCase():'—'}. Filters: ${FILTERS.length||0}.`;
+
+  document.querySelectorAll(".rowChk").forEach(chk=>{
+    chk.addEventListener("change",(e)=>{
+      const id=Number(e.target.getAttribute("data-id")); const row=ROWS.find(r=>r._id===id); if(!row) return;
+      row._selected=e.target.checked;
+      showToast(`${row._selected?'Added':'Removed'} VRID ${row["VRID"]} ${row._selected?'to':'from'} plan — ${activeRows().length} selected`);
+      renderTable(); computeAndRender();
+    });
+  });
+
+  if(chkAll){
+    const allSelected=filtered.length>0 && filtered.every(r=>r._selected);
+    chkAll.checked=allSelected; chkAll.indeterminate=!allSelected && filtered.some(r=>r._selected);
+    const setAll=(checked)=>{ filtered.forEach(r=> r._selected=checked); showToast(`${checked?'Selected':'Cleared'} ${filtered.length} visible row(s)`); renderTable(); computeAndRender(); };
+    chkAll.addEventListener("change",(e)=> setAll(e.target.checked));
+    headPlan.addEventListener("click",(e)=>{ if(e.target && e.target.id==="chkAll") return; setAll(!(chkAll.checked && !chkAll.indeterminate)); });
+  }
+
+  updateShadows();
+}
+
+function renderDerived(agg){
+  const d=derive(agg); derivedGrid.innerHTML="";
+  derivedGrid.appendChild(makeDerivedCard("Units in Cases (computed)", d.unitsInCases, false, "Units in Cases = Units in Palletized Single ASIN Cases + Units in Palletized Mixed ASIN Cases."));
+  derivedGrid.appendChild(makeDerivedCard("Case %", d.casePct, true, `Case % = Units in Cases / Total Units = ${fmtNumber(d.unitsInCases)} / ${fmtNumber(d.totalUnits)}.`));
+  derivedGrid.appendChild(makeDerivedCard("Tote Density (palletized-only)", d.toteDensityPal, false, `Units in Palletized Totes / Palletized Totes = ${fmtNumber(d.unitsInTotesPal)} / ${fmtNumber(d.palTotes)}.`));
+  derivedGrid.appendChild(makeDerivedCard("Tote Density (ALL totes) — recommended", d.toteDensityAll, false, `(Units in Palletized Totes + Units in FL Totes) / (Palletized Totes + FL Totes) = (${fmtNumber(d.unitsInTotesPal)} + ${fmtNumber(d.unitsInTotesFL)}) / (${fmtNumber(d.palTotes)} + ${fmtNumber(d.flTotes)}).`));
+}
+function makeDerivedCard(title,value,isPercent,explain=""){
+  const d=document.createElement("div"); d.className="card";
+  const pretty=isPercent?fmtPercent(value):fmtNumber(value);
+  d.innerHTML=`<div class="k">${title}</div><div class="v" style="margin-top:4px">${pretty}</div>${explain?`<div class="explain">${explain}</div>`:""}`;
+  return d;
+}
+function countBy(arr){const m={}; for(const x of arr){ m[x]=(m[x]||0)+1; } return m; }
+
+function renderHeadcount(agg){
+  const hours=Number(hoursInput.value)||0, rate=Number(rateInput.value)||0;
+  const d=derive(agg);
+  let workload=d.unitsInCases;
+  const src=workloadSource.value;
+  if(src==="Total Units") workload=d.totalUnits;
+  else if(src==="Units in Cases (computed)") workload=d.unitsInCases;
+  else if(src==="Units in Palletized Totes") workload=d.unitsInTotesPal;
+  const capacity=rate*hours; const needed=(capacity>0)? Math.ceil(workload/capacity) : 0;
+  headcountResult.textContent=isFinite(needed)? `${needed} decanters` : "—";
+  headcountExplain.textContent=`Headcount = ceil(${fmtNumber(workload)} ÷ (${fmtNumber(rate)} × ${hours})) → Capacity/person: ${fmtNumber(capacity)} units (selected + status filter).`;
+}
+
+// ===== Row selection (click anywhere) =====
+function onTbodyClick(e){
+  if(PAN_SUPPRESS_CLICK){ PAN_SUPPRESS_CLICK=false; return; }
+  const tag=(e.target.tagName||"").toLowerCase();
+  if(["input","button","select","label","a"].includes(tag)) return;
+  if(window.getSelection && String(window.getSelection()).length) return;
+  const tr=e.target.closest("tr"); if(!tr) return;
+  const id=Number(tr.getAttribute("data-id")); const row=ROWS.find(r=>r._id===id); if(!row) return;
+  row._selected=!row._selected;
+  showToast(`${row._selected ? 'Added' : 'Removed'} VRID ${row["VRID"]} ${row._selected ? 'to' : 'from'} plan — ${activeRows().length + (row._selected?1:-1)} selected`);
+  renderTable(); computeAndRender();
+}
+function onTbodyDblClick(e){ onTbodyClick(e); }
+
+// ===== Auto Plan (Smart selector) =====
+function getCandidates(useSel){
+  const base=useSel? activeRows() : ROWS.filter(r=> STATUS_FILTER.has(statusKey(r["Transship Status"])));
+  return base.map(r=>{
+    const units=toNum(r["Total Units"]);
+    return {_globalIndex:ROWS.indexOf(r), VRID:r["VRID"], units,
+            small:toNum(r["PPR Small"]), med:toNum(r["PPR Medium"]), large:toNum(r["PPR Large"]),
+            ps:toNum(r["Priority Score"]), loc:r["Trailer Location"]||"", sev:sevLabel(r["Severity"])};
+  }).filter(x=>x.units>0);
+}
+function evaluateSubset(sub,target,over,thresh){
+  const units=sub.reduce((a,b)=>a+b.units,0); if(units<=0) return null;
+  const smallUnits=sub.reduce((a,b)=>a + b.units*b.small/100,0);
+  const medUnits  =sub.reduce((a,b)=>a + b.units*b.med/100,0);
+  const largeUnits=sub.reduce((a,b)=>a + b.units*b.large/100,0);
+  const w_small=smallUnits/units*100, w_med=medUnits/units*100, w_large=largeUnits/units*100;
+  const overshoot=(units/target - 1.0);
+  const within=units>=target*(1-over) && units<=target*(1+over);
+  const allowBeyond=(units>target*(1+over) && w_small>=thresh);
+  return {units, smallUnits, medUnits, largeUnits, w_small, w_med, w_large, overshoot, within, allowBeyond};
+}
+function recommendPlan(){
+  const target=Number(targetUnits.value)||0, over=(Number(allowedOver.value)||0)/100, thresh=Number(smallThresh.value)||0, useSel=!!useSelected.checked;
+  const cand=getCandidates(useSel);
+  if(!cand.length || target<=0){ planOutput.textContent="Load data and set a positive target."; LAST_PLAN=null; return; }
+  let bestInWindow=null, bestLargeOver=null, bestAny=null, closestUnder=null;
+  const n=cand.length;
+  if(n<=20){
+    const totalComb=1<<n;
+    for(let mask=1; mask<totalComb; mask++){
+      const sub=[]; for(let i=0;i<n;i++) if(mask&(1<<i)) sub.push(cand[i]);
+      const ev=evaluateSubset(sub,target,over,thresh); if(!ev) continue;
+      if(ev.within){ const key=[ev.w_small, ev.w_med, -ev.w_large, -Math.abs(ev.overshoot)]; if(!bestInWindow||key>bestInWindow.key) bestInWindow={sub,ev,key}; }
+      else if(ev.allowBeyond){ const key=[ev.w_small, -ev.overshoot]; if(!bestLargeOver||key>bestLargeOver.key) bestLargeOver={sub,ev,key}; }
+      if(ev.units>=target){ const key=[-ev.overshoot, ev.w_small]; if(!bestAny||key>bestAny.key) bestAny={sub,ev,key}; }
+      else{ const underGap=target-ev.units; const key=[-underGap, ev.w_small]; if(!closestUnder||key>closestUnder.key) closestUnder={sub,ev,key}; }
+    }
+  }else{
+    const ordered=[...cand].sort((a,b)=>(b.small-a.small)||(b.med-a.med)||(a.large-b.large)||(a.units-b.units));
+    const sub=[]; let sum=0; for(const t of ordered){ if(sum>=target*(1+over)) break; sub.push(t); sum+=t.units; }
+    const ev=evaluateSubset(sub,target,over,thresh); bestAny={sub,ev,key:[-Math.abs(ev.overshoot), ev.w_small]};
+  }
+  const chosen=bestInWindow||bestLargeOver||bestAny||closestUnder;
+  if(!chosen){ planOutput.textContent="No feasible combination found."; LAST_PLAN=null; return; }
+
+  const s=chosen.sub.slice().sort((a,b)=> (b.ps-a.ps) || String(a.VRID||"").localeCompare(String(b.VRID||"")));
+  const lines=[]; const oversPct=chosen.ev.overshoot*100;
+  lines.push(`TRAILER PLAN — Target: ${fmtNumber(target)} units | Allowed deviation: ${document.getElementById('allowedOver').value}% (±)`);
+  lines.push(`Selected Units: ${fmtNumber(chosen.ev.units)}  (Deviation vs target: ${oversPct.toFixed(2)}%)`);
+  lines.push(`Weighted PPR → Small: ${fmtPercent(chosen.ev.w_small)} (≈ ${fmtNumber(chosen.ev.smallUnits)} units), Medium: ${fmtPercent(chosen.ev.w_med)} (≈ ${fmtNumber(chosen.ev.medUnits)} units), Large: ${fmtPercent(chosen.ev.w_large)} (≈ ${fmtNumber(chosen.ev.largeUnits)} units)`);
+  lines.push(`Order: by Priority Score (DESC)`); lines.push(""); lines.push("Trailers:");
+  for(const r of s){
+    const loc=r.loc?` — Location: ${r.loc}`:""; const sevTxt=r.sev && r.sev!=="UNKNOWN"?` — Severity: ${r.sev}`:"";
+    lines.push(`• VRID ${r.VRID}: ${fmtNumber(r.units)} units — Priority Score ${fmtScore(r.ps)} — PPR Small ${fmtPercent(r.small)} | Medium ${fmtPercent(r.med)} | Large ${fmtPercent(r.large)}${loc}${sevTxt}`);
+  }
+  const text=lines.join("\n"); planOutput.textContent=text; LAST_PLAN={text, idxs:s.map(x=>x._globalIndex)};
+}
+
+// ===== Touch / Drag / Wheel horizontal scroll + External buttons =====
+function initPanScroll(){
+  if(!tblWrap) return;
+  let isDown=false, startX=0, scrollStart=0, moved=false;
+
+  const onDown = (x)=>{
+    isDown=true; startX=x; scrollStart=tblWrap.scrollLeft; moved=false; tblWrap.classList.add("dragging");
+  };
+  const onMove = (x)=>{
+    if(!isDown) return;
+    const dx=x-startX; if(Math.abs(dx)>3) moved=true;
+    tblWrap.scrollLeft = scrollStart - dx; updateShadows();
+  };
+  const onUp = ()=>{
+    if(!isDown) return;
+    isDown=false; tblWrap.classList.remove("dragging");
+    if(moved){ PAN_SUPPRESS_CLICK=true; setTimeout(()=> PAN_SUPPRESS_CLICK=false, 80); }
+  };
+
+  // Mouse drag
+  tblWrap.addEventListener("mousedown", e=> onDown(e.clientX));
+  document.addEventListener("mousemove", e=> onMove(e.clientX));
+  document.addEventListener("mouseup", onUp);
+  tblWrap.addEventListener("mouseleave", onUp);
+
+  // Touch drag
+  tblWrap.addEventListener("touchstart", e=>{ if(e.touches.length!==1) return; onDown(e.touches[0].clientX); }, {passive:true});
+  tblWrap.addEventListener("touchmove", e=>{ if(!isDown) return; onMove(e.touches[0].clientX); e.preventDefault(); }, {passive:false});
+  tblWrap.addEventListener("touchend", onUp, {passive:true});
+  tblWrap.addEventListener("touchcancel", onUp, {passive:true});
+
+  // Wheel: only convert to horizontal when NO vertical overflow or when holding Shift
+  tblWrap.addEventListener("wheel", e=>{
+    const hasVOverflow = tblWrap.scrollHeight > (tblWrap.clientHeight + 1);
+    const wantH = e.shiftKey || (!hasVOverflow && Math.abs(e.deltaY) > Math.abs(e.deltaX));
+    if(wantH){
+      tblWrap.scrollLeft += e.deltaY;
+      e.preventDefault();
+      updateShadows();
+    }
+  }, {passive:false});
+
+  // External buttons
+  const page=()=> Math.max(200, Math.floor(tblWrap.clientWidth*0.7));
+  btnScrollL.addEventListener("click", ()=>{ tblWrap.scrollBy({left:-page(), behavior:"smooth"}); setTimeout(updateShadows, 120); });
+  btnScrollR.addEventListener("click", ()=>{ tblWrap.scrollBy({left: page(), behavior:"smooth"}); setTimeout(updateShadows, 120); });
+  btnJumpL.addEventListener("click", ()=>{ tblWrap.scrollTo({left:0, behavior:"smooth"}); setTimeout(updateShadows, 120); });
+  btnJumpR.addEventListener("click", ()=>{ tblWrap.scrollTo({left: tblWrap.scrollWidth, behavior:"smooth"}); setTimeout(updateShadows, 120); });
+
+  // Keyboard: Home/End to jump, arrows to nudge
+  tblWrap.addEventListener("keydown", e=>{
+    if(e.key==="ArrowLeft"){ tblWrap.scrollBy({left:-120, behavior:"smooth"}); }
+    if(e.key==="ArrowRight"){ tblWrap.scrollBy({left:120, behavior:"smooth"}); }
+    if(e.key==="Home"){ e.preventDefault(); tblWrap.scrollTo({left:0, behavior:"smooth"}); }
+    if(e.key==="End"){ e.preventDefault(); tblWrap.scrollTo({left: tblWrap.scrollWidth, behavior:"smooth"}); }
+  });
+
+  tblWrap.addEventListener("scroll", updateShadows, {passive:true});
+  updateShadows();
+}
+function updateShadows(){
+  const el=tblWrap; if(!el) return;
+  const atStart = el.scrollLeft <= 1;
+  const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1;
+  shadowL.style.opacity = atStart ? 0 : 1;
+  shadowR.style.opacity = atEnd ? 0 : 1;
+  if(btnScrollL){ btnScrollL.disabled = atStart; }
+  if(btnJumpL){ btnJumpL.disabled = atStart; }
+  if(btnScrollR){ btnScrollR.disabled = atEnd; }
+  if(btnJumpR){ btnJumpR.disabled = atEnd; }
+}
+</script>
+</body>
+</html>
