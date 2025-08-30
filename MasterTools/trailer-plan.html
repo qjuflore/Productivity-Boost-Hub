@@ -158,14 +158,12 @@
 <body>
   <header>
     <div class="flex">
-      <!-- Botón Back to Hub con efecto y click tipo YMS/Oculus -->
+      <!-- Botón Back to Hub con efecto y click -->
       <a
         href="https://qjuflore.github.io/Productivity-Boost-Hub/?tab=mastertools#mastertools"
         class="btn ghost"
         id="btnHome"
-        target="_blank"
-        rel="noopener"
-        aria-label="Back to Productivity Boost Hub (opens in new tab)"
+        aria-label="Back to Productivity Boost Hub"
       >🏠 Back to Hub <span class="pulse" aria-hidden="true"></span></a>
 
       <h1>Trailer Plan Analyzer — BFL2</h1>
@@ -574,10 +572,10 @@ document.addEventListener("DOMContentLoaded", ()=>{
   initPanScroll();
 });
 
-// Hub shortcuts: abre Hub en nueva pestaña
+// Hub shortcuts: abre Hub en la misma pestaña
 window.addEventListener('keydown', (e)=>{
   if(e.key === 'Escape' || (e.key.toLowerCase() === 'h' && e.altKey)){
-    window.open('https://qjuflore.github.io/Productivity-Boost-Hub/?tab=mastertools#mastertools','_blank','noopener');
+    window.location.href = 'https://qjuflore.github.io/Productivity-Boost-Hub/?tab=mastertools#mastertools';
   }
 });
 
