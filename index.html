@@ -166,7 +166,7 @@
     .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
     .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
 
-    /* Open más visible en MasterTools */
+    /* Make OPEN button more visible */
     .tool-link {
       background: var(--accent);
       color: #000 !important;
@@ -179,7 +179,7 @@
     }
     .tool-link:hover { transform: scale(1.05); }
 
-    /* Barras de búsqueda unificadas */
+    /* Unified search bars */
     .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch {
       margin-bottom: 1rem;
       padding: 0.7rem 1rem;
@@ -238,52 +238,7 @@
 
   <script src="script.js"></script>
 
-  <!-- Parche: asegurar que MasterTools también quede seleccionado visualmente -->
-  <script>
-    (function(){
-      const tabs = document.querySelectorAll('.tab');
-      const sections = document.querySelectorAll('.section');
-
-      function setActiveTab(id){
-        // Mostrar sección activa
-        sections.forEach(s => s.classList.toggle('active', s.id === id));
-        // Poner .active en la tab correspondiente
-        tabs.forEach(t => {
-          const isTarget = (t.textContent.includes('Share Reports') && id==='reports')
-                        || (t.textContent.includes('Problem Solve Guide') && id==='guide')
-                        || (t.textContent.includes('Tampermonkey Scripts') && id==='scripts')
-                        || (t.textContent.includes('MasterTools') && id==='mastertools');
-          t.classList.toggle('active', isTarget);
-        });
-        // Persistir en URL y localStorage
-        try{
-          localStorage.setItem('pb.activeTab', id);
-          const u = new URL(location.href);
-          u.searchParams.set('tab', id);
-          u.hash = '#'+id;
-          history.replaceState(null,'',u);
-        }catch(e){}
-      }
-
-      // Extender showSection existente (si lo tienes en script.js)
-      const original = window.showSection;
-      window.showSection = function(id){
-        if(typeof original === 'function'){ try{ original(id); }catch(e){} }
-        setActiveTab(id);
-      };
-
-      // Selección inicial (respetando lo que ya esté activo)
-      const activeNow = document.querySelector('.section.active');
-      const initialId = (activeNow && activeNow.id)
-        || new URL(location.href).searchParams.get('tab')
-        || (location.hash||'').slice(1)
-        || localStorage.getItem('pb.activeTab')
-        || 'reports';
-      setActiveTab(initialId);
-    })();
-  </script>
-
-  <!-- Lógica MasterTools -->
+  <!-- MasterTools logic -->
   <script>
     const LS_FAVS = 'pb.master.favorites';
     const tools = [
@@ -348,6 +303,67 @@
     }
 
     renderMasterTools();
+
+    // --- Patch: ensure MasterTools tab also toggles active state ---
+    (function(){
+      const tabs = document.querySelectorAll('.tab');
+      const sections = document.querySelectorAll('.section');
+
+      function setActiveTab(id){
+        sections.forEach(s => s.classList.toggle('active', s.id === id));
+        tabs.forEach(t => {
+          const isTarget = (t.textContent.includes('Share Reports') && id==='reports')
+                        || (t.textContent.includes('Problem Solve Guide') && id==='guide')
+                        || (t.textContent.includes('Tampermonkey Scripts') && id==='scripts')
+                        || (t.textContent.includes('MasterTools') && id==='mastertools');
+          t.classList.toggle('active', isTarget);
+        });
+        try {
+          localStorage.setItem('pb.activeTab', id);
+          const u = new URL(location.href);
+          u.searchParams.set('tab', id);
+          u.hash = '#'+id;
+          history.replaceState(null,'',u);
+        } catch(e){}
+      }
+
+      const original = window.showSection;
+      window.showSection = function(id){
+        if(typeof original === 'function'){ try{ original(id); }catch(e){} }
+        setActiveTab(id);
+      };
+
+      // Initial selection
+      const activeNow = document.querySelector('.section.active');
+      const initialId = (activeNow && activeNow.id)
+        || new URL(location.href).searchParams.get('tab')
+        || (location.hash||'').slice(1)
+        || localStorage.getItem('pb.activeTab')
+        || 'reports';
+      setActiveTab(initialId);
+    })();
+
+    // --- Sync: mirror #visitInfo total into localStorage so tools can read it ---
+    (function syncVisitsToLocalStorage(){
+      const el = document.getElementById('visitInfo');
+      if (!el) return;
+
+      function extractNumber(text) {
+        const m = String(text || '').match(/(\d[\d.,]*)/);
+        if (!m) return '';
+        return m[1].replace(/[^\d]/g, '');
+      }
+
+      function pushToLS(){
+        const n = extractNumber(el.textContent || el.innerText);
+        if (n) localStorage.setItem('pbh.totalVisits', n);
+      }
+
+      const mo = new MutationObserver(pushToLS);
+      mo.observe(el, { childList: true, subtree: true, characterData: true });
+      // Try immediately if already rendered
+      pushToLS();
+    })();
   </script>
 </body>
 </html>
