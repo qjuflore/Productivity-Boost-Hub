@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Trailer Plan Analyzer — BFL2 (EN v19)</title>
+  <title>Trailer Plan Analyzer — BFL2 (EN v19.4)</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root{
@@ -57,19 +57,15 @@
     tbody tr td:last-child{border-right:1px solid var(--border);border-top-right-radius:12px;border-bottom-right-radius:12px}
     tbody tr:hover td{background:linear-gradient(90deg, rgba(122,162,247,.08), transparent)}
 
-    /* Pill filters */
     .pill{padding:4px 10px;border-radius:999px;font-size:12px;border:1px solid var(--border);cursor:pointer}
     .pill.on{background:#0f2b19;color:#b4f0bf;border-color:#1c4730;box-shadow:0 0 12px rgba(78,241,161,0.25) inset}
     .pill.off{background:#221619;color:#ffb3b3;border-color:#4a1e1e}
 
     .foot{color:#6b7280;font-size:12px;padding:12px 0}
     .hidden{display:none}
-    .control{display:grid;grid-template-columns: 1fr 60px; gap:8px; align-items:center}
-    .range{width:100%}
-    .select,.input{background:#0b1220;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 10px;min-width:160px}
+    .select,.input{background:#0b1220;color:#fff;border:1px solid var(--border);border-radius:10px;padding:8px 10px;min-width:160px}
     .selBtn{font-size:12px;padding:6px 10px;border:1px dashed #37507f;cursor:pointer}
 
-    /* Plan cell visuals */
     .planCell{cursor:pointer; position:relative; user-select:none;}
     .planTag{display:inline-block; margin-left:8px; padding:4px 10px; border-radius:999px; border:1px solid var(--border);
              color:#cfe7ff; font-size:12px; background:linear-gradient(90deg,#0b1424,#0c1a2d)}
@@ -80,7 +76,6 @@
     }
     th.planHead{cursor:pointer}
 
-    /* Severity highlighting */
     tr.sev-ok td{ box-shadow: inset 3px 0 0 0 var(--sevGBorder); background-image: linear-gradient(90deg, rgba(46,139,87,.08), transparent); }
     tr.sev-yellow td{ box-shadow: inset 3px 0 0 0 var(--sevYBorder); background-image: linear-gradient(90deg, rgba(255,215,0,.10), transparent); }
     tr.sev-red td{ box-shadow: inset 3px 0 0 0 var(--sevRBorder); background-image: linear-gradient(90deg, rgba(255,0,0,.10), transparent); }
@@ -89,7 +84,6 @@
     .sev-yellow .sevBadge{background:#332a0f;color:#ffe08a;border-color:#6f5b1b}
     .sev-red .sevBadge{background:#331212;color:#ffb3b3;border-color:#6b1f1f}
 
-    /* ✅ Neon selection overlay (works for ALL rows, even with severity) */
     tr.selRow td{
       position: relative;
       box-shadow: 0 0 0 1px rgba(78,241,161,0.35) inset, 0 0 18px rgba(78,241,161,0.18) inset;
@@ -97,26 +91,15 @@
     tr.selRow td::after{
       content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
       background: radial-gradient(120% 120% at 0% 0%, rgba(78,241,161,0.18), transparent 60%);
-      mix-blend-mode: screen; /* overlays on top of any background */
+      mix-blend-mode: screen;
     }
 
-    /* Scroll area: fixed max-height and internal vertical scroll */
-    .scrollWrap{
-      position:relative; 
-      overflow:auto;
-      max-height:62vh;
-      margin-top:10px; 
-      border-radius:12px;
-      outline:1px solid var(--border); 
-      cursor:grab; user-select:none; touch-action:none;
-      background:#0b1220;
-    }
+    .scrollWrap{position:relative; overflow:auto; max-height:62vh; margin-top:10px; border-radius:12px; outline:1px solid var(--border); background:#0b1220; cursor:grab; user-select:none; touch-action:none;}
     .scrollWrap.dragging{cursor:grabbing}
     .scrollShadow{position:absolute; top:0; bottom:0; width:28px; pointer-events:none; opacity:0; transition:opacity .18s}
     .scrollShadow.left{left:0; background:linear-gradient(90deg, rgba(13,21,34,.9), transparent)}
     .scrollShadow.right{right:0; background:linear-gradient(270deg, rgba(13,21,34,.9), transparent)}
 
-    /* External horizontal controls */
     .hControls{display:flex; gap:6px; align-items:center; margin:8px 0 4px 0}
     .hControls .btn{padding:6px 10px}
 
@@ -127,11 +110,13 @@
     .toast .dot{width:8px;height:8px;border-radius:999px;background:var(--neon);box-shadow:0 0 10px rgba(78,241,161,.7)}
     .toast.bye{opacity:0; transform: translateY(8px); transition: opacity .35s ease, transform .35s ease}
     @keyframes toastIn{from{opacity:0; transform: translateY(6px)} to{opacity:1; transform: translateY(0)}}
-    @media (max-width:900px){
-      .u-row.cols-2{grid-template-columns:1fr}
-      .grid.cols-4{grid-template-columns:1fr 1fr}
-      .grid.cols-3{grid-template-columns:1fr 1fr}
-    }
+
+    .miniTable{width:100%; border-collapse:collapse; font-size:12px}
+    .miniTable th,.miniTable td{border:1px solid var(--border); padding:6px 8px; white-space:nowrap}
+    .badge{display:inline-block;padding:2px 8px;border:1px solid var(--border);border-radius:999px;background:#0b1220}
+    .ok{color:#b4f0bf; border-color:#1c4730; background:#0f2b19}
+    .warn{color:#ffe08a; border-color:#6f5b1b; background:#332a0f}
+    .bad{color:#ffb3b3; border-color:#6b1f1f; background:#331212}
   </style>
 </head>
 <body>
@@ -223,16 +208,16 @@
           </div>
           <div style="min-width:260px">
             <div class="k">Hours remaining</div>
-            <div class="control">
-              <input id="hoursRange" type="range" min="1" max="12" step="1" value="4" class="range">
+            <div class="flex" style="gap:8px">
+              <input id="hoursRange" type="range" min="1" max="12" step="1" value="4" class="range" style="flex:1">
               <input id="hoursInput" type="number" min="0.5" max="24" step="0.5" value="4" class="input">
             </div>
             <div class="explain">Headcount = ceil(Workload ÷ (Rate × Hours)).</div>
           </div>
           <div style="min-width:260px">
             <div class="k">Decanter rate (units/hour per person)</div>
-            <div class="control">
-              <input id="rateRange" type="range" min="50" max="1200" step="10" value="350" class="range">
+            <div class="flex" style="gap:8px">
+              <input id="rateRange" type="range" min="50" max="1200" step="10" value="350" class="range" style="flex:1">
               <input id="rateInput" type="number" min="10" max="3000" step="10" value="350" class="input">
             </div>
           </div>
@@ -254,8 +239,7 @@
           <button class="selBtn" id="btnSelectNone">Select none</button>
         </div>
 
-        <!-- Filters UI -->
-        <div class="filters">
+        <div class="flex" style="gap:8px; flex-wrap:wrap; margin-top:8px">
           <div>
             <div class="k">Column</div>
             <select id="filterCol" class="select"></select>
@@ -275,9 +259,8 @@
           <button class="btn" id="btnAddFilter">Add filter</button>
           <button class="btn" id="btnClearFilters">Clear filters</button>
         </div>
-        <div class="filter-chips" id="activeFilters"></div>
+        <div class="filter-chips" id="activeFilters" style="margin-top:6px"></div>
 
-        <!-- External horizontal controls -->
         <div class="hControls" aria-label="Horizontal controls for VRID table">
           <button class="btn ghost" id="btnJumpL" title="Jump to start">⏮</button>
           <button class="btn ghost" id="btnScrollL" title="Scroll left">◀</button>
@@ -286,7 +269,6 @@
           <span class="k">Tip: drag inside the table, Shift+wheel = horizontal, Home/End keys.</span>
         </div>
 
-        <!-- Scrollable table with vertical overflow -->
         <div class="scrollWrap" id="tblWrap" tabindex="0" aria-label="Scroll area for VRID table">
           <div class="scrollShadow left" id="shadowL"></div>
           <div class="scrollShadow right" id="shadowR"></div>
@@ -304,6 +286,18 @@
         <h3 style="margin:0 0 10px 0">Auto Plan (Smart selector)</h3>
         <div class="flex" style="gap:12px; flex-wrap:wrap">
           <div>
+            <div class="k">Plan strategy</div>
+            <select id="planStrategy" class="select">
+              <option value="ps_strict" selected>Priority Score (strict)</option>
+              <option value="max_cases">Maximize Units in Cases</option>
+              <option value="max_totes">Maximize Units in Totes</option>
+              <option value="high_smalls">Favor Small PPR%</option>
+              <option value="high_mediums">Favor Medium PPR%</option>
+              <option value="high_large">Favor Large PPR%</option>
+              <option value="balance_60_39_0">Balance to PPR 60/39/0</option>
+            </select>
+          </div>
+          <div>
             <div class="k">Target units</div>
             <input id="targetUnits" type="number" class="input" value="100000" min="1" step="100">
           </div>
@@ -311,33 +305,40 @@
             <div class="k">Allowed deviation (±%)</div>
             <input id="allowedOver" type="number" class="input" value="5" min="0" max="50" step="0.5">
           </div>
-          <div>
-            <div class="k">High-small threshold % (to exceed +deviation)</div>
-            <input id="smallThresh" type="number" class="input" value="60" min="0" max="100" step="1">
-          </div>
           <div class="flex" style="align-items:center;gap:6px">
             <input type="checkbox" id="useSelected" checked>
             <label class="k" for="useSelected">Use currently selected rows only</label>
           </div>
         </div>
         <div class="explain" style="margin-top:8px">
-          Deviation applies both above and below the target. Exceeding the <b>upper</b> bound is only allowed if weighted <b>PPR Small</b> ≥ threshold.
+          In <b>Strict strategy</b>, the tool builds the plan by the strategy order (e.g., Priority Score high→low) until the target window. If no exact window is found, it returns the closest; in ties it prefers meeting/exceeding the target.
         </div>
         <div class="flex" style="gap:8px;margin-top:10px">
           <button class="btn accent" id="btnRecommend">Recommend plan</button>
           <button class="btn" id="btnApplyPlan">Apply to table selection</button>
           <button class="btn" id="btnCopyPlan">Copy plan text</button>
+          <button class="btn" id="btnCompare">Compare strategies</button>
         </div>
         <pre id="planOutput" style="margin-top:10px;min-height:100px">—</pre>
+
+        <div class="grid cols-3" style="margin-top:10px">
+          <div class="card">
+            <div class="k">Strategy summary</div>
+            <div id="strategySummary" class="k" style="margin-top:6px">—</div>
+          </div>
+          <div class="card" style="grid-column: span 2;">
+            <div class="k">Strategy Inspector (top 10 candidates by current strategy)</div>
+            <div id="inspector" style="margin-top:6px" class="k">—</div>
+          </div>
+        </div>
       </div>
     </section>
   </div>
 
-  <!-- Toasts -->
   <div id="toasts" aria-live="polite"></div>
 
 <script>
-// ===== Configuration =====
+// ===== Config & helpers =====
 const REQUIRED = [
   "VRID","Transship Status","Load Config","Trailer Location",
   "Severity","Status Info","Actual / Expected Arrival Time",
@@ -363,7 +364,6 @@ const NUMERIC = REQUIRED.filter(c => !NON_NUMERIC.includes(c));
 const normalize = s => String(s||"").trim().toLowerCase().replace(/[_%-]/g," ").replace(/\s+/g," ");
 const up = s => String(s||"").trim().toUpperCase();
 
-/* Rename MISSING (and blanks) → ARRIVAL_SCHEDULED */
 function toStatusLabel(raw){
   const s=String(raw||"").trim();
   if(!s) return "ARRIVAL_SCHEDULED";
@@ -373,7 +373,6 @@ function toStatusLabel(raw){
 }
 function statusKey(raw){ return up(toStatusLabel(raw)); }
 
-// ===== CSV/TSV parsing =====
 function guessDelimiter(text){
   const line = (text.match(/^[^\r\n]+/)||[""])[0];
   const counts = {",":(line.match(/,/g)||[]).length,"\t":(line.match(/\t/g)||[]).length,";":(line.match(/;/g)||[]).length};
@@ -398,14 +397,12 @@ function arrayToCSV(rows){
   }).join(",")).join("\n");
 }
 
-// ===== Formatting =====
 function toNum(v){ if(v==null) return 0; let s=String(v).replace(/,/g,"").replace(/%/g,"").trim(); if(s==="") return 0; const x=Number(s); return isFinite(x)?x:0; }
 function fmtNumber(n){const f=Number(n); return isFinite(f)? f.toLocaleString(undefined,{maximumFractionDigits:0}) : ""; }
 function fmtScore(n){const f=Number(n); return isFinite(f)? f.toLocaleString(undefined,{maximumFractionDigits:2}) : ""; }
 function fmtPercent(n){const f=Number(n); return isFinite(f)? f.toLocaleString(undefined,{maximumFractionDigits:2})+"%" : ""; }
 function parseWhen(s){ const t=Date.parse(String(s||"").replaceAll("  "," ")); return isNaN(t)? null : t; }
 
-// ===== Header mapping =====
 function mapHeaders(headers){
   const map = {}, normToReal = {}; headers.forEach(h => normToReal[normalize(h)] = h);
   const arrivalSyns = ["actual / expected arrival time","arrival time","expected arrival","actual arrival","eta","ata","scheduled arrival","appt time","appointment time"];
@@ -427,7 +424,7 @@ function detectPercentColumn(values,label){
   return nonEmpty>0 && (withPct/nonEmpty)>=0.30;
 }
 
-// ===== State & DOM =====
+// ===== State =====
 const drop=document.getElementById("drop");
 const filePick=document.getElementById("filePick");
 const btnPaste=document.getElementById("btnPaste");
@@ -461,13 +458,14 @@ const workloadSource=document.getElementById("workloadSource");
 const headcountResult=document.getElementById("headcountResult");
 const headcountExplain=document.getElementById("headcountExplain");
 
+const planStrategy=document.getElementById("planStrategy");
 const targetUnits=document.getElementById("targetUnits");
 const allowedOver=document.getElementById("allowedOver");
-const smallThresh=document.getElementById("smallThresh");
 const useSelected=document.getElementById("useSelected");
 const btnRecommend=document.getElementById("btnRecommend");
 const btnApplyPlan=document.getElementById("btnApplyPlan");
 const btnCopyPlan=document.getElementById("btnCopyPlan");
+const btnCompare=document.getElementById("btnCompare");
 const planOutput=document.getElementById("planOutput");
 
 const filterCol=document.getElementById("filterCol");
@@ -480,8 +478,9 @@ const btnClearFilters=document.getElementById("btnClearFilters");
 const activeFilters=document.getElementById("activeFilters");
 
 const toasts=document.getElementById("toasts");
+// Strict mode is always ON (control removed from UI)
+const strictMode = { checked: true };
 
-// External horizontal controls
 const tblWrap=document.getElementById("tblWrap");
 const btnScrollL=document.getElementById("btnScrollL");
 const btnScrollR=document.getElementById("btnScrollR");
@@ -494,9 +493,10 @@ let ROWS=[], IS_PERCENT={}, PCT_UNITS={}, LAST_PLAN=null;
 let STATUS_FILTER=new Set(), SORT_BY=null, SORT_DIR='asc', FILTERS=[];
 let PAN_SUPPRESS_CLICK=false;
 
-// Default workload source
+// ===== Init =====
 document.addEventListener("DOMContentLoaded", ()=>{
   if(workloadSource) workloadSource.value="Units in Cases (computed)";
+  if(planStrategy) planStrategy.value="ps_strict"; // ensure default selection on refresh
   tbody.addEventListener("click", onTbodyClick);
   tbody.addEventListener("dblclick", onTbodyDblClick);
   initPanScroll();
@@ -521,7 +521,8 @@ btnReset.onclick=()=>{
   planOutput.textContent="—"; LAST_PLAN=null;
   STATUS_FILTER=new Set(["INBOUND"]); SORT_BY=null; SORT_DIR='asc'; FILTERS=[]; renderFilterChips();
   if(workloadSource) workloadSource.value="Units in Cases (computed)";
-  statusFilterBox.innerHTML="";
+  if(planStrategy) planStrategy.value="ps_strict"; // also on reset
+  statusFilterBox.innerHTML=""; document.getElementById("strategySummary").textContent="—"; document.getElementById("inspector").textContent="—";
 };
 
 search.oninput=()=> renderTable();
@@ -544,6 +545,7 @@ btnCopyPlan.onclick=()=>{
   if(!LAST_PLAN){alert("No plan yet."); return;}
   navigator.clipboard.writeText(LAST_PLAN.text||"").then(()=>{btnCopyPlan.textContent="Copied ✓"; setTimeout(()=>btnCopyPlan.textContent="Copy plan text",1200);});
 };
+btnCompare.onclick=()=> compareStrategies();
 
 btnAddFilter.onclick=()=> addFilterFromUI();
 btnClearFilters.onclick=()=>{FILTERS=[]; renderFilterChips(); renderTable();};
@@ -561,7 +563,8 @@ btnCopySlack.onclick=()=>{
       lines.push(`• ${key}: ${pretty} (≈ ${fmtNumber(u)} of ${fmtNumber(totalUnits)} units)`);
     }else lines.push(`• ${key}: ${pretty}`);
   }
-  lines.push(`Derived → Units in Cases: ${fmtNumber(d.unitsInCases)} | Case %: ${fmtPercent(d.casePct)} | Tote Density (all totes): ${fmtNumber(d.toteDensityAll)}`);
+  const d2=derive(agg);
+  lines.push(`Derived → Units in Cases: ${fmtNumber(d2.unitsInCases)} | Case %: ${fmtPercent(d2.casePct)} | Tote Density (all totes): ${fmtNumber(d2.toteDensityAll)}`);
   navigator.clipboard.writeText(lines.join("\n")).then(()=>{copyMsg.textContent="Copied ✓"; setTimeout(()=>copyMsg.textContent="",1200);});
 };
 
@@ -582,7 +585,7 @@ function showToast(msg){
   setTimeout(()=>{t.classList.add("bye"); setTimeout(()=>t.remove(),380);},2200);
 }
 
-// ===== File handling (plan) =====
+// ===== File handling =====
 function handleFile(file){
   const name=file.name.toLowerCase();
   if(name.endsWith(".xlsx")){
@@ -618,7 +621,6 @@ function handleText(text){
       const real=map[label]; const val=real ? r[idx[real]] : "";
       obj[label]=val;
     });
-    // Normalize Transship Status
     obj["Transship Status"]=toStatusLabel(obj["Transship Status"]);
     return obj;
   });
@@ -631,7 +633,7 @@ function handleText(text){
   initFilterUI(); computeAndRender();
 }
 
-// ---- Status/YMS file handling ----
+// ===== Status/YMS merge =====
 function handleStatusFile(file){
   const name=file.name.toLowerCase();
   if(name.endsWith(".xlsx")){
@@ -700,7 +702,7 @@ function mergeStatusText(text){
   showToast(`Merged status for ${matched} VRID(s). OK: ${ok}, Yellow/Other: ${warn}, Red: ${red}${updatedLoc?`, Loc updated: ${updatedLoc}`:''}${updatedArr?`, Arrival updated: ${updatedArr}`:''}`);
 }
 
-// ===== Filters & Sorting =====
+// ===== Filters & table =====
 function initFilterUI(){
   const cols=["VRID"].concat(REQUIRED.filter(c=>c!=="VRID"));
   filterCol.innerHTML=cols.map(c=>`<option value="${c}">${c}</option>`).join("");
@@ -784,7 +786,7 @@ function applySort(arr){
   });
 }
 
-// ===== Core compute & render =====
+// ===== Aggregations =====
 function activeRows(){ return ROWS.filter(r=> r._selected && STATUS_FILTER.has(statusKey(r["Transship Status"]))); }
 function baseRows(){ return ROWS.filter(r=> STATUS_FILTER.has(statusKey(r["Transship Status"]))); }
 function visibleRows(){
@@ -860,7 +862,6 @@ function severityClass(sevRaw){
   const s=String(sevRaw||"").toLowerCase();
   if(!s) return ""; if(s.includes("red")) return "sev-red"; if(s==="ok"||s.includes("green")||s.includes("good")) return "sev-ok"; return "sev-yellow";
 }
-
 function aggregate(rows){
   const out={}; for(const col of TOTALS_COLUMNS.concat(["Priority Score"])){ let sum=0; for(const r of rows){sum+=toNum(r[col]);} out[col]={value:sum}; }
   return out;
@@ -875,7 +876,6 @@ function computePercentUnits(rows){
   }
   return m;
 }
-
 function derive(agg){
   const unitsInCases=toNum(agg["Units in Palletized Single ASIN Cases"]?.value)+toNum(agg["Units in Palletized Mixed ASIN Cases"]?.value);
   const totalUnits=toNum(agg["Total Units"]?.value);
@@ -892,7 +892,6 @@ function derive(agg){
   return {unitsInCases, casePct, toteDensityPal, toteDensityAll, totalUnits,
           unitsInTotesPal, unitsInTotesFL, palTotes, flTotes};
 }
-
 function makeBreakCard(title,obj){
   const d=document.createElement("div"); d.className="card";
   const parts=Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
@@ -919,7 +918,6 @@ function makeTotalCard(k,v,isPercent,explain="",sub=""){
   d.querySelector(".copy").onclick=(e)=>{const val=e.target.getAttribute("data-copy"); navigator.clipboard.writeText(val).then(()=>{e.target.textContent="copied ✓"; setTimeout(()=> e.target.textContent="copy",1200);});};
   return d;
 }
-
 function renderTable(){
   const cols=["(Plan)","VRID"].concat(REQUIRED.filter(c=>c!=="VRID"));
   thead.innerHTML="<tr>"+cols.map((c,i)=>{
@@ -979,7 +977,6 @@ function renderTable(){
 
   updateShadows();
 }
-
 function renderDerived(agg){
   const d=derive(agg); derivedGrid.innerHTML="";
   derivedGrid.appendChild(makeDerivedCard("Units in Cases (computed)", d.unitsInCases, false, "Units in Cases = Units in Palletized Single ASIN Cases + Units in Palletized Mixed ASIN Cases."));
@@ -994,7 +991,6 @@ function makeDerivedCard(title,value,isPercent,explain=""){
   return d;
 }
 function countBy(arr){const m={}; for(const x of arr){ m[x]=(m[x]||0)+1; } return m; }
-
 function renderHeadcount(agg){
   const hours=Number(hoursInput.value)||0, rate=Number(rateInput.value)||0;
   const d=derive(agg);
@@ -1008,7 +1004,7 @@ function renderHeadcount(agg){
   headcountExplain.textContent=`Headcount = ceil(${fmtNumber(workload)} ÷ (${fmtNumber(rate)} × ${hours})) → Capacity/person: ${fmtNumber(capacity)} units (selected + status filter).`;
 }
 
-// ===== Row selection (click anywhere) =====
+// ===== Selection behavior =====
 function onTbodyClick(e){
   if(PAN_SUPPRESS_CLICK){ PAN_SUPPRESS_CLICK=false; return; }
   const tag=(e.target.tagName||"").toLowerCase();
@@ -1022,124 +1018,255 @@ function onTbodyClick(e){
 }
 function onTbodyDblClick(e){ onTbodyClick(e); }
 
-// ===== Auto Plan (Smart selector) =====
+// ===== Candidates & strategies =====
 function getCandidates(useSel){
   const base=useSel? activeRows() : ROWS.filter(r=> STATUS_FILTER.has(statusKey(r["Transship Status"])));
   return base.map(r=>{
     const units=toNum(r["Total Units"]);
-    return {_globalIndex:ROWS.indexOf(r), VRID:r["VRID"], units,
-            small:toNum(r["PPR Small"]), med:toNum(r["PPR Medium"]), large:toNum(r["PPR Large"]),
-            ps:toNum(r["Priority Score"]), loc:r["Trailer Location"]||"", sev:sevLabel(r["Severity"])};
+    const casesUnits = toNum(r["Units in Palletized Single ASIN Cases"]) + toNum(r["Units in Palletized Mixed ASIN Cases"]);
+    const totesUnits = toNum(r["Units in Palletized Totes"]) + toNum(r["Units in FL Totes"]);
+    return {
+      _globalIndex:ROWS.indexOf(r),
+      VRID:r["VRID"], units,
+      casesUnits, totesUnits,
+      small:toNum(r["PPR Small"]), med:toNum(r["PPR Medium"]), large:toNum(r["PPR Large"]),
+      ps:toNum(r["Priority Score"]), loc:r["Trailer Location"]||"", sev:sevLabel(r["Severity"])
+    };
   }).filter(x=>x.units>0);
 }
-function evaluateSubset(sub,target,over,thresh){
+function evaluateSubset(sub,target,over){
   const units=sub.reduce((a,b)=>a+b.units,0); if(units<=0) return null;
   const smallUnits=sub.reduce((a,b)=>a + b.units*b.small/100,0);
   const medUnits  =sub.reduce((a,b)=>a + b.units*b.med/100,0);
   const largeUnits=sub.reduce((a,b)=>a + b.units*b.large/100,0);
+  const casesUnits=sub.reduce((a,b)=>a + b.casesUnits,0);
+  const totesUnits=sub.reduce((a,b)=>a + b.totesUnits,0);
   const w_small=smallUnits/units*100, w_med=medUnits/units*100, w_large=largeUnits/units*100;
   const overshoot=(units/target - 1.0);
   const within=units>=target*(1-over) && units<=target*(1+over);
-  const allowBeyond=(units>target*(1+over) && w_small>=thresh);
-  return {units, smallUnits, medUnits, largeUnits, w_small, w_med, w_large, overshoot, within, allowBeyond};
+  const avgPS = sub.length? sub.reduce((a,b)=>a+b.ps,0)/sub.length : 0;
+  const casesShare = (casesUnits/units)*100;
+  const totesShare = (totesUnits/units)*100;
+  return {units, smallUnits, medUnits, largeUnits, w_small, w_med, w_large, overshoot, within, avgPS, casesUnits, totesUnits, casesShare, totesShare};
 }
+function greedyOrder(strategy, cand){
+  const distanceTo = (c, tgtSmall, tgtMed, tgtLarge) => {
+    return Math.sqrt((c.small-tgtSmall)**2 + (c.med-tgtMed)**2 + (c.large-tgtLarge)**2);
+  };
+  const arr=[...cand];
+  switch(strategy){
+    case 'ps_strict':
+      return arr.sort((a,b)=> (b.ps-a.ps) || (b.units-a.units));
+    case 'max_cases':
+      return arr.sort((a,b)=>{
+        const da=(a.casesUnits/a.units)-(b.casesUnits/b.units);
+        if(da!==0) return da>0?-1:1;
+        if(b.casesUnits!==a.casesUnits) return b.casesUnits-a.casesUnits;
+        return (b.ps-a.ps);
+      });
+    case 'max_totes':
+      return arr.sort((a,b)=>{
+        const da=(a.totesUnits/a.units)-(b.totesUnits/b.units);
+        if(da!==0) return da>0?-1:1;
+        if(b.totesUnits!==a.totesUnits) return b.totesUnits-a.totesUnits;
+        return (b.ps-a.ps);
+      });
+    case 'high_smalls':
+      return arr.sort((a,b)=> (b.small-a.small) || (b.med-a.med) || (a.large-b.large) || (b.units-a.units));
+    case 'high_mediums':
+      return arr.sort((a,b)=> (b.med-a.med) || (b.small-a.small) || (a.large-b.large) || (b.units-a.units));
+    case 'high_large':
+      return arr.sort((a,b)=> (b.large-a.large) || (b.units-a.units));
+    case 'balance_60_39_0':
+      return arr.sort((a,b)=>{
+        const da=distanceTo(a,60,39,0)-distanceTo(b,60,39,0);
+        if(da!==0) return da<0?-1:1;
+        return (b.ps-a.ps);
+      });
+    default:
+      return arr.sort((a,b)=> (b.ps-a.ps) || (b.units-a.units));
+  }
+}
+function isBetter(ev, bestEv, target){
+  if(!bestEv) return true;
+  if(ev.within && !bestEv.within) return true;
+  if(!ev.within && bestEv.within) return false;
+  const gap=Math.abs(ev.overshoot), bgap=Math.abs(bestEv.overshoot);
+  if(gap !== bgap) return gap < bgap;
+  if(ev.units>=target && bestEv.units<target) return true;
+  if(ev.units<target && bestEv.units>=target) return false;
+  if(ev.avgPS !== bestEv.avgPS) return ev.avgPS > bestEv.avgPS;
+  if(ev.units !== bestEv.units) return ev.units > bestEv.units;
+  return false;
+}
+function scoreForStrategy(strategy, ev){
+  if(!ev) return -Infinity;
+  let score = 0;
+  if(ev.within) score += 1_000_000;
+  score += -Math.abs(ev.overshoot)*50_000;
+  switch(strategy){
+    case 'ps_strict':     score += ev.avgPS*10_000 + ev.w_small*10 - ev.w_large*20; break;
+    case 'max_cases':     score += ev.casesShare*10_000 + ev.casesUnits*2 + ev.avgPS*500; break;
+    case 'max_totes':     score += ev.totesShare*10_000 + ev.totesUnits*2 + ev.avgPS*500; break;
+    case 'high_smalls':   score += ev.w_small*800 + ev.w_med*80 - ev.w_large*400 + ev.avgPS*200; break;
+    case 'high_mediums':  score += ev.w_med*800 + ev.w_small*80 - ev.w_large*400 + ev.avgPS*200; break;
+    case 'high_large':    score += ev.w_large*800 + ev.avgPS*200; break;
+    case 'balance_60_39_0': {
+      const d = Math.sqrt((ev.w_small-60)**2 + (ev.w_med-39)**2 + (ev.w_large-0)**2);
+      score += -d*500 + ev.avgPS*300;
+      break;
+    }
+    default: score += ev.avgPS*10_000;
+  }
+  return score;
+}
+function buildPlanGreedy(strategy, target, over, cand){
+  const ordered=greedyOrder(strategy, cand);
+  const windowMin = target*(1-over), windowMax = target*(1+over);
+  let picked=[], sum=0, best=null;
+
+  const consider = (arr) => {
+    const ev=evaluateSubset(arr, target, over);
+    if(!ev) return;
+    if(isBetter(ev, best?.ev, target)){
+      best={sub:[...arr], ev};
+    }
+  };
+
+  for(const c of ordered){
+    picked.push(c); sum+=c.units;
+    consider(picked);
+    if(sum>=windowMin && sum<=windowMax) break;
+  }
+
+  if(best && !best.ev.within && picked.length>1){
+    for(let i=picked.length-1;i>=0;i--){
+      const trial=[...picked]; trial.splice(i,1);
+      consider(trial);
+      if(best.ev.within) break;
+    }
+  }
+  return best;
+}
+function buildPlanSearch(strategy, target, over, cand){
+  const n=cand.length;
+  if(n===0) return null;
+  if(n<=18){
+    let best=null;
+    const total=1<<n;
+    for(let mask=1; mask<total; mask++){
+      const sub=[]; for(let i=0;i<n;i++) if(mask&(1<<i)) sub.push(cand[i]);
+      const ev=evaluateSubset(sub, target, over);
+      const sc=scoreForStrategy(strategy, ev);
+      if(!best || sc>best.score) best={sub,ev,score:sc};
+    }
+    return best;
+  }else{
+    return buildPlanGreedy(strategy, target, over, cand);
+  }
+}
+
+// ===== Recommend & compare =====
 function recommendPlan(){
-  const target=Number(targetUnits.value)||0, over=(Number(allowedOver.value)||0)/100, thresh=Number(smallThresh.value)||0, useSel=!!useSelected.checked;
+  const strategy = planStrategy.value || 'ps_strict';
+  const target=Number(targetUnits.value)||0, over=(Number(allowedOver.value)||0)/100, useSel=!!useSelected.checked;
   const cand=getCandidates(useSel);
   if(!cand.length || target<=0){ planOutput.textContent="Load data and set a positive target."; LAST_PLAN=null; return; }
-  let bestInWindow=null, bestLargeOver=null, bestAny=null, closestUnder=null;
-  const n=cand.length;
-  if(n<=20){
-    const totalComb=1<<n;
-    for(let mask=1; mask<totalComb; mask++){
-      const sub=[]; for(let i=0;i<n;i++) if(mask&(1<<i)) sub.push(cand[i]);
-      const ev=evaluateSubset(sub,target,over,thresh); if(!ev) continue;
-      if(ev.within){ const key=[ev.w_small, ev.w_med, -ev.w_large, -Math.abs(ev.overshoot)]; if(!bestInWindow||key>bestInWindow.key) bestInWindow={sub,ev,key}; }
-      else if(ev.allowBeyond){ const key=[ev.w_small, -ev.overshoot]; if(!bestLargeOver||key>bestLargeOver.key) bestLargeOver={sub,ev,key}; }
-      if(ev.units>=target){ const key=[-ev.overshoot, ev.w_small]; if(!bestAny||key>bestAny.key) bestAny={sub,ev,key}; }
-      else{ const underGap=target-ev.units; const key=[-underGap, ev.w_small]; if(!closestUnder||key>closestUnder.key) closestUnder={sub,ev,key}; }
-    }
-  }else{
-    const ordered=[...cand].sort((a,b)=>(b.small-a.small)||(b.med-a.med)||(a.large-b.large)||(a.units-b.units));
-    const sub=[]; let sum=0; for(const t of ordered){ if(sum>=target*(1+over)) break; sub.push(t); sum+=t.units; }
-    const ev=evaluateSubset(sub,target,over,thresh); bestAny={sub,ev,key:[-Math.abs(ev.overshoot), ev.w_small]};
-  }
-  const chosen=bestInWindow||bestLargeOver||bestAny||closestUnder;
-  if(!chosen){ planOutput.textContent="No feasible combination found."; LAST_PLAN=null; return; }
 
-  const s=chosen.sub.slice().sort((a,b)=> (b.ps-a.ps) || String(a.VRID||"").localeCompare(String(b.VRID||"")));
-  const lines=[]; const oversPct=chosen.ev.overshoot*100;
-  lines.push(`TRAILER PLAN — Target: ${fmtNumber(target)} units | Allowed deviation: ${document.getElementById('allowedOver').value}% (±)`);
-  lines.push(`Selected Units: ${fmtNumber(chosen.ev.units)}  (Deviation vs target: ${oversPct.toFixed(2)}%)`);
-  lines.push(`Weighted PPR → Small: ${fmtPercent(chosen.ev.w_small)} (≈ ${fmtNumber(chosen.ev.smallUnits)} units), Medium: ${fmtPercent(chosen.ev.w_med)} (≈ ${fmtNumber(chosen.ev.medUnits)} units), Large: ${fmtPercent(chosen.ev.w_large)} (≈ ${fmtNumber(chosen.ev.largeUnits)} units)`);
+  const best = strictMode.checked
+    ? buildPlanGreedy(strategy, target, over, cand)
+    : buildPlanSearch(strategy, target, over, cand);
+
+  if(!best){ planOutput.textContent="No feasible combination found."; LAST_PLAN=null; return; }
+
+  const s=best.sub.slice().sort((a,b)=> (b.ps-a.ps) || String(a.VRID||"").localeCompare(String(b.VRID||"")));
+  const lines=[]; const oversPct=(best.ev.overshoot*100);
+  lines.push(`TRAILER PLAN — Strategy: ${strategy.replaceAll('_',' ').toUpperCase()} | Mode: ${strictMode.checked?'STRICT-GREEDY':'BALANCED SEARCH'} | Target: ${fmtNumber(target)} units | Allowed deviation: ${document.getElementById('allowedOver').value}% (±)`);
+  lines.push(`Selected Units: ${fmtNumber(best.ev.units)}  (Deviation vs target: ${oversPct.toFixed(2)}%)`);
+  lines.push(`Weighted PPR → Small: ${fmtPercent(best.ev.w_small)} (≈ ${fmtNumber(best.ev.smallUnits)} units), Medium: ${fmtPercent(best.ev.w_med)} (≈ ${fmtNumber(best.ev.medUnits)} units), Large: ${fmtPercent(best.ev.w_large)} (≈ ${fmtNumber(best.ev.largeUnits)} units)`);
+  lines.push(`Workload split → Units in Cases: ${fmtNumber(best.ev.casesUnits)} (${fmtPercent(best.ev.casesShare)} of plan) | Units in Totes: ${fmtNumber(best.ev.totesUnits)} (${fmtPercent(best.ev.totesShare)} of plan)`);
   lines.push(`Order: by Priority Score (DESC)`); lines.push(""); lines.push("Trailers:");
   for(const r of s){
     const loc=r.loc?` — Location: ${r.loc}`:""; const sevTxt=r.sev && r.sev!=="UNKNOWN"?` — Severity: ${r.sev}`:"";
     lines.push(`• VRID ${r.VRID}: ${fmtNumber(r.units)} units — Priority Score ${fmtScore(r.ps)} — PPR Small ${fmtPercent(r.small)} | Medium ${fmtPercent(r.med)} | Large ${fmtPercent(r.large)}${loc}${sevTxt}`);
   }
   const text=lines.join("\n"); planOutput.textContent=text; LAST_PLAN={text, idxs:s.map(x=>x._globalIndex)};
+
+  renderStrategySummary(strategy, best.ev);
+  renderInspector(strategy, cand);
+  showToast(`Recommended plan using ${strictMode.checked?'STRICT':'SEARCH'} — ${strategy}`);
 }
-
-// ===== Touch / Drag / Wheel horizontal scroll + External buttons =====
-function initPanScroll(){
-  if(!tblWrap) return;
-  let isDown=false, startX=0, scrollStart=0, moved=false;
-
-  const onDown = (x)=>{
-    isDown=true; startX=x; scrollStart=tblWrap.scrollLeft; moved=false; tblWrap.classList.add("dragging");
-  };
-  const onMove = (x)=>{
-    if(!isDown) return;
-    const dx=x-startX; if(Math.abs(dx)>3) moved=true;
-    tblWrap.scrollLeft = scrollStart - dx; updateShadows();
-  };
-  const onUp = ()=>{
-    if(!isDown) return;
-    isDown=false; tblWrap.classList.remove("dragging");
-    if(moved){ PAN_SUPPRESS_CLICK=true; setTimeout(()=> PAN_SUPPRESS_CLICK=false, 80); }
-  };
-
-  // Mouse drag
-  tblWrap.addEventListener("mousedown", e=> onDown(e.clientX));
-  document.addEventListener("mousemove", e=> onMove(e.clientX));
-  document.addEventListener("mouseup", onUp);
-  tblWrap.addEventListener("mouseleave", onUp);
-
-  // Touch drag
-  tblWrap.addEventListener("touchstart", e=>{ if(e.touches.length!==1) return; onDown(e.touches[0].clientX); }, {passive:true});
-  tblWrap.addEventListener("touchmove", e=>{ if(!isDown) return; onMove(e.touches[0].clientX); e.preventDefault(); }, {passive:false});
-  tblWrap.addEventListener("touchend", onUp, {passive:true});
-  tblWrap.addEventListener("touchcancel", onUp, {passive:true});
-
-  // Wheel: only convert to horizontal when NO vertical overflow or when holding Shift
-  tblWrap.addEventListener("wheel", e=>{
-    const hasVOverflow = tblWrap.scrollHeight > (tblWrap.clientHeight + 1);
-    const wantH = e.shiftKey || (!hasVOverflow && Math.abs(e.deltaY) > Math.abs(e.deltaX));
-    if(wantH){
-      tblWrap.scrollLeft += e.deltaY;
-      e.preventDefault();
-      updateShadows();
-    }
-  }, {passive:false});
-
-  // External buttons
-  const page=()=> Math.max(200, Math.floor(tblWrap.clientWidth*0.7));
-  btnScrollL.addEventListener("click", ()=>{ tblWrap.scrollBy({left:-page(), behavior:"smooth"}); setTimeout(updateShadows, 120); });
-  btnScrollR.addEventListener("click", ()=>{ tblWrap.scrollBy({left: page(), behavior:"smooth"}); setTimeout(updateShadows, 120); });
-  btnJumpL.addEventListener("click", ()=>{ tblWrap.scrollTo({left:0, behavior:"smooth"}); setTimeout(updateShadows, 120); });
-  btnJumpR.addEventListener("click", ()=>{ tblWrap.scrollTo({left: tblWrap.scrollWidth, behavior:"smooth"}); setTimeout(updateShadows, 120); });
-
-  // Keyboard: Home/End to jump, arrows to nudge
-  tblWrap.addEventListener("keydown", e=>{
-    if(e.key==="ArrowLeft"){ tblWrap.scrollBy({left:-120, behavior:"smooth"}); }
-    if(e.key==="ArrowRight"){ tblWrap.scrollBy({left:120, behavior:"smooth"}); }
-    if(e.key==="Home"){ e.preventDefault(); tblWrap.scrollTo({left:0, behavior:"smooth"}); }
-    if(e.key==="End"){ e.preventDefault(); tblWrap.scrollTo({left: tblWrap.scrollWidth, behavior:"smooth"}); }
+function compareStrategies(){
+  const strategies = ["ps_strict","max_cases","max_totes","high_smalls","high_mediums","high_large","balance_60_39_0"];
+  const target=Number(targetUnits.value)||0, over=(Number(allowedOver.value)||0)/100, useSel=!!useSelected.checked;
+  const cand=getCandidates(useSel);
+  if(!cand.length || target<=0){ showToast("Load data first"); return; }
+  const rows = strategies.map(st=>{
+    const best = strictMode.checked ? buildPlanGreedy(st,target,over,cand) : buildPlanSearch(st,target,over,cand);
+    if(!best) return {st, note:"—"};
+    return {
+      st,
+      units: best.ev.units,
+      dev: (best.ev.overshoot*100),
+      wS: best.ev.w_small, wM: best.ev.w_med, wL: best.ev.w_large,
+      cases: best.ev.casesShare, totes: best.ev.totesShare,
+      note: best.ev.within ? "within window" : "closest"
+    };
   });
-
-  tblWrap.addEventListener("scroll", updateShadows, {passive:true});
-  updateShadows();
+  let html = `<table class="miniTable"><thead><tr>
+    <th>Strategy</th><th>Units</th><th>Dev %</th><th>PPR S/M/L</th><th>Cases %</th><th>Totes %</th><th>Note</th></tr></thead><tbody>`;
+  for(const r of rows){
+    html += `<tr>
+      <td>${r.st?.replaceAll('_',' ')||'—'}</td>
+      <td>${r.units?fmtNumber(r.units):'—'}</td>
+      <td>${isFinite(r.dev)?r.dev.toFixed(2)+'%':'—'}</td>
+      <td>${isFinite(r.wS)?fmtPercent(r.wS):'—'} / ${isFinite(r.wM)?fmtPercent(r.wM):'—'} / ${isFinite(r.wL)?fmtPercent(r.wL):'—'}</td>
+      <td>${isFinite(r.cases)?fmtPercent(r.cases):'—'}</td>
+      <td>${isFinite(r.totes)?fmtPercent(r.totes):'—'}</td>
+      <td>${r.note||'—'}</td>
+    </tr>`;
+  }
+  html += `</tbody></table>`;
+  document.getElementById("strategySummary").innerHTML = html;
+  showToast("Compared strategies (see Strategy summary)");
 }
+function renderStrategySummary(strategy, ev){
+  const box=document.getElementById("strategySummary");
+  const badge = ev.within ? '<span class="badge ok">within window</span>' : '<span class="badge warn">closest</span>';
+  box.innerHTML = `
+    <div>Strategy: <b>${strategy.replaceAll('_',' ').toUpperCase()}</b> · ${badge}</div>
+    <div style="margin-top:6px">Units: <b>${fmtNumber(ev.units)}</b> · Deviation: <b>${(ev.overshoot*100).toFixed(2)}%</b></div>
+    <div>PPR → Small: <b>${fmtPercent(ev.w_small)}</b>, Medium: <b>${fmtPercent(ev.w_med)}</b>, Large: <b>${fmtPercent(ev.w_large)}</b></div>
+    <div>Workload split → Cases: <b>${fmtPercent(ev.casesShare)}</b>, Totes: <b>${fmtPercent(ev.totesShare)}</b></div>
+  `;
+}
+function renderInspector(strategy, cand){
+  const ordered = greedyOrder(strategy, cand).slice(0,10);
+  let html = `<table class="miniTable"><thead><tr>
+    <th>#</th><th>VRID</th><th>PS</th><th>Units</th><th>PPR S/M/L</th><th>Cases%</th><th>Totes%</th><th>Location</th><th>Sev</th>
+  </tr></thead><tbody>`;
+  let i=1;
+  for(const c of ordered){
+    const casesPct = c.units? (c.casesUnits/c.units*100) : 0;
+    const totesPct = c.units? (c.totesUnits/c.units*100) : 0;
+    const sevClass = c.sev==="RED"?"bad":(c.sev==="OK"?"ok":"warn");
+    html += `<tr>
+      <td>${i++}</td>
+      <td>${c.VRID}</td>
+      <td>${fmtScore(c.ps)}</td>
+      <td>${fmtNumber(c.units)}</td>
+      <td>${fmtPercent(c.small)} / ${fmtPercent(c.med)} / ${fmtPercent(c.large)}</td>
+      <td>${fmtPercent(casesPct)}</td>
+      <td>${fmtPercent(totesPct)}</td>
+      <td>${c.loc||''}</td>
+      <td><span class="badge ${sevClass}">${c.sev}</span></td>
+    </tr>`;
+  }
+  html += `</tbody></table>`;
+  document.getElementById("inspector").innerHTML = html;
+}
+
+// ===== Scroll UX =====
 function updateShadows(){
   const el=tblWrap; if(!el) return;
   const atStart = el.scrollLeft <= 1;
@@ -1150,6 +1277,46 @@ function updateShadows(){
   if(btnJumpL){ btnJumpL.disabled = atStart; }
   if(btnScrollR){ btnScrollR.disabled = atEnd; }
   if(btnJumpR){ btnJumpR.disabled = atEnd; }
+}
+function initPanScroll(){
+  if(!tblWrap) return;
+  let isDown=false, startX=0, scrollStart=0, moved=false;
+
+  const onDown = (x)=>{ isDown=true; startX=x; scrollStart=tblWrap.scrollLeft; moved=false; tblWrap.classList.add("dragging"); };
+  const onMove = (x)=>{ if(!isDown) return; const dx=x-startX; if(Math.abs(dx)>3) moved=true; tblWrap.scrollLeft = scrollStart - dx; updateShadows(); };
+  const onUp = ()=>{ if(!isDown) return; isDown=false; tblWrap.classList.remove("dragging"); if(moved){ PAN_SUPPRESS_CLICK=true; setTimeout(()=> PAN_SUPPRESS_CLICK=false, 80); } };
+
+  tblWrap.addEventListener("mousedown", e=> onDown(e.clientX));
+  document.addEventListener("mousemove", e=> onMove(e.clientX));
+  document.addEventListener("mouseup", onUp);
+  tblWrap.addEventListener("mouseleave", onUp);
+
+  tblWrap.addEventListener("touchstart", e=>{ if(e.touches.length!==1) return; onDown(e.touches[0].clientX); }, {passive:true});
+  tblWrap.addEventListener("touchmove", e=>{ if(!isDown) return; onMove(e.touches[0].clientX); e.preventDefault(); }, {passive:false});
+  tblWrap.addEventListener("touchend", onUp, {passive:true});
+  tblWrap.addEventListener("touchcancel", onUp, {passive:true});
+
+  tblWrap.addEventListener("wheel", e=>{
+    const hasVOverflow = tblWrap.scrollHeight > (tblWrap.clientHeight + 1);
+    const wantH = e.shiftKey || (!hasVOverflow && Math.abs(e.deltaY) > Math.abs(e.deltaX));
+    if(wantH){ tblWrap.scrollLeft += e.deltaY; e.preventDefault(); updateShadows(); }
+  }, {passive:false});
+
+  const page=()=> Math.max(200, Math.floor(tblWrap.clientWidth*0.7));
+  btnScrollL.addEventListener("click", ()=>{ tblWrap.scrollBy({left:-page(), behavior:"smooth"}); setTimeout(updateShadows, 120); });
+  btnScrollR.addEventListener("click", ()=>{ tblWrap.scrollBy({left: page(), behavior:"smooth"}); setTimeout(updateShadows, 120); });
+  btnJumpL.addEventListener("click", ()=>{ tblWrap.scrollTo({left:0, behavior:"smooth"}); setTimeout(updateShadows, 120); });
+  btnJumpR.addEventListener("click", ()=>{ tblWrap.scrollTo({left: tblWrap.scrollWidth, behavior:"smooth"}); setTimeout(updateShadows, 120); });
+
+  tblWrap.addEventListener("keydown", e=>{
+    if(e.key==="ArrowLeft"){ tblWrap.scrollBy({left:-120, behavior:"smooth"}); }
+    if(e.key==="ArrowRight"){ tblWrap.scrollBy({left:120, behavior:"smooth"}); }
+    if(e.key==="Home"){ e.preventDefault(); tblWrap.scrollTo({left:0, behavior:"smooth"}); }
+    if(e.key==="End"){ e.preventDefault(); tblWrap.scrollTo({left: tblWrap.scrollWidth, behavior:"smooth"}); }
+  });
+
+  tblWrap.addEventListener("scroll", updateShadows, {passive:true});
+  updateShadows();
 }
 </script>
 </body>
