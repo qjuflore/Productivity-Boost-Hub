@@ -20,8 +20,7 @@
          font:14px/1.4 system-ui,Segoe UI,Roboto,Ubuntu,sans-serif}
     header{padding:12px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;
            background:rgba(13,19,31,.85);backdrop-filter: blur(6px);z-index:10}
-    h1{margin:0;font-size:18px;letter-spacing:.3px; display:flex; align-items:center; gap:10px}
-    .view-chip{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border:1px solid var(--border);border-radius:999px;padding:4px 10px;color:#cfe7ff;font-size:12px}
+    h1{margin:0;font-size:18px;letter-spacing:.3px}
     .container{padding:20px;max-width:1200px;margin:0 auto}
     .u-row{display:grid;gap:16px}
     .u-row.cols-2{grid-template-columns: repeat(2, minmax(0,1fr))}
@@ -108,7 +107,7 @@
     .toast{display:flex;align-items:center;gap:10px;background:linear-gradient(180deg,#0d1a2b,#0a1322);
            border:1px solid var(--border); border-radius:12px; padding:10px 12px; box-shadow:0 8px 30px rgba(0,0,0,.35);
            animation:toastIn .18s ease-out; color:#cfe7ff; font-size:13px}
-    .toast .dot{width:8px;height:8px;border-radius:999px;background:var(--neon);box-shadow:0 0 10px rgba(78,241,161,.7)}
+    .toast .dot{width:8px;height:8px;border-radius:999px;background:var(--neon);box-shadow: 0 0 10px rgba(78,241,161,.7)}
     .toast.bye{opacity:0; transform: translateY(8px); transition: opacity .35s ease, transform .35s ease}
     @keyframes toastIn{from{opacity:0; transform: translateY(6px)} to{opacity:1; transform: translateY(0)}}
 
@@ -121,7 +120,7 @@
     /* === Strong layout fix: Headcount Needed (Decant) slicers === */
     .hcCtl{ display:grid !important; grid-template-columns: 1fr 120px; column-gap: 10px; align-items:center; }
     @media (max-width: 720px){
-      .hcCtl{ grid-template-columns: 1fr; row-gap:8px; }
+      .hcCtl{ grid-template-columns:1fr; row-gap:8px; }
       .hcCtl .input{ width:100%; }
     }
     .hcCtl .range{ width:100%; min-width:140px; }
@@ -150,8 +149,8 @@
 <body>
   <header>
     <div class="flex">
-      <a href="https://qjuflore.github.io/Productivity-Boost-Hub/" class="btn ghost" id="btnHome">🏠 Back to Hub</a>
-      <h1>Trailer Plan Analyzer — BFL2 <span class="view-chip" title="Tool views">👁️ <b id="tpaViews">0</b></span></h1>
+      <a href="../../" class="btn ghost" id="btnHome">🏠 Back to Hub</a>
+      <h1>Trailer Plan Analyzer — BFL2</h1>
       <div class="right flex" id="quickLinks">
         <a class="btn ghost" href="https://trans-logistics.amazon.com/yms/shipclerk/#/yard" target="_blank" rel="noopener">YMS<span class="pulse" aria-hidden="true"></span></a>
         <a class="btn ghost" href="https://oculus.qubit.amazon.dev/transship/BFL2" target="_blank" rel="noopener">Oculus<span class="pulse" aria-hidden="true"></span></a>
@@ -160,6 +159,8 @@
       <div class="right chips">
         <span class="chip">CSV/TSV/; supported</span>
         <span class="chip">Excel: XLSX supported</span>
+        <!-- Chip de vistas de ESTA tool -->
+        <span class="chip" id="toolViewChip" title="Views for this tool">👁️ 0</span>
       </div>
       <div class="right flex">
         <button class="btn" id="btnExport">Export .csv</button>
@@ -557,7 +558,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
 // Hub shortcuts
 window.addEventListener('keydown', (e)=>{
   if(e.key === 'Escape' || (e.key.toLowerCase() === 'h' && e.altKey)){
-    window.location.href = 'https://qjuflore.github.io/Productivity-Boost-Hub/';
+    window.location.href = '../../';
   }
 });
 
@@ -665,7 +666,7 @@ function handleText(text){
 
   let idCounter=0;
   const rawRows=body.map(r=>{
-    const obj={_id:(idCounter++), _selected=true};
+    const obj={_id:(idCounter++), _selected:true};
     REQUIRED.forEach(label=>{
       const real=map[label]; const val=real ? r[idx[real]] : "";
       obj[label]=val;
@@ -1146,20 +1147,20 @@ function greedyOrder(strategy, cand){
       return arr.sort((a,b)=>{
         const as = safeShare(a.casesUnits, a.units);
         const bs = safeShare(b.casesUnits, b.units);
-        if(bs !== as) return bs - as;
-        if(b.casesUnits !== a.casesUnits) return b.casesUnits - a.casesUnits;
-        if(b.ps !== a.ps) return b.ps - a.ps;
-        return b.units - a.units;
+        if(bs !== as) return bs - as;                 // DESC by cases share ✅
+        if(b.casesUnits !== a.casesUnits) return b.casesUnits - a.casesUnits; // DESC by absolute cases units
+        if(b.ps !== a.ps) return b.ps - a.ps;         // DESC by PS
+        return b.units - a.units;                      // DESC by units
       });
     }
     case 'max_totes': {
       return arr.sort((a,b)=>{
         const as = safeShare(a.totesUnits, a.units);
         const bs = safeShare(b.totesUnits, b.units);
-        if(bs !== as) return bs - as;
-        if(b.totesUnits !== a.totesUnits) return b.totesUnits - a.totesUnits;
-        if(b.ps !== a.ps) return b.ps - a.ps;
-        return b.units - a.units;
+        if(bs !== as) return bs - as;                 // DESC by totes share ✅
+        if(b.totesUnits !== a.totesUnits) return b.totesUnits - a.totesUnits; // DESC by absolute totes units
+        if(b.ps !== a.ps) return b.ps - a.ps;         // DESC by PS
+        return b.units - a.units;                      // DESC by units
       });
     }
     case 'high_smalls':
@@ -1171,8 +1172,8 @@ function greedyOrder(strategy, cand){
     case 'balance_60_39_0': {
       return arr.sort((a,b)=>{
         const da=distanceTo(a,60,39,0)-distanceTo(b,60,39,0);
-        if(da!==0) return da<0?-1:1;
-        return (b.ps-a.ps);
+        if(da!==0) return da<0?-1:1;                 // closer to target first
+        return (b.ps-a.ps);                           // then higher PS
       });
     }
     default:
@@ -1408,52 +1409,6 @@ function initPanScroll(){
 }
 </script>
 
-  <!-- ===== PB Views (módulo idéntico al del Hub) ===== -->
-  <script>
-  (function(){
-    const TOTAL_KEY = 'pb.views.total';
-    const TOOL_PREFIX = 'pb.views.tool.';
-    const CHANGE_EVT = 'pbviews:changed';
-    function safeGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
-    function safeSet(k,v){ try{ localStorage.setItem(k,v); }catch(_){ } }
-    function toNum(x){ const n = Number(x); return Number.isFinite(n)? n : 0; }
-    function emit(){ try{ window.dispatchEvent(new CustomEvent(CHANGE_EVT)); }catch(_){ } }
-    window.PBViews = window.PBViews || {
-      bumpTotal(by=1){ const cur=toNum(safeGet(TOTAL_KEY))+by; safeSet(TOTAL_KEY,String(cur));
-        try{ if(window.PB_VIEWS_ENDPOINT){ navigator.sendBeacon(window.PB_VIEWS_ENDPOINT, JSON.stringify({kind:'total', by, ts: Date.now()})); } }catch(_){}
-        emit(); return cur; },
-      bumpTool(id, by=1){ const k=TOOL_PREFIX+id; const cur=toNum(safeGet(k))+by; safeSet(k,String(cur));
-        try{ if(window.PB_VIEWS_ENDPOINT){ navigator.sendBeacon(window.PB_VIEWS_ENDPOINT, JSON.stringify({kind:'tool', id, by, ts: Date.now()})); } }catch(_){}
-        emit(); return cur; },
-      getTotal(){ return toNum(safeGet(TOTAL_KEY)); },
-      getTool(id){ return toNum(safeGet(TOOL_PREFIX+id)); },
-      listTools(){ const out=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.startsWith(TOOL_PREFIX)){ out.push([k.slice(TOOL_PREFIX.length), toNum(safeGet(k))]); } } return out; },
-      onChange(cb){ if(typeof cb!=='function') return; window.addEventListener(CHANGE_EVT, cb); window.addEventListener('storage', (e)=>{ if(!e||!e.key) return; if(e.key===TOTAL_KEY || e.key.startsWith(TOOL_PREFIX)) cb(); }); }
-    };
-  })();
-  </script>
-
-  <!-- ===== Inicializa los contadores de esta herramienta ===== -->
-  <script>
-    (function(){
-      const TOOL_ID = 'trailer-plan';
-      function format(n){ return n.toLocaleString(); }
-      function updateChip(){
-        const el=document.getElementById('tpaViews');
-        if(!el) return;
-        const v = window.PBViews?.getTool(TOOL_ID) || 0;
-        el.textContent = format(v);
-      }
-      // Suma al total del sitio y a la herramienta (cuenta cada apertura)
-      window.PBViews?.bumpTotal(1);
-      window.PBViews?.bumpTool(TOOL_ID, 1);
-      updateChip();
-      // Si otra pestaña modifica, refresca
-      window.PBViews?.onChange(updateChip);
-    })();
-  </script>
-
-  <!-- ===== Tu script de persistencia v7 (tal cual) ===== -->
   <script id="tpa_persist_v7">
   (function(){
     const KEY = "TrailerPlanAnalyzer_state_v7";
@@ -1656,6 +1611,41 @@ function initPanScroll(){
     if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", init);
     else init();
   })();
+  </script>
+
+  <!-- PBViews (contador compartido) -->
+  <script>
+    (function(w){
+      const N=(x)=>{const n=parseInt(x,10);return isNaN(n)?0:n;};
+      const g=(k)=>{try{return localStorage.getItem(k);}catch(e){return null;}};
+      const s=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
+      const KEY_TOTAL='pb.views.total', P_TOOL='pb.views.tool.', P_AREA='pb.views.area.';
+      function bump(key,n=1){const cur=N(g(key));const val=cur+(n|0);s(key,String(val));return val;}
+      w.PBViews={bumpTotal(n=1){return bump(KEY_TOTAL,n);},getTotal(){return N(g(KEY_TOTAL));},
+                 bumpTool(id,n=1){return bump(P_TOOL+String(id),n);},getTool(id){return N(g(P_TOOL+String(id)));},
+                 bumpArea(id,n=1){return bump(P_AREA+String(id),n);},getArea(id){return N(g(P_AREA+String(id)));}};
+    })(window);
+  </script>
+
+  <!-- Init contador para ESTA tool -->
+  <script>
+    (function(){
+      const TOOL_ID = 'trailer-plan';
+      try{
+        PBViews.bumpTotal(1);
+        PBViews.bumpTool(TOOL_ID,1);
+        PBViews.bumpArea('MasterTools',1);
+      }catch(e){}
+      function renderChip(){
+        const el=document.getElementById('toolViewChip');
+        if(!el) return;
+        el.textContent=`👁️ ${PBViews.getTool(TOOL_ID).toLocaleString()}`;
+      }
+      renderChip();
+      window.addEventListener('storage',(e)=>{
+        if(e.key==='pb.views.tool.'+TOOL_ID) renderChip();
+      });
+    })();
   </script>
 
 </body>
