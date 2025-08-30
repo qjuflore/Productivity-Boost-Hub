@@ -169,7 +169,6 @@
   </header>
 
   <div class="container">
-    <!-- === Comienza tu contenido original (sin cambios funcionales) === -->
     <div class="u-row cols-2">
       <section class="panel">
         <div class="body">
@@ -474,7 +473,7 @@ function mapHeaders(headers){
 }
 function detectPercentColumn(values,label){
   if(PERCENT_HINT.includes(label)) return true;
-  let nonEmpty=0, withPct=0; for(const v of values){ if(String(v||"").trim()!==""){nonEmpty++; if(String(v).includes("%")) withPct++; } }
+  let nonEmpty=0, withPct=0; for(const v of values){ if(String(v??"").trim()!==""){nonEmpty++; if(String(v).includes("%")) withPct++; } }
   return nonEmpty>0 && (withPct/nonEmpty)>=0.30;
 }
 
@@ -666,7 +665,7 @@ function handleText(text){
 
   let idCounter=0;
   const rawRows=body.map(r=>{
-    const obj={_id:(idCounter++), _selected:true};
+    const obj={_id:(idCounter++), _selected=true};
     REQUIRED.forEach(label=>{
       const real=map[label]; const val=real ? r[idx[real]] : "";
       obj[label]=val;
@@ -876,4 +875,788 @@ function renderStatusFilterUI(){
     </div>`;
   statusFilterBox.querySelectorAll(".pill").forEach(el=>{
     el.addEventListener("click", ()=>{ const st=el.getAttribute("data-st");
-      if(
+      if(STATUS_FILTER.has(st)) STATUS_FILTER.delete(st); else STATUS_FILTER.add(st); computeAndRender();
+    });
+  });
+  document.getElementById("btnOnlyInbound").onclick=()=>{STATUS_FILTER=new Set(["INBOUND"]); computeAndRender();};
+  document.getElementById("btnAllStatus").onclick=()=>{STATUS_FILTER=new Set(allStatuses); computeAndRender();};
+  document.getElementById("btnNoneStatus").onclick=()=>{STATUS_FILTER=new Set(); computeAndRender();};
+}
+
+function computeAndRender(){
+  ROWS.forEach(computeAttributesIntoRow); // keep Attributes updated (doesn't touch Severity)
+
+  const totalVRIDs=new Set(ROWS.map(r=>r["VRID"])).size;
+  const selectedVRIDs=new Set(activeRows().map(r=>r["VRID"])).size;
+  const counts=countBy(ROWS.map(r=> statusKey(r["Transship Status"])));
+  const enabled=[...STATUS_FILTER].sort();
+  const sevCounts=countBy(ROWS.map(r=> sevLabel(r["Severity"])));
+  metaChips.innerHTML = `
+    <span class="chip">VRIDs: <b>${totalVRIDs}</b></span>
+    <span class="chip">Selected (after status filter): <b>${selectedVRIDs}</b></span>
+    <span class="chip">Status enabled: <b>${enabled.length}</b></span>
+    <span class="chip">Severity — OK: <b>${sevCounts["OK"]||0}</b> · Yellow/Other: <b>${sevCounts["YELLOW"]||0}</b> · Red: <b>${sevCounts["RED"]||0}</b></span>`;
+
+  renderStatusFilterUI();
+
+  breakdowns.innerHTML="";
+  breakdowns.appendChild(makeBreakCard("Transship Status (all)", counts));
+  const loads=countBy(ROWS.map(r=> r["Load Config"]||"Missing")); breakdowns.appendChild(makeBreakCard("Load Config (all)", loads));
+  const locs=countBy(ROWS.map(r=> r["Trailer Location"]||"Missing")); breakdowns.appendChild(makeBreakCard("Trailer Location (all)", locs));
+  const sevs=countBy(ROWS.map(r=> sevLabel(r["Severity"]))); breakdowns.appendChild(makeBreakCard("Severity (merged)", sevs));
+
+  totalsGrid.innerHTML="";
+  const agg=aggregate(activeRows()); PCT_UNITS=computePercentUnits(activeRows());
+  for(const key of TOTALS_COLUMNS){
+    const isPct=!!IS_PERCENT[key];
+    let explain=isPct ? "Weighted by Total Units (selected & status-filtered): sum(Unitsᵢ × %ᵢ) ÷ sum(Unitsᵢ)" : "Sum across selected & status-filtered rows";
+    let sub=""; if(isPct){ const u=PCT_UNITS[key]?.units||0, totalUnits=agg["Total Units"]?.value||0; sub=`≈ ${fmtNumber(u)} of ${fmtNumber(totalUnits)} units`; }
+    const value=isPct ? (PCT_UNITS[key]?.pct||0) : (agg[key]?.value||0);
+    totalsGrid.appendChild(makeTotalCard(key, value, isPct, explain, sub));
+  }
+
+  renderDerived(agg);
+  renderTable();
+  renderHeadcount(agg);
+}
+
+/* Severity helpers */
+function sevLabel(s){
+  const c=severityClass(s); if(c==="sev-red") return "RED"; if(c==="sev-ok") return "OK"; if(!s) return "UNKNOWN"; return "YELLOW";
+}
+function severityClass(sevRaw){
+  const s=String(sevRaw||"").toLowerCase();
+  if(!s) return "";
+  if(s.includes("red")) return "sev-red";
+  if(s==="ok"||s.includes("green")||s.includes("good")) return "sev-ok";
+  return "sev-yellow";
+}
+
+/* Aggregation helpers */
+function aggregate(rows){
+  const out={}; for(const col of TOTALS_COLUMNS.concat(["Priority Score"])){ let sum=0; for(const r of rows){sum+=toNum(r[col]);} out[col]={value:sum}; }
+  return out;
+}
+function computePercentUnits(rows){
+  const m={}, totalUnitsAll=rows.reduce((a,r)=>a+toNum(r["Total Units"]),0);
+  for(const col of TOTALS_COLUMNS){
+    if(!IS_PERCENT[col]) continue;
+    let unitsWeighted=0; for(const r of rows){ unitsWeighted += (toNum(r[col])/100) * toNum(r["Total Units"]); }
+    const pctWeighted= totalUnitsAll ? (unitsWeighted/totalUnitsAll*100) : 0;
+    m[col]={units:unitsWeighted, pct:pctWeighted};
+  }
+  return m;
+}
+function derive(agg){
+  const unitsInCases=toNum(agg["Units in Palletized Single ASIN Cases"]?.value)+toNum(agg["Units in Palletized Mixed ASIN Cases"]?.value);
+  const totalUnits=toNum(agg["Total Units"]?.value);
+  const casePct= totalUnits ? (unitsInCases/totalUnits*100) : 0;
+
+  const unitsInTotesPal=toNum(agg["Units in Palletized Totes"]?.value);
+  const unitsInTotesFL =toNum(agg["Units in FL Totes"]?.value);
+  const palTotes=toNum(agg["Palletized Totes"]?.value);
+  const flTotes =toNum(agg["FL Totes"]?.value);
+
+  const toteDensityPal = palTotes ? (unitsInTotesPal/palTotes) : 0;
+  const toteDensityAll = (palTotes+flTotes) ? ((unitsInTotesPal+unitsInTotesFL)/(palTotes+flTotes)) : 0;
+
+  return {unitsInCases, casePct, toteDensityPal, toteDensityAll, totalUnits,
+          unitsInTotesPal, unitsInTotesFL, palTotes, flTotes};
+}
+function makeBreakCard(title,obj){
+  const d=document.createElement("div"); d.className="card";
+  const parts=Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
+    const active=STATUS_FILTER.has(k), pillClass=active?"pill on":"pill off";
+    return `<span class="${pillClass}" data-st="${k}">${k}: <b>${v}</b></span>`;
+  }).join(" ");
+  d.innerHTML=`<div class="k">${title}</div><div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">${parts}</div>`;
+  setTimeout(()=>{ d.querySelectorAll(".pill").forEach(el=>{
+    el.addEventListener("click",()=>{const st=el.getAttribute("data-st"); if(STATUS_FILTER.has(st)) STATUS_FILTER.delete(st); else STATUS_FILTER.add(st); computeAndRender();});
+  }); },0);
+  return d;
+}
+function makeTotalCard(k,v,isPercent,explain="",sub=""){
+  const d=document.createElement("div"); d.className="card";
+  const pretty=isPercent?fmtPercent(v):(k==="Priority Score"?fmtScore(v):fmtNumber(v));
+  d.innerHTML=`
+    <div class="k">${k} ${isPercent?"(weighted %)":"(sum)"}</div>
+    <div class="flex" style="margin-top:4px">
+      <div class="v">${pretty}</div>
+      ${sub?`<div class="k" style="margin-left:8px">${sub}</div>`:""}
+      <span class="right copy" title="Copy" data-copy="${pretty}${sub?' '+sub:''}">copy</span>
+    </div>
+    ${explain?`<div class="explain">${explain}</div>`:""}`;
+  d.querySelector(".copy").onclick=(e)=>{const val=e.target.getAttribute("data-copy"); navigator.clipboard.writeText(val).then(()=>{e.target.textContent="copied ✓"; setTimeout(()=> e.target.textContent="copy",1200);});};
+  return d;
+}
+
+/* Table render (with cell coloring rules) */
+function renderTable(){
+  const cols=["(Plan)","VRID"].concat(REQUIRED.filter(c=>c!=="VRID" && !HIDE_IN_TABLE.has(c)));
+  thead.innerHTML="<tr>"+cols.map((c,i)=>{
+    if(i===0) return `<th class="planHead"><input id="chkAll" type="checkbox" /></th>`;
+    const sortable="sortable"; const sorted=(SORT_BY===c)?"sorted":""; const arrow=(SORT_BY===c)?(SORT_DIR==='asc'?'▲':'▼'):'↕';
+    return `<th class="${sortable} ${sorted}" data-col="${c}"><span>${c}</span><span class="arrow">${arrow}</span></th>`;
+  }).join("")+"</tr>";
+
+  thead.querySelectorAll("th.sortable").forEach(th=>{
+    th.addEventListener("click",()=>{ const col=th.getAttribute("data-col"); if(SORT_BY===col){SORT_DIR=(SORT_DIR==='asc'?'desc':'asc');} else {SORT_BY=col; SORT_DIR='asc';} renderTable();});
+  });
+
+  const chkAll=document.getElementById("chkAll");
+  const headPlan=document.querySelector("th.planHead");
+  const filtered=visibleRows();
+
+  const rows=filtered.map(r=>{
+    const isSel=!!r._selected; const sevCls=severityClass(r["Severity"]); const rowCls=[isSel?'selRow':'', sevCls].filter(Boolean).join(' ');
+    const cells=[]; const planCellClass="planCell"+(isSel?" selected":"");
+    cells.push(`<td class="${planCellClass}" data-id="${r._id}">
+        <input type="checkbox" class="rowChk" data-id="${r._id}" ${isSel?"checked":""}>
+        <span class="planTag">${isSel?"IN PLAN":"SKIP"}</span>
+      </td>`);
+    cells.push(`<td><button class="miniChip vridBtn" data-vrid="${r["VRID"]??""}" title="Copy VRID">${r["VRID"]??""}</button></td>`);
+    for(const c of REQUIRED.filter(c=>c!=="VRID" && !HIDE_IN_TABLE.has(c))){
+      let v=r[c];
+      let tdClass="";
+      if(NUMERIC.includes(c)){
+        const n=toNum(v); const percent=IS_PERCENT[c];
+        v=percent?fmtPercent(n):(c==="Priority Score"?fmtScore(n):fmtNumber(n));
+      }
+      if(c==="Severity"){
+        const raw=String(r[c]||""); const lc=raw.toLowerCase();
+        if(lc.includes("red")) tdClass="cell-bad";
+        else if(raw && lc!=="ok") tdClass="cell-warn";
+        v=`<span class="sevBadge">${raw||""}</span>`;
+      }
+      if(c==="Attributes"){
+        if(String(r[c]||"").trim()!=="") tdClass="cell-warn";
+      }
+      cells.push(`<td class="${tdClass}">${v??""}</td>`);
+    }
+    return `<tr class="${rowCls}" data-id="${r._id}">`+cells.join("")+`</tr>`;
+  }).join("");
+  tbody.innerHTML=rows;
+
+  const selAfterStatus=activeRows().length;
+  selectionMsg.textContent=`Visible rows: ${filtered.length}. Selected (after status filter): ${selAfterStatus} of ${ROWS.length}. Sort: ${SORT_BY? SORT_BY+' '+SORT_DIR.toUpperCase():'—'}. Filters: ${FILTERS.length||0}.`;
+
+  document.querySelectorAll(".rowChk").forEach(chk=>{
+    chk.addEventListener("change",(e)=>{
+      const id=Number(e.target.getAttribute("data-id")); const row=ROWS.find(r=>r._id===id); if(!row) return;
+      row._selected=e.target.checked;
+      showToast(`${row._selected?'Added':'Removed'} VRID ${row["VRID"]} ${row._selected?'to':'from'} plan — ${activeRows().length} selected`);
+      renderTable(); computeAndRender();
+    });
+  });
+
+  if(chkAll){
+    const allSelected=filtered.length>0 && filtered.every(r=>r._selected);
+    chkAll.checked=allSelected; chkAll.indeterminate=!allSelected && filtered.some(r=>r._selected);
+    const setAll=(checked)=>{ filtered.forEach(r=> r._selected=checked); showToast(`${checked?'Selected':'Cleared'} ${filtered.length} visible row(s)`); renderTable(); computeAndRender(); };
+    chkAll.addEventListener("change",(e)=> setAll(e.target.checked));
+    headPlan.addEventListener("click",(e)=>{ if(e.target && e.target.id==="chkAll") return; setAll(!(chkAll.checked && !chkAll.indeterminate)); });
+  }
+
+  updateShadows();
+}
+
+/* Derived cards & headcount */
+function renderDerived(agg){
+  const d=derive(agg); derivedGrid.innerHTML="";
+  derivedGrid.appendChild(makeDerivedCard("Units in Cases (computed)", d.unitsInCases, false, "Units in Cases = Units in Palletized Single ASIN Cases + Units in Palletized Mixed ASIN Cases."));
+  derivedGrid.appendChild(makeDerivedCard("Case %", d.casePct, true, `Case % = Units in Cases / Total Units = ${fmtNumber(d.unitsInCases)} / ${fmtNumber(d.totalUnits)}.`));
+  derivedGrid.appendChild(makeDerivedCard("Tote Density (palletized-only)", d.toteDensityPal, false, `Units in Palletized Totes / Palletized Totes = ${fmtNumber(d.unitsInTotesPal)} / ${fmtNumber(d.palTotes)}.`));
+  derivedGrid.appendChild(makeDerivedCard("Tote Density (ALL totes) — recommended", d.toteDensityAll, false, `(Units in Palletized Totes + Units in FL Totes) / (Palletized Totes + FL Totes) = (${fmtNumber(d.unitsInTotesPal)} + ${fmtNumber(d.unitsInTotesFL)}) / (${fmtNumber(d.palTotes)} + ${fmtNumber(d.flTotes)}).`));
+}
+function makeDerivedCard(title,value,isPercent,explain=""){
+  const d=document.createElement("div"); d.className="card";
+  const pretty=isPercent?fmtPercent(value):fmtNumber(value);
+  d.innerHTML=`<div class="k">${title}</div><div class="v" style="margin-top:4px">${pretty}</div>${explain?`<div class="explain">${explain}</div>`:""}`;
+  return d;
+}
+function countBy(arr){const m={}; for(const x of arr){ m[x]=(m[x]||0)+1; } return m; }
+function renderHeadcount(agg){
+  const hours=Number(hoursInput.value)||0, rate=Number(rateInput.value)||0;
+  const d=derive(agg);
+  let workload=d.unitsInCases;
+  const src=workloadSource.value;
+  if(src==="Total Units") workload=d.totalUnits;
+  else if(src==="Units in Cases (computed)") workload=d.unitsInCases;
+  else if(src==="Units in Palletized Totes") workload=d.unitsInTotesPal;
+  const capacity=rate*hours; const needed=(capacity>0)? Math.ceil(workload/capacity) : 0;
+  headcountResult.textContent=isFinite(needed)? `${needed} decanters` : "—";
+  headcountExplain.textContent=`Headcount = ceil(${fmtNumber(workload)} ÷ (${fmtNumber(rate)} × ${hours})) → Capacity/person: ${fmtNumber(capacity)} units (selected + status filter).`;
+}
+
+/* Selection */
+function onTbodyClick(e){
+  if(PAN_SUPPRESS_CLICK){ PAN_SUPPRESS_CLICK=false; return; }
+  const tag=(e.target.tagName||"").toLowerCase();
+  if(["input","button","select","label","a"].includes(tag)) return;
+  if(window.getSelection && String(window.getSelection()).length) return;
+  const tr=e.target.closest("tr"); if(!tr) return;
+  const id=Number(tr.getAttribute("data-id")); const row=ROWS.find(r=>r._id===id); if(!row) return;
+  row._selected=!row._selected;
+  showToast(`${row._selected ? 'Added' : 'Removed'} VRID ${row["VRID"]} ${row._selected ? 'to' : 'from'} plan`);
+  renderTable(); computeAndRender();
+}
+function onTbodyDblClick(e){ onTbodyClick(e); }
+
+/* Planning */
+function getCandidates(useSel){
+  const base=useSel? activeRows() : ROWS.filter(r=> STATUS_FILTER.has(statusKey(r["Transship Status"])));
+  return base.map(r=>{
+    const units=toNum(r["Total Units"]);
+    const casesUnits = toNum(r["Units in Palletized Single ASIN Cases"]) + toNum(r["Units in Palletized Mixed ASIN Cases"]);
+    const totesUnits = toNum(r["Units in Palletized Totes"]) + toNum(r["Units in FL Totes"]);
+    return {
+      _globalIndex:ROWS.indexOf(r),
+      VRID:r["VRID"], units,
+      casesUnits, totesUnits,
+      small:toNum(r["PPR Small"]), med:toNum(r["PPR Medium"]), large:toNum(r["PPR Large"]),
+      ps:toNum(r["Priority Score"]), loc:r["Trailer Location"]||"", sev:sevLabel(r["Severity"])
+    };
+  }).filter(x=>x.units>0);
+}
+function evaluateSubset(sub,target,over){
+  const units=sub.reduce((a,b)=>a+b.units,0); if(units<=0) return null;
+  const smallUnits=sub.reduce((a,b)=>a + b.units*b.small/100,0);
+  const medUnits  =sub.reduce((a,b)=>a + b.units*b.med/100,0);
+  const largeUnits=sub.reduce((a,b)=>a + b.units*b.large/100,0);
+  const casesUnits=sub.reduce((a,b)=>a + b.casesUnits,0);
+  const totesUnits=sub.reduce((a,b)=>a + b.totesUnits,0);
+  const w_small=smallUnits/units*100, w_med=medUnits/units*100, w_large=largeUnits/units*100;
+  const overshoot=(units/target - 1.0);
+  const within=units>=target*(1-over) && units<=target*(1+over);
+  const avgPS = sub.length? sub.reduce((a,b)=>a+b.ps,0)/sub.length : 0;
+  const casesShare = (casesUnits/units)*100;
+  const totesShare = (totesUnits/units)*100;
+  return {units, smallUnits, medUnits, largeUnits, w_small, w_med, w_large, overshoot, within, avgPS, casesUnits, totesUnits, casesShare, totesShare};
+}
+
+/* >>> FIXED comparators for max_cases/max_totes (now DESC by share) <<< */
+function greedyOrder(strategy, cand){
+  const safeShare = (num, den) => den>0 ? (num/den) : 0;
+  const distanceTo = (c, tgtSmall, tgtMed, tgtLarge) => Math.sqrt((c.small-tgtSmall)**2 + (c.med-tgtMed)**2 + (c.large-tgtLarge)**2);
+  const arr=[...cand];
+  switch(strategy){
+    case 'ps_strict':
+      return arr.sort((a,b)=> (b.ps-a.ps) || (b.units-a.units));
+    case 'max_cases': {
+      return arr.sort((a,b)=>{
+        const as = safeShare(a.casesUnits, a.units);
+        const bs = safeShare(b.casesUnits, b.units);
+        if(bs !== as) return bs - as;
+        if(b.casesUnits !== a.casesUnits) return b.casesUnits - a.casesUnits;
+        if(b.ps !== a.ps) return b.ps - a.ps;
+        return b.units - a.units;
+      });
+    }
+    case 'max_totes': {
+      return arr.sort((a,b)=>{
+        const as = safeShare(a.totesUnits, a.units);
+        const bs = safeShare(b.totesUnits, b.units);
+        if(bs !== as) return bs - as;
+        if(b.totesUnits !== a.totesUnits) return b.totesUnits - a.totesUnits;
+        if(b.ps !== a.ps) return b.ps - a.ps;
+        return b.units - a.units;
+      });
+    }
+    case 'high_smalls':
+      return arr.sort((a,b)=> (b.small-a.small) || (b.med-a.med) || (a.large-b.large) || (b.units-a.units));
+    case 'high_mediums':
+      return arr.sort((a,b)=> (b.med-a.med) || (b.small-a.small) || (a.large-b.large) || (b.units-a.units));
+    case 'high_large':
+      return arr.sort((a,b)=> (b.large-a.large) || (b.units-a.units));
+    case 'balance_60_39_0': {
+      return arr.sort((a,b)=>{
+        const da=distanceTo(a,60,39,0)-distanceTo(b,60,39,0);
+        if(da!==0) return da<0?-1:1;
+        return (b.ps-a.ps);
+      });
+    }
+    default:
+      return arr.sort((a,b)=> (b.ps-a.ps) || (b.units-a.units));
+  }
+}
+
+function isBetter(ev, bestEv, target){
+  if(!bestEv) return true;
+  if(ev.within && !bestEv.within) return true;
+  if(!ev.within && bestEv.within) return false;
+  const gap=Math.abs(ev.overshoot), bgap=Math.abs(bestEv.overshoot);
+  if(gap !== bgap) return gap < bgap;
+  if(ev.units>=target && bestEv.units<target) return true;
+  if(ev.units<target && bestEv.units>=target) return false;
+  if(ev.avgPS !== bestEv.avgPS) return ev.avgPS > bestEv.avgPS;
+  if(ev.units !== bestEv.units) return ev.units > bestEv.units;
+  return false;
+}
+function scoreForStrategy(strategy, ev){
+  if(!ev) return -Infinity;
+  let score = 0;
+  if(ev.within) score += 1_000_000;
+  score += -Math.abs(ev.overshoot)*50_000;
+  switch(strategy){
+    case 'ps_strict':     score += ev.avgPS*10_000 + ev.w_small*10 - ev.w_large*20; break;
+    case 'max_cases':     score += ev.casesShare*10_000 + ev.casesUnits*2 + ev.avgPS*500; break;
+    case 'max_totes':     score += ev.totesShare*10_000 + ev.totesUnits*2 + ev.avgPS*500; break;
+    case 'high_smalls':   score += ev.w_small*800 + ev.w_med*80 - ev.w_large*400 + ev.avgPS*200; break;
+    case 'high_mediums':  score += ev.w_med*800 + ev.w_small*80 - ev.w_large*400 + ev.avgPS*200; break;
+    case 'high_large':    score += ev.w_large*800 + ev.avgPS*200; break;
+    case 'balance_60_39_0': {
+      const d = Math.sqrt((ev.w_small-60)**2 + (ev.w_med-39)**2 + (ev.w_large-0)**2);
+      score += -d*500 + ev.avgPS*300;
+      break;
+    }
+    default: score += ev.avgPS*10_000;
+  }
+  return score;
+}
+function buildPlanGreedy(strategy, target, over, cand){
+  const ordered=greedyOrder(strategy, cand);
+  const windowMin = target*(1-over), windowMax = target*(1+over);
+  let picked=[], sum=0, best=null;
+  const consider = (arr) => {
+    const ev=evaluateSubset(arr, target, over);
+    if(!ev) return;
+    if(isBetter(ev, best?.ev, target)) best={sub:[...arr], ev};
+  };
+  for(const c of ordered){
+    picked.push(c); sum+=c.units;
+    consider(picked);
+    if(sum>=windowMin && sum<=windowMax) break;
+  }
+  if(best && !best.ev.within && picked.length>1){
+    for(let i=picked.length-1;i>=0;i--){
+      const trial=[...picked]; trial.splice(i,1);
+      consider(trial);
+      if(best.ev.within) break;
+    }
+  }
+  return best;
+}
+function buildPlanSearch(strategy, target, over, cand){
+  const n=cand.length;
+  if(n===0) return null;
+  if(n<=18){
+    let best=null;
+    const total=1<<n;
+    for(let mask=1; mask<total; mask++){
+      const sub=[]; for(let i=0; i<n; i++) if(mask&(1<<i)) sub.push(cand[i]);
+      const ev=evaluateSubset(sub, target, over);
+      const sc=scoreForStrategy(strategy, ev);
+      if(!best || sc>best.score) best={sub,ev,score:sc};
+    }
+    return best;
+  }else{
+    return buildPlanGreedy(strategy, target, over, cand);
+  }
+}
+
+/* Recommend & compare */
+function recommendPlan(){
+  const strategy = planStrategy.value || 'ps_strict';
+  const target=Number(targetUnits.value)||0, over=(Number(allowedOver.value)||0)/100, useSel=!!useSelected.checked;
+  const cand=getCandidates(useSel);
+  if(!cand.length || target<=0){ planOutput.textContent="Load data and set a positive target."; LAST_PLAN=null; return; }
+
+  const best = strictMode.checked
+    ? buildPlanGreedy(strategy, target, over, cand)
+    : buildPlanSearch(strategy, target, over, cand);
+
+  if(!best){ planOutput.textContent="No feasible combination found."; LAST_PLAN=null; return; }
+
+  const s=best.sub.slice().sort((a,b)=> (b.ps-a.ps) || String(a.VRID||"").localeCompare(String(b.VRID||"")));
+  const lines=[]; const oversPct=(best.ev.overshoot*100);
+  lines.push(`TRAILER PLAN — Strategy: ${strategy.replaceAll('_',' ').toUpperCase()} | Mode: STRICT-GREEDY | Target: ${fmtNumber(target)} units | Allowed deviation: ${document.getElementById('allowedOver').value}% (±)`);
+  lines.push(`Selected Units: ${fmtNumber(best.ev.units)}  (Deviation vs target: ${oversPct.toFixed(2)}%)`);
+  lines.push(`Weighted PPR → Small: ${fmtPercent(best.ev.w_small)} (≈ ${fmtNumber(best.ev.smallUnits)} units), Medium: ${fmtPercent(best.ev.w_med)} (≈ ${fmtNumber(best.ev.medUnits)} units), Large: ${fmtPercent(best.ev.w_large)} (≈ ${fmtNumber(best.ev.largeUnits)} units)`);
+  lines.push(`Workload split → Cases: ${fmtNumber(best.ev.casesUnits)} (${fmtPercent(best.ev.casesShare)} of plan) | Totes: ${fmtNumber(best.ev.totesUnits)} (${fmtPercent(best.ev.totesShare)} of plan)`);
+  lines.push(`Order: by Priority Score (DESC)`); lines.push(""); lines.push("Trailers:");
+  for(const r of s){
+    const loc=r.loc?` — Location: ${r.loc}`:""; const sevTxt=r.sev && r.sev!=="UNKNOWN"?` — Severity: ${r.sev}`:"";
+    lines.push(`• VRID ${r.VRID}: ${fmtNumber(r.units)} units — Priority Score ${fmtScore(r.ps)} — PPR Small ${fmtPercent(r.small)} | Medium ${fmtPercent(r.med)} | Large ${fmtPercent(r.large)}${loc}${sevTxt}`);
+  }
+  const text=lines.join("\n"); planOutput.textContent=text; LAST_PLAN={text, idxs:s.map(x=>x._globalIndex)};
+
+  renderStrategySummary(strategy, best.ev);
+  renderInspector(strategy, cand);
+  showToast(`Recommended plan using STRICT — ${strategy}`);
+}
+function compareStrategies(){
+  const strategies = ["ps_strict","max_cases","max_totes","high_smalls","high_mediums","high_large","balance_60_39_0"];
+  const target=Number(targetUnits.value)||0, over=(Number(allowedOver.value)||0)/100, useSel=!!useSelected.checked;
+  const cand=getCandidates(useSel);
+  if(!cand.length || target<=0){ showToast("Load data first"); return; }
+  const rows = strategies.map(st=>{
+    const best = strictMode.checked ? buildPlanGreedy(st,target,over,cand) : buildPlanSearch(st,target,over,cand);
+    if(!best) return {st, note:"—"};
+    return {
+      st,
+      units: best.ev.units,
+      dev: (best.ev.overshoot*100),
+      wS: best.ev.w_small, wM: best.ev.w_med, wL: best.ev.w_large,
+      cases: best.ev.casesShare, totes: best.ev.totesShare,
+      note: best.ev.within ? "within window" : "closest"
+    };
+  });
+  let html = `<table class="miniTable"><thead><tr>
+    <th>Strategy</th><th>Units</th><th>Dev %</th><th>PPR S/M/L</th><th>Cases %</th><th>Totes %</th><th>Note</th></tr></thead><tbody>`;
+  for(const r of rows){
+    html += `<tr>
+      <td>${r.st?.replaceAll('_',' ')||'—'}</td>
+      <td>${r.units?fmtNumber(r.units):'—'}</td>
+      <td>${isFinite(r.dev)?r.dev.toFixed(2)+'%':'—'}</td>
+      <td>${isFinite(r.wS)?fmtPercent(r.wS):'—'} / ${isFinite(r.wM)?fmtPercent(r.wM):'—'} / ${isFinite(r.wL)?fmtPercent(r.wL):'—'}</td>
+      <td>${isFinite(r.cases)?fmtPercent(r.cases):'—'}</td>
+      <td>${isFinite(r.totes)?fmtPercent(r.totes):'—'}</td>
+      <td>${r.note||'—'}</td>
+    </tr>`;
+  }
+  html += `</tbody></table>`;
+  document.getElementById("strategySummary").innerHTML = html;
+  showToast("Compared strategies (see Strategy summary)");
+}
+function renderStrategySummary(strategy, ev){
+  const box=document.getElementById("strategySummary");
+  const badge = ev.within ? '<span class="badge ok">within window</span>' : '<span class="badge warn">closest</span>';
+  box.innerHTML = `
+    <div>Strategy: <b>${strategy.replaceAll('_',' ').toUpperCase()}</b> · ${badge}</div>
+    <div style="margin-top:6px">Units: <b>${fmtNumber(ev.units)}</b> · Deviation: <b>${(ev.overshoot*100).toFixed(2)}%</b></div>
+    <div>PPR → Small: <b>${fmtPercent(ev.w_small)}</b>, Medium: <b>${fmtPercent(ev.w_med)}</b>, Large: <b>${fmtPercent(ev.w_large)}</b></div>
+    <div>Workload split → Cases: <b>${fmtPercent(ev.casesShare)}</b>, Totes: <b>${fmtPercent(ev.totesShare)}</b></div>
+  `;
+}
+function renderInspector(strategy, cand){
+  const ordered = greedyOrder(strategy, cand).slice(0,10);
+  let html = `<table class="miniTable"><thead><tr>
+    <th>#</th><th>VRID</th><th>PS</th><th>Units</th><th>PPR S/M/L</th><th>Cases%</th><th>Totes%</th><th>Location</th><th>Sev</th>
+  </tr></thead><tbody>`;
+  let i=1;
+  for(const c of ordered){
+    const casesPct = c.units? (c.casesUnits/c.units*100) : 0;
+    const totesPct = c.units? (c.totesUnits/c.units*100) : 0;
+    const sevClass = c.sev==="RED"?"bad":(c.sev==="OK"?"ok":"warn");
+    html += `<tr>
+      <td>${i++}</td>
+      <td>${c.VRID}</td>
+      <td>${fmtScore(c.ps)}</td>
+      <td>${fmtNumber(c.units)}</td>
+      <td>${fmtPercent(c.small)} / ${fmtPercent(c.med)} / ${fmtPercent(c.large)}</td>
+      <td>${fmtPercent(casesPct)}</td>
+      <td>${fmtPercent(totesPct)}</td>
+      <td>${c.loc||''}</td>
+      <td><span class="badge ${sevClass}">${c.sev}</span></td>
+    </tr>`;
+  }
+  html += `</tbody></table>`;
+  document.getElementById("inspector").innerHTML = html;
+}
+
+/* Scroll UX */
+function updateShadows(){
+  const el=tblWrap; if(!el) return;
+  const atStart = el.scrollLeft <= 1;
+  const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1;
+  shadowL.style.opacity = atStart ? 0 : 1;
+  shadowR.style.opacity = atEnd ? 0 : 1;
+  if(btnScrollL){ btnScrollL.disabled = atStart; }
+  if(btnJumpL){ btnJumpL.disabled = atStart; }
+  if(btnScrollR){ btnScrollR.disabled = atEnd; }
+  if(btnJumpR){ btnJumpR.disabled = atEnd; }
+}
+function initPanScroll(){
+  if(!tblWrap) return;
+  let isDown=false, startX=0, scrollStart=0, moved=false;
+
+  const onDown = (x)=>{ isDown=true; startX=x; scrollStart=tblWrap.scrollLeft; moved=false; tblWrap.classList.add("dragging"); };
+  const onMove = (x)=>{ if(!isDown) return; const dx=x-startX; if(Math.abs(dx)>3) moved=true; tblWrap.scrollLeft = scrollStart - dx; updateShadows(); };
+  const onUp = ()=>{ if(!isDown) return; isDown=false; tblWrap.classList.remove("dragging"); if(moved){ PAN_SUPPRESS_CLICK=true; setTimeout(()=> PAN_SUPPRESS_CLICK=false, 80); } };
+
+  tblWrap.addEventListener("mousedown", e=> onDown(e.clientX));
+  document.addEventListener("mousemove", e=> onMove(e.clientX));
+  document.addEventListener("mouseup", onUp);
+  tblWrap.addEventListener("mouseleave", onUp);
+
+  tblWrap.addEventListener("touchstart", e=>{ if(e.touches.length!==1) return; onDown(e.touches[0].clientX); }, {passive:true});
+  tblWrap.addEventListener("touchmove", e=>{ if(!isDown) return; onMove(e.touches[0].clientX); e.preventDefault(); }, {passive:false});
+  tblWrap.addEventListener("touchend", onUp, {passive:true});
+  tblWrap.addEventListener("touchcancel", onUp, {passive:true});
+
+  tblWrap.addEventListener("wheel", e=>{
+    const hasVOverflow = tblWrap.scrollHeight > (tblWrap.clientHeight + 1);
+    const wantH = e.shiftKey || (!hasVOverflow && Math.abs(e.deltaY) > Math.abs(e.deltaX));
+    if(wantH){ tblWrap.scrollLeft += e.deltaY; e.preventDefault(); updateShadows(); }
+  }, {passive:false});
+
+  const page=()=> Math.max(200, Math.floor(tblWrap.clientWidth*0.7));
+  btnScrollL.addEventListener("click", ()=>{ tblWrap.scrollBy({left:-page(), behavior:"smooth"}); setTimeout(updateShadows, 120); });
+  btnScrollR.addEventListener("click", ()=>{ tblWrap.scrollBy({left: page(), behavior:"smooth"}); setTimeout(updateShadows, 120); });
+  btnJumpL.addEventListener("click", ()=>{ tblWrap.scrollTo({left:0, behavior:"smooth"}); setTimeout(updateShadows, 120); });
+  btnJumpR.addEventListener("click", ()=>{ tblWrap.scrollTo({left: tblWrap.scrollWidth, behavior:"smooth"}); setTimeout(updateShadows, 120); });
+
+  tblWrap.addEventListener("keydown", e=>{
+    if(e.key==="ArrowLeft"){ tblWrap.scrollBy({left:-120, behavior:"smooth"}); }
+    if(e.key==="ArrowRight"){ tblWrap.scrollBy({left:120, behavior:"smooth"}); }
+    if(e.key==="Home"){ e.preventDefault(); tblWrap.scrollTo({left:0, behavior:"smooth"}); }
+    if(e.key==="End"){ e.preventDefault(); tblWrap.scrollTo({left: tblWrap.scrollWidth, behavior:"smooth"}); }
+  });
+
+  tblWrap.addEventListener("scroll", updateShadows, {passive:true});
+  updateShadows();
+}
+</script>
+
+  <!-- ===== PB Views (módulo idéntico al del Hub) ===== -->
+  <script>
+  (function(){
+    const TOTAL_KEY = 'pb.views.total';
+    const TOOL_PREFIX = 'pb.views.tool.';
+    const CHANGE_EVT = 'pbviews:changed';
+    function safeGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
+    function safeSet(k,v){ try{ localStorage.setItem(k,v); }catch(_){ } }
+    function toNum(x){ const n = Number(x); return Number.isFinite(n)? n : 0; }
+    function emit(){ try{ window.dispatchEvent(new CustomEvent(CHANGE_EVT)); }catch(_){ } }
+    window.PBViews = window.PBViews || {
+      bumpTotal(by=1){ const cur=toNum(safeGet(TOTAL_KEY))+by; safeSet(TOTAL_KEY,String(cur));
+        try{ if(window.PB_VIEWS_ENDPOINT){ navigator.sendBeacon(window.PB_VIEWS_ENDPOINT, JSON.stringify({kind:'total', by, ts: Date.now()})); } }catch(_){}
+        emit(); return cur; },
+      bumpTool(id, by=1){ const k=TOOL_PREFIX+id; const cur=toNum(safeGet(k))+by; safeSet(k,String(cur));
+        try{ if(window.PB_VIEWS_ENDPOINT){ navigator.sendBeacon(window.PB_VIEWS_ENDPOINT, JSON.stringify({kind:'tool', id, by, ts: Date.now()})); } }catch(_){}
+        emit(); return cur; },
+      getTotal(){ return toNum(safeGet(TOTAL_KEY)); },
+      getTool(id){ return toNum(safeGet(TOOL_PREFIX+id)); },
+      listTools(){ const out=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.startsWith(TOOL_PREFIX)){ out.push([k.slice(TOOL_PREFIX.length), toNum(safeGet(k))]); } } return out; },
+      onChange(cb){ if(typeof cb!=='function') return; window.addEventListener(CHANGE_EVT, cb); window.addEventListener('storage', (e)=>{ if(!e||!e.key) return; if(e.key===TOTAL_KEY || e.key.startsWith(TOOL_PREFIX)) cb(); }); }
+    };
+  })();
+  </script>
+
+  <!-- ===== Inicializa los contadores de esta herramienta ===== -->
+  <script>
+    (function(){
+      const TOOL_ID = 'trailer-plan';
+      function format(n){ return n.toLocaleString(); }
+      function updateChip(){
+        const el=document.getElementById('tpaViews');
+        if(!el) return;
+        const v = window.PBViews?.getTool(TOOL_ID) || 0;
+        el.textContent = format(v);
+      }
+      // Suma al total del sitio y a la herramienta (cuenta cada apertura)
+      window.PBViews?.bumpTotal(1);
+      window.PBViews?.bumpTool(TOOL_ID, 1);
+      updateChip();
+      // Si otra pestaña modifica, refresca
+      window.PBViews?.onChange(updateChip);
+    })();
+  </script>
+
+  <!-- ===== Tu script de persistencia v7 (tal cual) ===== -->
+  <script id="tpa_persist_v7">
+  (function(){
+    const KEY = "TrailerPlanAnalyzer_state_v7";
+    const get = (id)=>document.getElementById(id);
+    window.__TPA_RESTORING__ = false;
+
+    function selectedVRIDsFromRows(){
+      try{
+        if(!Array.isArray(window.ROWS)) return [];
+        const out=[];
+        for(const r of window.ROWS){ if(r && r._selected && r["VRID"]!=null) out.push(String(r["VRID"])); }
+        return out;
+      }catch(_e){ return []; }
+    }
+    function idxsFromVRIDs(vrids){
+      if(!Array.isArray(window.ROWS)||!Array.isArray(vrids)) return [];
+      const map = new Map();
+      window.ROWS.forEach((r,i)=>{ map.set(String(r["VRID"]), i); });
+      return vrids.map(v=> map.has(String(v)) ? map.get(String(v)) : -1).filter(i=> i>=0);
+    }
+
+    function saveState(reason){
+      if(window.__TPA_RESTORING__) return;
+      try{
+        const ids = ["workloadSource","hoursRange","hoursInput","rateRange","rateInput",
+                     "search","planStrategy","targetUnits","allowedOver","useSelected","strictMode"];
+        const form = {};
+        ids.forEach(id=>{
+          const el=get(id);
+          if(!el) return;
+          if(el.type==="checkbox") form[id]=!!el.checked;
+          else if(el.type==="file"){} else form[id]=el.value;
+        });
+        const lp = (typeof window.LAST_PLAN!=="undefined" && window.LAST_PLAN) ? window.LAST_PLAN : null;
+        const planVRIDs = (lp && Array.isArray(lp.idxs)) ? (lp.idxs.map(i=> (window.ROWS?.[i]?.VRID)).filter(v=>v!=null).map(String)) : [];
+
+        const state = {
+          form,
+          rows: (Array.isArray(window.ROWS)? window.ROWS : []),
+          isPercent: window.IS_PERCENT||{},
+          pctUnits: window.PCT_UNITS||{},
+          statusFilter: Array.from(window.STATUS_FILTER||[]),
+          sortBy: window.SORT_BY||null,
+          sortDir: window.SORT_DIR||'asc',
+          filters: Array.isArray(window.FILTERS)? window.FILTERS : [],
+          lastPlan: lp ? { strategy: lp.strategy||get("planStrategy")?.value||"", idxs: lp.idxs||[], ev: lp.ev||null, text: lp.text||"" } : null,
+          planOutput: get("planOutput")?.textContent || "",
+          strategySummaryHTML: get("strategySummary")?.innerHTML || "",
+          inspectorHTML: get("inspector")?.innerHTML || "",
+          trailerRaw: window.__TRAILER_RAW__ || "",
+          ymsRaw: window.__YMS_RAW__ || "",
+          selectedVRIDs: selectedVRIDsFromRows(),
+          planVRIDs
+        };
+        localStorage.setItem(KEY, JSON.stringify(state));
+      }catch(err){}
+    }
+
+    function restoreState(){
+      try{
+        const raw = localStorage.getItem(KEY);
+        if(!raw) return false;
+        const s = JSON.parse(raw);
+        window.__TPA_RESTORING__ = true;
+
+        // Rebuild from raw text if available
+        if(s.trailerRaw && typeof window.handleText === "function"){
+          window.handleText(s.trailerRaw);
+        }else{
+          window.ROWS = Array.isArray(s.rows)? s.rows : [];
+          window.IS_PERCENT = s.isPercent||{};
+          window.PCT_UNITS = s.pctUnits||{};
+        }
+        if(s.ymsRaw && typeof window.mergeStatusText==="function"){
+          window.mergeStatusText(s.ymsRaw);
+        }
+
+        // Restore globals & form
+        window.STATUS_FILTER = new Set(s.statusFilter||["INBOUND"]);
+        window.SORT_BY = s.sortBy||null;
+        window.SORT_DIR = s.sortDir||'asc';
+        window.FILTERS = Array.isArray(s.filters)? s.filters : [];
+        if(s.form){
+          Object.keys(s.form).forEach(id=>{
+            const el=get(id); if(!el) return;
+            if(el.type==="checkbox") el.checked = !!s.form[id];
+            else el.value = s.form[id];
+          });
+        }
+
+        // Apply selection strictly from saved VRIDs (and plan VRIDs). If we have any saved, clear others.
+        const haveSavedSel = Array.isArray(s.selectedVRIDs) && s.selectedVRIDs.length>0;
+        const havePlanSel  = Array.isArray(s.planVRIDs) && s.planVRIDs.length>0;
+        if((haveSavedSel || havePlanSel) && Array.isArray(window.ROWS)){
+          const selSet = new Set((s.selectedVRIDs||[]).map(String));
+          const planSet = new Set((s.planVRIDs||[]).map(String));
+          window.ROWS.forEach(r=>{ if(r) r._selected = false; }); // clear default ALL selected
+          window.ROWS.forEach(r=>{
+            if(!r) return;
+            const v=String(r["VRID"]);
+            if(selSet.has(v) || planSet.has(v)) r._selected = true;
+          });
+        }
+
+        // Rebuild LAST_PLAN idxs from planVRIDs if provided
+        if(s.lastPlan){
+          window.LAST_PLAN = s.lastPlan;
+          if(havePlanSel && Array.isArray(window.ROWS)){
+            const idxs = idxsFromVRIDs(s.planVRIDs);
+            window.LAST_PLAN.idxs = idxs;
+          }
+        }else{
+          window.LAST_PLAN = null;
+        }
+
+        // Render and restore views
+        if(typeof renderFilterChips==="function") renderFilterChips();
+        if(typeof computeAndRender==="function") computeAndRender();
+        if(typeof renderTable==="function") renderTable();
+
+        if(s.planOutput){ const po=get("planOutput"); if(po) po.textContent = s.planOutput; }
+        if(s.strategySummaryHTML){ const ss=get("strategySummary"); if(ss) ss.innerHTML = s.strategySummaryHTML; }
+        if(s.inspectorHTML){ const ins=get("inspector"); if(ins) ins.innerHTML = s.inspectorHTML; }
+
+        window.__TPA_RESTORING__ = false;
+        return true;
+      }catch(e){
+        window.__TPA_RESTORING__ = false;
+        return false;
+      }
+    }
+
+    // Delegated handlers to ensure saving selection changes and VRID copy
+    function hookDelegates(){
+      document.addEventListener("click", function(ev){
+        const chk = ev.target.closest(".rowChk");
+        if(chk){ setTimeout(function(){ saveState("rowChk"); }, 0); }
+        const planCell = ev.target.closest(".planCell");
+        if(planCell){ setTimeout(function(){ saveState("planCell"); }, 0); }
+        const vridBtn = ev.target.closest(".vridBtn");
+        if(vridBtn){
+          const vrid = vridBtn.getAttribute("data-vrid") || vridBtn.textContent.trim();
+          if(navigator.clipboard && vrid){
+            navigator.clipboard.writeText(vrid);
+          }
+          // quick toast if available
+          if(typeof window.showToast === "function") window.showToast("Copied VRID " + vrid);
+        }
+      }, {passive:true});
+    }
+
+    function wrapRaw(name, rawSinkName){
+      const fn = window[name];
+      if(typeof fn!=="function") return;
+      window[name] = function(arg){
+        if(typeof arg === "string"){ window[rawSinkName] = arg; }
+        if(window.__TPA_RESTORING__) return fn.apply(this, arguments);
+        try{ return fn.apply(this, arguments); }
+        finally{ try{ saveState(name); }catch(_e){} }
+      }
+    }
+    function wrapSave(name){
+      const fn = window[name];
+      if(typeof fn!=="function") return;
+      window[name] = function(){
+        if(window.__TPA_RESTORING__) return fn.apply(this, arguments);
+        try{ return fn.apply(this, arguments); }
+        finally{ try{ saveState(name); }catch(_e){} }
+      };
+    }
+
+    function hookReset(){
+      const btn = get("btnReset");
+      if(!btn) return;
+      btn.addEventListener("click", function(){
+        try{ localStorage.removeItem(KEY); }catch(_e){}
+        setTimeout(saveState, 80);
+      });
+    }
+
+    function hookInputs(){
+      const sel = "input:not([type=file]), select, textarea";
+      document.querySelectorAll(sel).forEach(el=>{
+        el.addEventListener("change", function(){ saveState("change"); }, {passive:true});
+        el.addEventListener("input",  function(){ saveState("input");  }, {passive:true});
+      });
+    }
+
+    function init(){
+      wrapRaw("handleText","__TRAILER_RAW__");
+      wrapRaw("mergeStatusText","__YMS_RAW__");
+      ["computeAndRender","renderTable","compareStrategies","renderStrategySummary","recommendPlan","applyPlan"]
+        .forEach(wrapSave);
+      hookDelegates();
+      hookReset();
+      hookInputs();
+      restoreState();
+      saveState("init");
+    }
+    if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", init);
+    else init();
+  })();
+  </script>
+
+</body>
+</html>
