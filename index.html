@@ -282,24 +282,17 @@
   <!-- Sincronía de pestañas + tabs + contadores -->
   <script>
     (function(){
-      // Actualiza el contador global del header
       function renderGlobalViews(){
         const el = document.getElementById('viewInfo');
         if(!el || !window.PBViews) return;
         const total = window.PBViews.getTotal();
         el.textContent = `👁️ Total Views: ${total.toLocaleString()}`;
       }
-
-      // Suma 1 vista al cargar el Hub
       try {
         window.PBViews?.bumpTotal(1);
         window.PBViews?.bumpArea?.('hub', 1);
       } catch(e){}
-
-      // Pinta el valor inicial global
       renderGlobalViews();
-
-      // Si otra pestaña incrementa, este index se actualiza
       window.addEventListener('storage', (e)=>{
         if(e.key === 'pb.views.total') renderGlobalViews();
         if(e.key && e.key.startsWith('pb.views.tool.')) {
@@ -311,11 +304,8 @@
           }
         }
       });
-
-      // --- Parche de tabs activo (mantiene tu lógica original) ---
       const tabs = document.querySelectorAll('.tab');
       const sections = document.querySelectorAll('.section');
-
       function setActiveTab(id){
         sections.forEach(s => s.classList.toggle('active', s.id === id));
         tabs.forEach(t => {
@@ -333,13 +323,11 @@
           history.replaceState(null,'',u);
         }catch(e){}
       }
-
       const original = window.showSection;
       window.showSection = function(id){
         if(typeof original === 'function'){ try{ original(id); }catch(e){} }
         setActiveTab(id);
       };
-
       const activeNow = document.querySelector('.section.active');
       const initialId = (activeNow && activeNow.id)
         || new URL(location.href).searchParams.get('tab')
@@ -354,7 +342,8 @@
   <script>
     const LS_FAVS = 'pb.master.favorites';
     const tools = [
-      {id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'https://qjuflore.github.io/Productivity-Boost-Hub/MasterTools/trailer-plan.html', desc:'Plan injection, density & severity attributes for trailers.'}
+      {id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'https://qjuflore.github.io/Productivity-Boost-Hub/MasterTools/trailer-plan.html', desc:'Plan injection, density & severity attributes for trailers.'},
+      {id:'inbound-flow-planner', icon:'📦', name:'Inbound Flow Planner', href:'https://qjuflore.github.io/Productivity-Boost-Hub/MasterTools/Inbound%20Flow%20Planner.html', desc:'Optimize inbound flow & labor planning.'}
     ];
 
     const getFavs = () => { try { return JSON.parse(localStorage.getItem(LS_FAVS) || '[]'); } catch { return []; } };
