@@ -137,9 +137,9 @@
   <script>
     const LS_FAVS='pb.master.favorites';
     const tools=[
+      // Agrega aquí más tools. Recomendación: usa el mismo slug que la carpeta dentro de /MasterTools/
       {id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'MasterTools/trailer-plan/', desc:'Plan injection, density & severity attributes for trailers.'},
-      // Ejemplo para añadir más tools:
-      // {id:'mi-otra-tool', icon:'🧪', name:'Mi Otra Tool', href:'MasterTools/mi-otra-tool/', desc:'Descripción corta…'},
+      // {id:'mi-otra-tool', icon:'🧪', name:'Mi Otra Tool', href:'MasterTools/mi-otra-tool/', desc:'Descripción corta...'},
     ];
     const getFavs=()=>{try{return JSON.parse(localStorage.getItem(LS_FAVS)||'[]');}catch{return[]}};
     const setFavs=(a)=>localStorage.setItem(LS_FAVS,JSON.stringify(a));
