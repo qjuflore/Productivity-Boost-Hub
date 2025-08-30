@@ -22,174 +22,31 @@
       --focus: 0 0 0 3px rgba(0, 255, 247, 0.35);
       --radius: 14px;
     }
-
     * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      padding: 2rem;
-      font-family: 'Orbitron', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    h1 {
-      font-size: 2.2rem;
-      margin-bottom: 2rem;
-      color: var(--accent);
-      text-shadow: var(--text-glow);
-      animation: fadeInUp 1s ease-out;
-    }
-
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .tabs {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-    }
-
-    .tab {
-      padding: 0.5rem 1rem;
-      border-radius: 10px;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .tab.active {
-      background: var(--accent);
-      color: black;
-      box-shadow: var(--button-glow);
-    }
-
-    .controls {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin-bottom: 1rem;
-    }
-
-    .btn {
-      background: var(--button-bg);
-      color: var(--button-text);
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      box-shadow: var(--button-glow);
-      transition: transform 0.2s ease;
-    }
-
-    .btn:hover { transform: scale(1.05); }
-
-    .section { display: none; }
-    .section.active { display: block; }
-
-    .category {
-      background: var(--card-bg);
-      margin-bottom: 1rem;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-    }
-
-    .category-header {
-      padding: 1rem;
-      font-size: 1.2rem;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: rgba(255, 255, 255, 0.07);
-    }
-
-    .category-content {
-      display: none;
-      padding: 1rem;
-      white-space: pre-wrap;
-      border-top: 1px solid var(--border);
-    }
-
-    .visible { display: block; }
-
-    .copy-btn {
-      background: var(--button-bg);
-      color: var(--button-text);
-      padding: 0.4rem 0.8rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      box-shadow: var(--button-glow);
-      transition: all 0.3s ease;
-      margin-left: 0.5rem;
-    }
-    .copy-btn.copied { background-color: #00c851; color: white; }
-
-    .footer {
-      margin-top: auto;
-      text-align: center;
-      font-size: 0.9rem;
-      padding: 1rem;
-      color: #aaa;
-    }
-
-    #visitInfo { margin-top: 1rem; cursor: pointer; font-size: 1.1rem; }
-
-    .submit-card {
-      background: var(--card-bg);
-      padding: 1rem;
-      border: 1px dashed var(--accent);
-      border-radius: 10px;
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .submit-card a { color: var(--accent); font-weight: bold; text-decoration: none; }
-    .submit-card a:hover { text-decoration: underline; }
-
-    /* MasterTools */
-    .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .8rem; }
-    .card { border:1px solid var(--border); background: var(--card-bg); border-radius: var(--radius); padding: .9rem; display:flex; flex-direction:column; gap:.7rem; }
-    .card h3 { margin:0; font-size:1rem; color: var(--accent-2); }
-    .card p { margin:0; color: var(--muted); font-size:.92rem; min-height: 2.2em; }
-    .card .row { display:flex; gap:.5rem; }
-    .icon-btn { background: transparent; border:1px solid var(--border); border-radius: 10px; padding:.45rem .6rem; color: var(--text); cursor: pointer; }
-    .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
-    .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
-
-    /* Open más visible en MasterTools */
-    .tool-link {
-      background: var(--accent);
-      color: #000 !important;
-      font-weight: 900;
-      border: none;
-      box-shadow: var(--button-glow);
-      transition: transform .2s ease;
-      padding: 0.5rem 1rem;
-      border-radius: 10px;
-    }
-    .tool-link:hover { transform: scale(1.05); }
-
-    /* Barras de búsqueda unificadas */
-    .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch {
-      margin-bottom: 1rem;
-      padding: 0.7rem 1rem;
-      width: 100%;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--card-bg);
-      color: var(--text);
-      font-size: 1rem;
-    }
+    body { margin: 0; padding: 2rem; font-family: 'Orbitron', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    h1 { font-size: 2.2rem; margin-bottom: 2rem; color: var(--accent); text-shadow: var(--text-glow); animation: fadeInUp 1s ease-out; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px);} to { opacity: 1; transform: translateY(0);} }
+    .tabs{display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
+    .tab{padding:.5rem 1rem;border-radius:10px;background:var(--card-bg);border:1px solid var(--border);cursor:pointer;transition:.3s}
+    .tab.active{background:var(--accent);color:#000;box-shadow:var(--button-glow)}
+    .controls{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center}
+    .btn{background:var(--button-bg);color:#000;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-weight:bold;box-shadow:var(--button-glow);transition:.2s}
+    .btn:hover{transform:scale(1.05)}
+    .section{display:none}.section.active{display:block}
+    .footer{margin-top:auto;text-align:center;font-size:.9rem;padding:1rem;color:#aaa}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.8rem}
+    .card{border:1px solid var(--border);background:var(--card-bg);border-radius:14px;padding:.9rem;display:flex;flex-direction:column;gap:.7rem}
+    .card h3{margin:0;font-size:1rem;color:var(--accent-2)}
+    .card p{margin:0;color:var(--muted);font-size:.92rem;min-height:2.2em}
+    .card .row{display:flex;gap:.5rem;align-items:center}
+    .icon-btn{background:transparent;border:1px solid var(--border);border-radius:10px;padding:.45rem .6rem;color:var(--text);cursor:pointer}
+    .icon-btn:hover{border-color:var(--accent);box-shadow:var(--button-glow)}
+    .favorite[aria-pressed="true"]{border-color:var(--accent);box-shadow:var(--button-glow)}
+    .tool-link{background:var(--accent);color:#000 !important;font-weight:900;border:none;box-shadow:var(--button-glow);transition:.2s;padding:.5rem 1rem;border-radius:10px}
+    .tool-link:hover{transform:scale(1.05)}
+    .search{margin-bottom:1rem;padding:.7rem 1rem;width:100%;border-radius:10px;border:1px solid var(--border);background:var(--card-bg);color:var(--text);font-size:1rem}
+    #viewInfo{font-size:1.05rem;user-select:none;padding:.4rem .7rem;border:1px solid var(--border);border-radius:10px;background:var(--card-bg)}
+    .tool-views{margin-left:auto;font-size:.9rem;color:var(--muted);padding:.15rem .45rem;border:1px solid var(--border);border-radius:999px;background:rgba(255,255,255,.03);white-space:nowrap;line-height:1.1}
   </style>
 </head>
 <body>
@@ -205,8 +62,7 @@
   <div class="controls">
     <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
     <button class="btn" onclick="loadReports()">↻ Refresh</button>
-    <div id="visitInfo" onclick="toggleCountryStats()">👁️ Total Visits: Loading...</div>
-    <div id="countryStats"></div>
+    <div id="viewInfo">👁️ Total Views: Loading…</div>
   </div>
 
   <div id="reports" class="section active">
@@ -222,13 +78,12 @@
 
   <div id="scripts" class="section">
     <input type="text" id="scriptSearch" placeholder="🔍 Search scripts..." class="search">
-    <div class="submit-card">
+    <div class="submit-card" style="background:var(--card-bg); padding:1rem; border:1px dashed var(--accent); border-radius:10px; text-align:center; margin-bottom:2rem;">
       📝 Want to share your script? <a href="https://docs.google.com/forms/d/e/1FAIpQLSdVhvhkmE28nIxDH2DAo4FR7W14zqUxp2KlGHvib6baAMplEQ/viewform" target="_blank">Submit it here</a>
     </div>
     <div id="scriptContainer"></div>
   </div>
 
-  <!-- MasterTools -->
   <div id="mastertools" class="section">
     <input type="text" id="masterSearch" placeholder="🔍 Search MasterTools..." class="search">
     <div class="grid" id="masterGrid" style="margin-top:.8rem"></div>
@@ -236,118 +91,101 @@
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
+  <!-- PBViews (contador compartido) -->
+  <script>
+    (function(w){
+      const N=(x)=>{const n=parseInt(x,10);return isNaN(n)?0:n;};
+      const g=(k)=>{try{return localStorage.getItem(k);}catch(e){return null;}};
+      const s=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
+      const KEY_TOTAL='pb.views.total', P_TOOL='pb.views.tool.', P_AREA='pb.views.area.';
+      function bump(key,n=1){const cur=N(g(key));const val=cur+(n|0);s(key,String(val));return val;}
+      w.PBViews={bumpTotal(n=1){return bump(KEY_TOTAL,n);},getTotal(){return N(g(KEY_TOTAL));},
+                 bumpTool(id,n=1){return bump(P_TOOL+String(id),n);},getTool(id){return N(g(P_TOOL+String(id)));},
+                 bumpArea(id,n=1){return bump(P_AREA+String(id),n);},getArea(id){return N(g(P_AREA+String(id)));}};
+    })(window);
+  </script>
+
   <script src="script.js"></script>
 
-  <!-- Parche: asegurar que MasterTools también quede seleccionado visualmente -->
+  <!-- Tabs + contadores -->
   <script>
     (function(){
-      const tabs = document.querySelectorAll('.tab');
-      const sections = document.querySelectorAll('.section');
+      function renderGlobal(){ const el=document.getElementById('viewInfo'); if(!el||!window.PBViews) return;
+        el.textContent=`👁️ Total Views: ${window.PBViews.getTotal().toLocaleString()}`; }
+      try{ window.PBViews?.bumpTotal(1); window.PBViews?.bumpArea?.('hub',1);}catch(e){}
+      renderGlobal();
+      window.addEventListener('storage',(e)=>{ if(e.key==='pb.views.total') renderGlobal(); });
 
-      function setActiveTab(id){
-        // Mostrar sección activa
-        sections.forEach(s => s.classList.toggle('active', s.id === id));
-        // Poner .active en la tab correspondiente
-        tabs.forEach(t => {
-          const isTarget = (t.textContent.includes('Share Reports') && id==='reports')
-                        || (t.textContent.includes('Problem Solve Guide') && id==='guide')
-                        || (t.textContent.includes('Tampermonkey Scripts') && id==='scripts')
-                        || (t.textContent.includes('MasterTools') && id==='mastertools');
-          t.classList.toggle('active', isTarget);
-        });
-        // Persistir en URL y localStorage
-        try{
-          localStorage.setItem('pb.activeTab', id);
-          const u = new URL(location.href);
-          u.searchParams.set('tab', id);
-          u.hash = '#'+id;
-          history.replaceState(null,'',u);
-        }catch(e){}
+      const tabs=document.querySelectorAll('.tab'); const sections=document.querySelectorAll('.section');
+      function setActive(id){
+        sections.forEach(s=>s.classList.toggle('active',s.id===id));
+        tabs.forEach(t=>{const isTarget=(t.textContent.includes('Share Reports')&&id==='reports')
+          ||(t.textContent.includes('Problem Solve Guide')&&id==='guide')
+          ||(t.textContent.includes('Tampermonkey Scripts')&&id==='scripts')
+          ||(t.textContent.includes('MasterTools')&&id==='mastertools');
+          t.classList.toggle('active',isTarget);});
+        try{localStorage.setItem('pb.activeTab',id);const u=new URL(location.href);u.searchParams.set('tab',id);u.hash='#'+id;history.replaceState(null,'',u);}catch(e){}
       }
-
-      // Extender showSection existente (si lo tienes en script.js)
-      const original = window.showSection;
-      window.showSection = function(id){
-        if(typeof original === 'function'){ try{ original(id); }catch(e){} }
-        setActiveTab(id);
-      };
-
-      // Selección inicial (respetando lo que ya esté activo)
-      const activeNow = document.querySelector('.section.active');
-      const initialId = (activeNow && activeNow.id)
-        || new URL(location.href).searchParams.get('tab')
-        || (location.hash||'').slice(1)
-        || localStorage.getItem('pb.activeTab')
-        || 'reports';
-      setActiveTab(initialId);
+      const orig = window.showSection;
+      window.showSection=function(id){ if(typeof orig==='function'){try{orig(id);}catch(e){}} setActive(id); };
+      const initial=(new URL(location.href).searchParams.get('tab'))||(location.hash||'').slice(1)||localStorage.getItem('pb.activeTab')||'reports';
+      setActive(initial);
     })();
   </script>
 
-  <!-- Lógica MasterTools -->
+  <!-- MasterTools listado + badges 👁️ -->
   <script>
-    const LS_FAVS = 'pb.master.favorites';
-    const tools = [
-      {id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'MasterTools/trailer-plan.html', desc:'Plan injection, density & severity attributes for trailers.'}
+    const LS_FAVS='pb.master.favorites';
+    const tools=[
+      {id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'MasterTools/trailer-plan/', desc:'Plan injection, density & severity attributes for trailers.'},
+      // Ejemplo para añadir más tools:
+      // {id:'mi-otra-tool', icon:'🧪', name:'Mi Otra Tool', href:'MasterTools/mi-otra-tool/', desc:'Descripción corta…'},
     ];
-
-    const getFavs = () => { try { return JSON.parse(localStorage.getItem(LS_FAVS) || '[]'); } catch { return []; } };
-    const setFavs = (arr) => localStorage.setItem(LS_FAVS, JSON.stringify(arr));
-    const isFav = (id) => getFavs().includes(id);
-
-    function toggleFav(id){
-      const favs = new Set(getFavs());
-      if (favs.has(id)) favs.delete(id); else favs.add(id);
-      setFavs([...favs]);
-      renderMasterTools();
-    }
-
+    const getFavs=()=>{try{return JSON.parse(localStorage.getItem(LS_FAVS)||'[]');}catch{return[]}};
+    const setFavs=(a)=>localStorage.setItem(LS_FAVS,JSON.stringify(a));
+    const isFav=(id)=>getFavs().includes(id);
+    function toggleFav(id){const f=new Set(getFavs()); f.has(id)?f.delete(id):f.add(id); setFavs([...f]); renderMasterTools();}
     function renderMasterTools(){
-      const wrap=document.getElementById('masterGrid');
-      if(!wrap) return;
-      wrap.innerHTML='';
-      const data=[...tools];
-      data.sort((a,b)=> (isFav(b.id)-isFav(a.id)) || a.name.localeCompare(b.name));
+      const wrap=document.getElementById('masterGrid'); if(!wrap) return;
+      wrap.innerHTML=''; const data=[...tools]; data.sort((a,b)=>(isFav(b.id)-isFav(a.id))||a.name.localeCompare(b.name));
       for(const t of data){
+        const v=(window.PBViews?.getTool(t.id)||0).toLocaleString();
         const card=document.createElement('div');
-        card.className='card';
-        card.dataset.id=t.id;
+        card.className='card'; card.dataset.id=t.id;
         card.innerHTML=`<h3>${t.icon} ${t.name}</h3>
           <p>${t.desc||''}</p>
           <div class="row">
             <a class="tool-link" href="${t.href}" target="_blank" rel="noopener">Open</a>
             <button class="icon-btn favorite" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
             <button class="icon-btn copy-btn" title="Copy link">⧉</button>
+            <span class="tool-views" data-id="${t.id}">👁️ ${v}</span>
           </div>`;
-
-        const favBtn = card.querySelector('.favorite');
-        favBtn.addEventListener('click', ()=> toggleFav(t.id));
-
-        const copyBtn = card.querySelector('.copy-btn');
-        copyBtn.addEventListener('click', async ()=>{
-          try{
-            const url = new URL(t.href, location.href).href;
-            await navigator.clipboard.writeText(url);
-            const old = copyBtn.textContent; copyBtn.textContent='✔';
-            setTimeout(()=>copyBtn.textContent=old, 900);
-          }catch(e){ /* ignore */ }
+        card.querySelector('.favorite').addEventListener('click',()=>toggleFav(t.id));
+        card.querySelector('.copy-btn').addEventListener('click',async(e)=>{
+          try{const url=new URL(t.href,location.href).href; await navigator.clipboard.writeText(url);
+              const old=e.target.textContent; e.target.textContent='✔'; setTimeout(()=>e.target.textContent=old,900);}catch{}
         });
-
         wrap.appendChild(card);
       }
     }
-
-    const masterSearch = document.getElementById('masterSearch');
+    const masterSearch=document.getElementById('masterSearch');
     if(masterSearch){
-      masterSearch.addEventListener('input', ()=>{
-        const q = masterSearch.value.trim().toLowerCase();
+      masterSearch.addEventListener('input',()=>{
+        const q=masterSearch.value.trim().toLowerCase();
         document.querySelectorAll('#masterGrid .card').forEach(card=>{
-          const txt = card.textContent.toLowerCase();
-          card.style.display = q ? (txt.includes(q) ? '' : 'none') : '';
+          const txt=card.textContent.toLowerCase();
+          card.style.display=q?(txt.includes(q)?'':''):'';
         });
       });
     }
-
     renderMasterTools();
+    window.addEventListener('storage',(e)=>{
+      if(e.key&&e.key.startsWith('pb.views.tool.')){
+        const id=e.key.replace('pb.views.tool.','');
+        const span=document.querySelector(`.tool-views[data-id="${id}"]`);
+        if(span){const n=parseInt(e.newValue||'0',10)||0; span.textContent=`👁️ ${n.toLocaleString()}`;}
+      }
+    });
   </script>
 </body>
 </html>
