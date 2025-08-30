@@ -328,11 +328,12 @@
         if(typeof original === 'function'){ try{ original(id); }catch(e){} }
         setActiveTab(id);
       };
-      const activeNow = document.querySelector('.section.active');
-      const initialId = (activeNow && activeNow.id)
-        || new URL(location.href).searchParams.get('tab')
-        || (location.hash||'').slice(1)
+      // Prioriza ?tab, #hash y localStorage; luego el markup existente
+      const initialId =
+        new URL(location.href).searchParams.get('tab')
+        || (location.hash || '').slice(1)
         || localStorage.getItem('pb.activeTab')
+        || (document.querySelector('.section.active')?.id)
         || 'reports';
       setActiveTab(initialId);
     })();
