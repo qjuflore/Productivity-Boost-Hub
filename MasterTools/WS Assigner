@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WS Assigner — Identical + 2 rows per line (STEALTH v2025.9.1 EN-fix)</title>
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#0f1623; --card:#121a2a; --text:#e6edf7; --muted:#8aa2c0;
+      --accent:#6be675; --accent2:#7aa2f7; --border:#1c2a40; --bad:#ff6b6b; --ok:#25d07c;
+    }
+    html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,Segoe UI,Roboto,Inter,sans-serif;}
+    .wrap{max-width:1200px;margin:24px auto;padding:0 16px;}
+    .top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    .group{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+    .pill{background:var(--card);border:1px solid var(--border);border-radius:999px;padding:6px 10px;color:var(--muted);}
+    .scan-in{height:40px;min-width:320px;padding:0 12px;border-radius:12px;border:1px solid var(--border);background:#0e1524;color:var(--text);outline:none;}
+    .scan-in::placeholder{color:var(--muted);} .scan-in:focus{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent);}
+    .btn{padding:9px 14px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer}
+    .btn:hover{filter:brightness(1.15);}
+    .grid{display:grid;grid-template-columns:1fr;gap:16px;}
+    .line{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:12px 12px;}
+    .line h3{margin:0 0 12px 0;color:var(--muted);}
+    .rows{display:grid;grid-template-rows:repeat(2, auto);gap:10px;}
+    .stations-row{display:grid;gap:10px;}
+    .station{padding-bottom:74px;position:relative;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 12px;min-height:96px;cursor:pointer;transition:.15s}
+    .station:hover{transform:translateY(-1px);} .station .name{font-weight:600;opacity:.95;display:block;margin-bottom:6px;position:relative;z-index:2;color:var(--ok)}
+    .station .meta{position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--muted);z-index:1;}
+    .station .pill{position:absolute;left:10px;bottom: 30px;font-size:12px;padding:2px 8px;border-radius:8px;z-index:1;max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .station.free .pill{color:#98ffa7;border-color:#2b3;color:var(--ok)} .station.busy .pill{color: var(--accent2);border-color: #2a3a70;color: var(--ok); box-shadow: 0 0 0 1px rgba(122,162,247,0.35) inset;}
+    .station.ws-target{outline:2px solid var(--accent);box-shadow:0 0 12px #25d07c55;}
+    .toast{position:fixed;right:16px;bottom:16px;background:#0b131f;border:1px solid var(--border);padding:10px 12px;border-radius:12px;opacity:.97}
+    select.pill{background:var(--card);border:1px solid var(--border);color:var(--muted);padding:6px 10px;border-radius:999px;outline:none}
+    .station .avatar{position:absolute;right:10px;top:8px;width:36px;height:36px;border-radius:9999px;border:1px solid var(--border);object-fit:cover;display:none;background:#0e1524}
+    .station.busy .avatar{display:block}
+    @keyframes neonPulse{from{box-shadow:0 0 0 2px rgba(122,162,247,0.45),0 0 14px rgba(122,162,247,0.35),0 0 28px rgba(122,162,247,0.25)}to{box-shadow:0 0 0 2px rgba(122,162,247,0.75),0 0 22px rgba(122,162,247,0.55),0 0 48px rgba(122,162,247,0.40)}}
+    .station.neon-last{outline:2px solid var(--accent2) !important;border-radius:12px;animation:neonPulse 1.5s ease-in-out infinite alternate;box-shadow:0 0 0 2px rgba(122,162,247,0.65),0 0 22px rgba(122,162,247,0.55),0 0 48px rgba(122,162,247,0.40) !important}
+    @keyframes flashPop{
+      0%   { transform: scale(0.98); box-shadow: 0 0 0 0 rgba(122,162,247,0.45); }
+      60%  { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(122,162,247,0.00); }
+      100% { transform: scale(1.00); box-shadow: 0 0 0 0 rgba(122,162,247,0.00); }
+    }
+    .station.just-assigned{ animation: flashPop 700ms ease-out; }
+    @keyframes neonPulseBlueStrong{
+      0%{box-shadow:0 0 0 2px rgba(122,162,247,0.5),0 0 16px rgba(122,162,247,0.45),0 0 32px rgba(122,162,247,0.35)}
+      100%{box-shadow:0 0 0 3px rgba(122,162,247,0.8),0 0 26px rgba(122,162,247,0.65),0 0 58px rgba(122,162,247,0.50)}
+    }
+    .station.neon-last{outline:2px solid var(--accent2) !important;border-radius:12px;animation:neonPulseBlueStrong 1.4s ease-in-out infinite alternate !important;box-shadow:0 0 0 2px rgba(122,162,247,0.6),0 0 22px rgba(122,162,247,0.55),0 0 48px rgba(122,162,247,0.40) !important}
+    .station .login-tag{position:absolute;left:10px;bottom: 56px;font-size:12px;padding:2px 8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--accent2);cursor:pointer;display:none;z-index:3;pointer-events:auto;max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .station.busy .login-tag{display:inline-block}
+    .station.free .login-tag{display:none}
+    .station .login-tag:hover{filter:brightness(1.15)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="group">
+        <span class="pill">Total: <b id="totalCount">—</b></span>
+        <span class="pill">Occupied: <b id="occCount">—</b></span>
+        <span class="pill">Next free: <b id="nextFree">—</b></span>
+        <span class="pill" id="bridgeStatus">Bridge: <b>waiting…</b></span>
+        <span class="pill" id="stealthStatus" title="The FCLM window is reused and kept off-screen.">Stealth: <b>on</b></span>
+      </div>
+      <div class="group">
+        <input id="badge" class="scan-in" placeholder="Scan badge and press Enter" autofocus />
+        <button id="openLink" class="btn">Open FCLM</button>
+        <button id="help" class="btn">Bridge Help</button>
+        <button id="csv" class="btn">Export CSV</button>
+        <button id="slack" class="btn">Copy Slack</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </div>
+
+    <div id="grid" class="grid">
+      <div class="line" data-line="1"><h3>Line 1</h3><div class="rows"><div class="stations-row left"></div><div class="stations-row right"></div></div></div>
+      <div class="line" data-line="2"><h3>Line 2</h3><div class="rows"><div class="stations-row left"></div><div class="stations-row right"></div></div></div>
+      <div class="line" data-line="3"><h3>Line 3</h3><div class="rows"><div class="stations-row left"></div><div class="stations-row right"></div></div></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" style="display:none"></div>
+
+<script>
+(() => {
+  // ======= Layouts (IDENTICAL order + 2 rows per line) =======
+  const LAYOUT = {
+    "3": [["WS 3-2", "WS 3-1"], ["WS 3-4", "WS 3-3"], ["WS 3-6", "WS 3-5"], ["WS 3-8", "WS 3-7"],
+          ["WS 3-10", "WS 3-9"], ["WS 3-12", "WS 3-11"], ["WS 3-14", "WS 3-13"], ["WS 3-16", "WS 3-15"]],
+    "2": [["WS 2-2", "WS 2-1"], ["WS 2-4", "WS 2-3"], ["WS 2-6", "WS 2-5"], ["WS 2-8", "WS 2-7"],
+          ["WS 2-10", "WS 2-9"], ["WS 2-12", "WS 2-11"], ["WS 2-14", "WS 2-13"], ["WS 2-16", "WS 2-15"],
+          ["WS 2-18", "WS 2-17"], ["WS 2-20", "WS 2-19"]],
+    "1": [["WS 1-2", "WS 1-1"], ["WS 1-4", "WS 1-3"], ["WS 1-6", "WS 1-5"], ["WS 1-8", "WS 1-7"],
+          ["WS 1-10", "WS 1-9"], ["WS 1-12", "WS 1-11"], ["WS 1-14", "WS 1-13"], ["WS 1-16", "WS 1-15"],
+          ["WS 1-18", "WS 1-17"], ["WS 1-20", "WS 1-19"]]
+  };
+  const STATIONS = [
+    "WS 1-2","WS 1-4","WS 1-6","WS 1-8","WS 1-10","WS 1-12","WS 1-14","WS 1-16","WS 1-18","WS 1-20",
+    "WS 1-1","WS 1-3","WS 1-5","WS 1-7","WS 1-9","WS 1-11","WS 1-13","WS 1-15","WS 1-17","WS 1-19",
+    "WS 2-2","WS 2-4","WS 2-6","WS 2-8","WS 2-10","WS 2-12","WS 2-14","WS 2-16","WS 2-18","WS 2-20",
+    "WS 2-1","WS 2-3","WS 2-5","WS 2-7","WS 2-9","WS 2-11","WS 2-13","WS 2-15","WS 2-17","WS 2-19",
+    "WS 3-2","WS 3-4","WS 3-6","WS 3-8","WS 3-10","WS 3-12","WS 3-14","WS 3-16",
+    "WS 3-1","WS 3-3","WS 3-5","WS 3-7","WS 3-9","WS 3-11","WS 3-13","WS 3-15"
+  ];
+  const LINE_ROW_COUNTS = {"1": 10, "2": 10, "3": 8};
+  // Build left/right station sets per line from LAYOUT pairs
+  const LEFT_BY_LINE  = {
+    "1": new Set((LAYOUT["1"]||[]).map(p=>p[0])),
+    "2": new Set((LAYOUT["2"]||[]).map(p=>p[0])),
+    "3": new Set((LAYOUT["3"]||[]).map(p=>p[0])),
+  };
+  const RIGHT_BY_LINE = {
+    "1": new Set((LAYOUT["1"]||[]).map(p=>p[1])),
+    "2": new Set((LAYOUT["2"]||[]).map(p=>p[1])),
+    "3": new Set((LAYOUT["3"]||[]).map(p=>p[1])),
+  };
+
+
+
+  // ======= State =======
+  const STORAGE = { ASSIGNS: 'ws_assignments_identical_2rows_v1', CACHE: 'ws_emp_cache_identical_2rows_v1' };
+  function load(k, d){ try{ return JSON.parse(localStorage.getItem(k)||'') ?? d; }catch{ return d; } }
+  function save(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
+
+  let assignments = load(STORAGE.ASSIGNS, []);
+  let empCache    = load(STORAGE.CACHE,   {});
+  let selectedStation = null;
+  let pendingScan = null;
+  let lastAssignedStation = null;
+
+  
+  // Persisted preference to alternate sides per line (L/R)
+  const SIDE_PREF_KEY = 'ws_side_pref_v1';
+  let sidePref = (function(){ try { return JSON.parse(localStorage.getItem(SIDE_PREF_KEY)||'') || {1:'L',2:'L',3:'L'}; } catch { return {1:'L',2:'L',3:'L'}; } })();
+  function saveSidePref(){ try { localStorage.setItem(SIDE_PREF_KEY, JSON.stringify(sidePref)); } catch {} }
+// ======= STEALTH WINDOW =======
+  let FCLM_WIN = null;
+  function offscreenXY(){
+    let L = (screen && typeof screen.availWidth==='number') ? (screen.availWidth + 200) : 99999;
+    let T = (screen && typeof screen.availHeight==='number') ? (screen.availHeight + 200) : 99999;
+    return {left:L, top:T};
+  }
+  function ensureBridgeWindow(){
+    try{
+      if (FCLM_WIN && !FCLM_WIN.closed) return FCLM_WIN;
+      const p = offscreenXY();
+      const features = 'popup=1,toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=120,height=90,left='+p.left+',top='+p.top;
+      FCLM_WIN = window.open('about:blank', 'fclm_ws_assigner_bg', features);
+      if (FCLM_WIN){
+        try{ FCLM_WIN.blur(); }catch{}
+        try{ FCLM_WIN.moveTo(p.left, p.top); }catch{}
+        window.focus();
+      }
+      return FCLM_WIN;
+    }catch(_){ return null; }
+  }
+  function stealthNavigate(url){
+    const w = ensureBridgeWindow();
+    if(w){
+      try{ w.location.replace(url); }catch{ try{ w.location.href = url; }catch{} }
+      for (let i=0; i<5; i++){
+        setTimeout(()=>{ try{ w.blur(); }catch{}; try{ window.focus(); }catch{}; }, (i+1)*140);
+      }
+    }else{
+      const p = offscreenXY();
+      const wf = window.open(url, 'fclm_ws_assigner_bg', 'popup=1,toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=120,height=90,left='+p.left+',top='+p.top);
+      try{ wf && wf.blur(); window.focus(); }catch{}
+    }
+  }
+  function requirePopupGesture(){
+    const ok = !!ensureBridgeWindow();
+    if(!ok){ toast('Please allow pop-ups once to use the Bridge.'); }
+  }
+
+  // ======= Utils =======
+  const $ = (s, r=document) => r.querySelector(s);
+  const $all = (s, r=document) => Array.from(r.querySelectorAll(s));
+  function toast(msg, ms=1600){ const t=$('#toast'); t.textContent=msg; t.style.display='block'; setTimeout(() => t.style.display='none', ms); }
+  function isBusy(st){ return assignments.some(a => a.station === st); }
+  function whoAt(st){ return assignments.find(a => a.station === st); }
+  function nextFree(){ return STATIONS.find(s => !isBusy(s)) || null; }
+  function pretty(rec){ if(rec.name) return rec.name; if(rec.login) return '('+rec.login+')'; return 'Badge '+(rec.badge||''); }
+
+  function scrub(){
+    assignments = assignments.filter(a => STATIONS.includes(a.station));
+    assignments.sort((a,b) => new Date(b.ts) - new Date(a.ts));
+    const seen = new Set(), dedup=[];
+    for(const a of assignments){ if(seen.has(a.station)) continue; seen.add(a.station); dedup.push(a); }
+    assignments = dedup; save(STORAGE.ASSIGNS, assignments);
+  }
+
+  function buildGrid(){
+    ['1','2','3'].forEach(line => {
+      const leftNames  = (LAYOUT[line]||[]).map(p=>p[0]);
+      const rightNames = (LAYOUT[line]||[]).map(p=>p[1]);
+      const cols = (LINE_ROW_COUNTS[line]||0) || 1;
+
+      const lineEl = document.querySelector('.line[data-line="'+line+'"]');
+      const leftRow  = lineEl.querySelector('.stations-row.left');
+      const rightRow = lineEl.querySelector('.stations-row.right');
+      leftRow.style.gridTemplateColumns  = `repeat(${cols}, 1fr)`;
+      rightRow.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+      leftRow.innerHTML = ''; rightRow.innerHTML='';
+      for(const name of leftNames){
+        const el = document.createElement('div');
+        el.className = 'station'; el.dataset.station = name; el.innerHTML = '<div class="name"></div><img class="avatar" alt=""><span class="pill"></span><span class="meta"></span><span class="login-tag" title="Click to copy login"></span>';
+        leftRow.appendChild(el); bindStation(el, name);
+      }
+      for(const name of rightNames){
+        const el = document.createElement('div');
+        el.className = 'station'; el.dataset.station = name; el.innerHTML = '<div class="name"></div><img class="avatar" alt=""><span class="pill"></span><span class="meta"></span><span class="login-tag" title="Click to copy login"></span>';
+        rightRow.appendChild(el); bindStation(el, name);
+      }
+    });
+  }
+
+  function bindStation(el, name){
+    const nm = el.querySelector('.name');
+    if(nm){
+      nm.style.userSelect='text';
+      nm.addEventListener('auxclick', (ev)=>{
+        if(ev.button!==1) return;
+        ev.stopPropagation(); ev.preventDefault();
+        const a = whoAt(name);
+        const val = a && a.login ? a.login : '';
+        if(val){ navigator.clipboard.writeText(String(val)).then(()=>toast('Copied: ' + val)); }
+      });
+    }
+
+    const tag = el.querySelector('.login-tag');
+    if(tag){
+      tag.addEventListener('click', (ev)=>{ ev.stopPropagation(); ev.preventDefault();
+        const a = whoAt(name);
+        let val = (a && a.login) ? a.login : (tag && tag.textContent ? tag.textContent : ''); if(!val){ toast('No login'); return; } navigator.clipboard.writeText(String(val)).then(()=>toast('Copied: ' + val)).catch(()=>toast('Could not copy'));
+      });
+    }
+
+    el.addEventListener('click', () => {
+      if(selectedStation===name){ selectedStation=null; toast('Target canceled'); updateSel(); return; }
+      selectedStation=name; toast('Target: ' + name + (isBusy(name)?' (occupied — swap)':'')); updateSel();
+      const a = whoAt(name); if(a) announce(name, pretty(a));
+    });
+    el.addEventListener('contextmenu', (ev) => { ev.preventDefault(); freeStation(name); });
+  }
+
+  function updateSel(){
+    $all('.station').forEach(el => { const st=el.dataset.station; if(selectedStation===st) el.classList.add('ws-target'); else el.classList.remove('ws-target'); });
+  }
+
+  function render(){
+    if(typeof lastAssignedStation!=='undefined' && lastAssignedStation){
+      $all('.station').forEach(el=>el.classList.remove('neon-last'));
+      const el = document.querySelector('.station[data-station="'+lastAssignedStation+'"]');
+      if(el) el.classList.add('neon-last');
+    }
+    $('#totalCount').textContent = STATIONS.length;
+    $('#occCount').textContent = assignments.length;
+    const n = nextFree(); $('#nextFree').textContent = n || '—';
+
+    $all('.station').forEach(el => {
+      const st = el.dataset.station;
+      el.querySelector('.name').textContent = st;
+      const pill = el.querySelector('.pill');
+      const meta = el.querySelector('.meta'); const loginTag = el.querySelector('.login-tag'); const avatar = el.querySelector('.avatar');
+      const a = whoAt(st);
+      if(a){
+        el.classList.remove('free'); el.classList.add('busy');
+        if(avatar){
+          if(a.photo){
+            avatar.src = a.photo;
+            avatar.alt = (a.name||a.login||'Employee');
+            avatar.style.display = 'block';
+            avatar.onerror = ()=>{ avatar.style.display='none'; };
+          } else {
+            avatar.removeAttribute('src'); avatar.style.display = 'none';
+          }
+        }
+        if(loginTag){ loginTag.textContent = a.login || ''; loginTag.style.display = (a.login?'inline-block':'none'); }
+        pill.textContent = (a.name||a.login||('Badge '+a.badge));
+        meta.textContent = new Date(a.ts).toLocaleTimeString();
+      }else{
+        el.classList.remove('busy'); el.classList.add('free');
+        if(avatar){ avatar.removeAttribute('src'); avatar.style.display='none'; }
+        if(loginTag){ loginTag.textContent=''; loginTag.style.display='none'; }
+        pill.textContent = 'Free'; meta.textContent='';
+      }
+    });
+  }
+
+  function highlightStation(st){
+    $all('.station').forEach(x=>x.classList.remove('neon-last'));
+    const el = document.querySelector('.station[data-station="'+st+'"]');
+    if(el){
+      el.classList.add('neon-last');
+      el.classList.add('just-assigned');
+      setTimeout(()=>el.classList.remove('just-assigned'), 1200);
+    }
+  }
+
+  function announce(st, who){
+    try{ if(!('speechSynthesis' in window)) return; const u=new SpeechSynthesisUtterance(`${who} to ${st}`); speechSynthesis.speak(u); }catch{}
+  }
+
+  function selectTargetOrNext(){
+    const t = selectedStation || nextFree();
+    if(!t){ toast('No free stations.'); return null; }
+    return t;
+  }
+
+  function freeStation(st){
+    const idx = assignments.findIndex(a => a.station===st);
+    if(idx>=0){
+      assignments.splice(idx,1);
+      save(STORAGE.ASSIGNS, assignments);
+      lastAssignedStation = st;
+      render();
+      highlightStation(st);
+      const el2=document.querySelector('.station[data-station="'+st+'"]');
+      if(el2){ el2.click(); const b=document.getElementById('badge'); if(b){ b.value=''; b.focus(); } }
+      toast('Freed ' + st);
+    }
+  }
+
+  function assignTo(st, badge, info=null){
+    const existing = assignments.find(a=>a.station===st);
+    const now = new Date().toISOString();
+    if(existing){
+      const nf = STATIONS.find(s => !isBusy(s) && s!==st);
+      if(!nf){ toast('No free station available to swap'); return; }
+      const idx = assignments.findIndex(a => a.station===st);
+      const moved = Object.assign({}, assignments[idx], { station: nf, ts: now });
+      const newcomer = { ts: now, badge, name: info?.name||'', login: info?.login||'', emplId: info?.emplId||'', photo: info?.photo||'', station: st };
+      assignments[idx] = newcomer;
+      assignments.unshift(moved);
+    } else {
+      const rec = {
+        ts: now, badge,
+        name: info?.name||'', login: info?.login||'', emplId: info?.emplId||'', photo: info?.photo||'',
+        station: st
+      };
+      assignments.unshift(rec);
+    }
+    save(STORAGE.ASSIGNS, assignments);
+    lastAssignedStation = st;
+    render();
+    highlightStation(st);
+    announce(st, info?.name||info?.login||('Badge '+badge));
+    selectedStation=null; updateSel();
+  }
+
+  // === OPEN FCLM (stealth) ===
+  function openFCLMFor(token){
+    try{
+      const url = 'https://fclm-portal.amazon.com/employee/timeDetails?warehouseId=BFL2&employeeId=' + encodeURIComponent(token);
+      stealthNavigate(url);
+    }catch(e){}
+  }
+
+  function handleScanToken(raw){
+    const token = String(raw||'').trim();
+    if(!token){ toast('Empty badge'); return; }
+    requirePopupGesture();
+    try{
+      const url = 'https://fclm-portal.amazon.com/employee/lookup?warehouseId=BFL2&employeeId='+encodeURIComponent(token);
+      stealthNavigate(url);
+    }catch{}
+    const target = selectTargetOrNext(); if(!target) return;
+    pendingScan = { tokenLower: token.toLowerCase(), timer: setTimeout(()=>{ if(pendingScan){ assignTo(target, token, null); pendingScan=null; } }, 2500) };
+  }
+
+  const $badge = document.getElementById('badge');
+  $badge.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key==='Tab'){ e.preventDefault(); document.getElementById('openLink')?.click(); } });
+
+  window.addEventListener('message', (ev)=>{ try{
+    const data = ev.data || {};
+    if(data && data.type==='fclmEmployee'){
+      document.getElementById('bridgeStatus').innerHTML = 'Bridge: <b>active</b>';
+      if(data.badge) empCache[data.badge] = { name:data.name||'', login:data.login||'', emplId:data.emplId||'', photo:data.photo||'' };
+      if(data.login) empCache[data.login] = { name:data.name||'', login:data.login||'', emplId:data.emplId||'', photo:data.photo||'' };
+      save(STORAGE.CACHE, empCache);
+
+      const info = { name:data.name||'', login:data.login||'', emplId:data.emplId||'', photo:data.photo||'' };
+      let assigned=false;
+      if(pendingScan){
+        clearTimeout(pendingScan.timer);
+        const t = selectTargetOrNext(); if(t) assignTo(t, data.badge||data.login||'', info);
+        pendingScan=null; assigned=true;
+      }
+      if(!assigned){
+        const exists = assignments.some(a=>a.badge===data.badge) || (data.login && assignments.some(a=>a.login===data.login));
+        if(!exists){ const t = selectTargetOrNext(); if(t) assignTo(t, data.badge||data.login||'', info); }
+      }
+      toast(`Data received: ${data.name||'—'} (${data.login||'—'})`);
+    }
+  }catch(e){ console.warn(e); } });
+
+  document.getElementById('csv').addEventListener('click', () => {
+    const rows = [['timestamp','station','badge','name','login','emplId']].concat(assignments.map(a=>[a.ts,a.station,a.badge,a.name,a.login,a.emplId]));
+    const csv = rows.map(r=>r.map(x=>`"${String(x||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='ws-assignments.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  });
+  document.getElementById('slack').addEventListener('click', () => {
+    const lines = assignments.slice().reverse().map(a=>`• ${a.station} — ${pretty(a)}`);
+    navigator.clipboard.writeText(lines.join('\n')).then(()=>toast('Copied to clipboard for Slack'));
+  });
+  document.getElementById('reset').addEventListener('click', () => { if(confirm('Reset all assignments?')){ assignments=[]; save(STORAGE.ASSIGNS, assignments); render(); } });
+  document.getElementById('help').addEventListener('click', () => {
+    alert('Install Tampermonkey and then the Bridge:\n1) Open the .user.js I gave you\n2) Accept the install\n3) Scan the badge here; FCLM opens in the background and the Bridge sends data back for auto-assign.');
+  });
+
+  document.getElementById('openLink').addEventListener('click', ()=>{
+    const v=document.getElementById('badge').value.trim();
+    if(!v){ toast('Enter login or badge'); return; }
+    requirePopupGesture();
+    openFCLMFor(v);
+  });
+
+  (function(){
+    const btn = document.getElementById('openLink');
+    const b = document.getElementById('badge');
+    if(btn && b){
+      btn.addEventListener('click', ()=>{ setTimeout(()=>{ b.value=''; b.focus(); }, 0); });
+    }
+  })();
+
+  (function(){
+    const grid = document.getElementById('grid');
+    const b = document.getElementById('badge');
+    if(!grid || !b) return;
+    const obs = new MutationObserver(()=>{
+      const last = document.querySelector('.station.neon-last');
+      if(last){ b.value=''; b.focus(); }
+    });
+    obs.observe(grid, { attributes:true, subtree:true, attributeFilter:['class'] });
+  })();
+
+  // ======= Strategies =======
+  const STRAT_KEY = 'ws_assign_strategy_v1';
+  function getStrategy(){
+    try{ return localStorage.getItem(STRAT_KEY) || 'smartL1Cascade'; }catch{ return 'smartL1Cascade'; }
+  }
+  function setStrategy(v){ try{ localStorage.setItem(STRAT_KEY, v); }catch{} }
+
+  function stationLine(st){
+    const m = /WS\s+(\d+)-/i.exec(String(st||'')); return m ? parseInt(m[1],10) : null;
+  }
+  function freeList(){ return STATIONS.filter(s => !isBusy(s)); }
+  function freeByLine(line){ return freeList().filter(s => stationLine(s) === line); }
+  function pickFirst(list){ return list.length ? list[0] : null; }
+  function pickRandom(list){ return list.length ? list[Math.floor(Math.random()*list.length)] : null; }
+
+  
+  // Determine the side (L/R) of a station using the sets
+  function stationSide(st){
+    const ln = stationLine(st);
+    if(!ln) return null;
+    const lset = LEFT_BY_LINE[String(ln)], rset = RIGHT_BY_LINE[String(ln)];
+    if(lset && lset.has(st)) return 'L';
+    if(rset && rset.has(st)) return 'R';
+    return null;
+  }
+  function freeByLineAndSide(line, side){
+    const list = freeByLine(line);
+    const lset = LEFT_BY_LINE[String(line)], rset = RIGHT_BY_LINE[String(line)];
+    if(side==='L' && lset) return list.filter(s => lset.has(s));
+    if(side==='R' && rset) return list.filter(s => rset.has(s));
+    return list;
+  }
+  function pickBalancedInLine(line){
+    const pref = sidePref[line] || 'L';
+    let pick = pickRandom(freeByLineAndSide(line, pref));
+    if(!pick){
+      const other = pref === 'L' ? 'R' : 'L';
+      pick = pickRandom(freeByLineAndSide(line, other));
+    }
+    return pick || null;
+  }
+function totalsByLine(){
+    const lines = Array.from(new Set(STATIONS.map(stationLine).filter(Boolean)));
+    const totals = {};
+    for(const ln of lines){
+      const total = STATIONS.filter(s => stationLine(s)===ln).length;
+      const used  = assignments.filter(a => stationLine(a.station)===ln).length;
+      totals[ln] = { total, used, free: total-used };
+    }
+    return totals;
+  }
+
+  function nextFreeBalance12(){
+    const t = totalsByLine();
+    const a = t[1] || {total:0, used:0}; const b = t[2] || {total:0, used:0};
+    const occ1 = a.total ? a.used/a.total : 1;
+    const occ2 = b.total ? b.used/b.total : 1;
+    let target = null;
+    if(occ1 < occ2) target = 1;
+    else if(occ2 < occ1) target = 2;
+    else { target = 1; }
+    const cand = STATIONS.filter(s => stationLine(s)===target && !isBusy(s));
+    return pickFirst(cand) || null;
+  }
+  function nextFreeRand12(){
+    const list = freeList().filter(s => { const ln=stationLine(s); return ln===1 || ln===2; });
+    return pickRandom(list) || null;
+  }
+  function nextFreeRandL1(){ return pickRandom(freeByLine(1)) || null; }
+  function nextFreeRandAll(){ return pickRandom(freeList()) || null; }
+  function nextFreeSmartCascade(startLine=1){
+    const lines = [1,2,3];
+    const order = [];
+    for(let i=0;i<lines.length;i++){ order.push(((startLine-1+i)%lines.length)+1); }
+    for(const ln of order){
+      const pick = pickRandom(freeByLine(ln));
+      if(pick) return pick;
+    }
+    return null;
+  }
+
+  (function initStrategyUI(){
+    const openBtn = document.getElementById('openLink');
+    if(!openBtn || document.getElementById('strategy')) return;
+    const sel = document.createElement('select');
+    sel.id = 'strategy';
+    sel.className = 'pill';
+    sel.title = 'Assignment strategy';
+    sel.innerHTML = [
+      ['sequential','Sequential (current)'],
+      ['balance12','Balance L1↔L2'],
+      ['rand12','Random L1↔L2'],
+      ['randL1','Random only L1'],
+      ['randAll','Random global'],
+      ['smartL1Cascade','Smart random L1→L2→L3'],
+    ].map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
+    sel.value = getStrategy();
+    sel.addEventListener('change', ()=> setStrategy(sel.value));
+    openBtn.insertAdjacentElement('afterend', sel);
+  })();
+
+  const __orig_nextFree = nextFree;
+  nextFree = function(){
+    switch(getStrategy()){
+      case 'balance12':   return nextFreeBalance12()    || __orig_nextFree();
+      case 'rand12':      return nextFreeRand12()       || __orig_nextFree();
+      case 'randL1':      return nextFreeRandL1()       || __orig_nextFree();
+      case 'randAll':     return nextFreeRandAll()      || __orig_nextFree();
+      case 'smartL1Cascade': return nextFreeSmartCascade(1) || __orig_nextFree();
+      case 'sequential':
+      default:            return __orig_nextFree();
+    }
+  };
+
+  buildGrid(); scrub(); render();
+  window.handleScanToken = handleScanToken;
+})();
+</script>
+</body>
+</html>
