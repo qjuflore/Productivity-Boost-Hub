@@ -169,6 +169,19 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
       <div class="line" data-line="3"><h3>Line 3</h3><div class="rows"><div class="stations-row left"></div><div class="stations-row right"></div></div></div>
     </div>
   </div>
+      <div class="line" data-line="4"><h3>Line 4 — Problem Solvers</h3>
+        <div class="rows">
+          <div class="stations-row left"></div>
+          <div class="stations-row right"></div>
+        </div>
+      </div>
+      <div class="line" data-line="5"><h3>Line 5 — Indirects</h3>
+        <div class="rows">
+          <div class="stations-row left"></div>
+          <div class="stations-row right"></div>
+        </div>
+      </div>
+
 
   <div id="toast" class="toast" style="display:none"></div>
 
@@ -183,7 +196,10 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
           ["WS 2-18", "WS 2-17"], ["WS 2-20", "WS 2-19"]],
     "1": [["WS 1-2", "WS 1-1"], ["WS 1-4", "WS 1-3"], ["WS 1-6", "WS 1-5"], ["WS 1-8", "WS 1-7"],
           ["WS 1-10", "WS 1-9"], ["WS 1-12", "WS 1-11"], ["WS 1-14", "WS 1-13"], ["WS 1-16", "WS 1-15"],
-          ["WS 1-18", "WS 1-17"], ["WS 1-20", "WS 1-19"]]
+          ["WS 1-18", "WS 1-17"], ["WS 1-20", "WS 1-19"]],
+    "4": [['PS 2', 'PS 1'], ['PS 4', 'PS 3'], ['PS 6', 'PS 5'], ['PS 8', 'PS 7'], ['PS 10', 'PS 9'], ['PS 12', 'PS 11'], ['PS 14', 'PS 13'], ['PS 16', 'PS 15']],
+    "5": [['Indirect 2', 'Indirect 1'], ['Indirect 4', 'Indirect 3'], ['Indirect 6', 'Indirect 5'], ['Indirect 8', 'Indirect 7'], ['Indirect 10', 'Indirect 9'], ['Indirect 12', 'Indirect 11'], ['Indirect 14', 'Indirect 13'], ['Indirect 16', 'Indirect 15']]
+  
   };
   const STATIONS = [
     "WS 1-2","WS 1-4","WS 1-6","WS 1-8","WS 1-10","WS 1-12","WS 1-14","WS 1-16","WS 1-18","WS 1-20",
@@ -191,9 +207,13 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
     "WS 2-2","WS 2-4","WS 2-6","WS 2-8","WS 2-10","WS 2-12","WS 2-14","WS 2-16","WS 2-18","WS 2-20",
     "WS 2-1","WS 2-3","WS 2-5","WS 2-7","WS 2-9","WS 2-11","WS 2-13","WS 2-15","WS 2-17","WS 2-19",
     "WS 3-2","WS 3-4","WS 3-6","WS 3-8","WS 3-10","WS 3-12","WS 3-14","WS 3-16",
-    "WS 3-1","WS 3-3","WS 3-5","WS 3-7","WS 3-9","WS 3-11","WS 3-13","WS 3-15"
+    "WS 3-1","WS 3-3","WS 3-5","WS 3-7","WS 3-9","WS 3-11","WS 3-13","WS 3-15",
+    "PS 2", "PS 4", "PS 6", "PS 8", "PS 10", "PS 12", "PS 14", "PS 16",
+    "PS 1", "PS 3", "PS 5", "PS 7", "PS 9", "PS 11", "PS 13", "PS 15",
+    "Indirect 2", "Indirect 4", "Indirect 6", "Indirect 8", "Indirect 10", "Indirect 12", "Indirect 14", "Indirect 16",
+    "Indirect 1", "Indirect 3", "Indirect 5", "Indirect 7", "Indirect 9", "Indirect 11", "Indirect 13", "Indirect 15"
   ];
-  const LINE_ROW_COUNTS = {"1": 10, "2": 10, "3": 8};
+  const LINE_ROW_COUNTS = {"1": 10, "2": 10, "3": 8, "4": 8, "5": 8};
   // Build left/right station sets per line from LAYOUT pairs
   const LEFT_BY_LINE  = {
     "1": new Set((LAYOUT["1"]||[]).map(p=>p[0])),
@@ -281,7 +301,7 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
   }
 
   function buildGrid(){
-    ['1','2','3'].forEach(line => {
+    Object.keys(LAYOUT).sort((a,b)=>Number(a)-Number(b)).forEach(line => {
       const leftNames  = (LAYOUT[line]||[]).map(p=>p[0]);
       const rightNames = (LAYOUT[line]||[]).map(p=>p[1]);
       const cols = (LINE_ROW_COUNTS[line]||0) || 1;
