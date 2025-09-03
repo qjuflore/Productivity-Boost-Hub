@@ -9,7 +9,7 @@
   },
   {
     "title": "HRV Report",
-    "content": "💎 *HRV Problem Solve & WIP Report*\n_For each “[ ]”, enter a number and specify “totes” or “U-boats”._\n\n*1. Ready to Inject:* [ ]  \n↳ Move *U-boats to Decant* for reinjection; verify `dz-P-LIBRARY` routing\n\n*2. Needing Sorting:* [ ]\n\n*3. Ready to Stow (Q330):* [ ]\n\n*4. Ready to Stow (Q364):* [ ]"
+    "content": "💎 *HRV Problem Solve & WIP Report*\n_For each “[ ]”, enter a number and specify “totes” or “U-boats”._\n\n*1. Ready to Inject:* [ ]  \n↳ Move *U-boats to Decant* for reinjection; verify `dz-P-LIBRARY` routing\n\n*2. Needing Sorting:* [ ]\n\n*3. Ready to Stow (Q330):* [ ]\n\n*4. Ready to Stow (Q364):* [ ]\n\n*5. Ready to Stow (IB Dock):* [ ]"
   },
   {
     "title": "IDRT Report",
