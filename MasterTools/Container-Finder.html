@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Container Finder — Scan & Alert (v2025.9.4)</title>
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#0f1623; --card:#121a2a; --text:#e6edf7; --muted:#8aa2c0;
+      --accent:#64f38c; --accent2:#74a7ff; --border:#1c2a40; --bad:#ff6b6b; --ok:#25d07c;
+      --ring:#25d07c88; --chip:#1b2536; --chipText:#cfe9ff;
+      --good:#16a34a; --warn:#d97706; --light-bg:#f7fafc; --light-panel:#ffffff; --light-text:#0b0f14;
+      --shadow:0 10px 30px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.03);
+    }
+    [data-theme="light"]{
+      --bg:var(--light-bg); --panel:#f3f7fb; --card:var(--light-panel); --text:var(--light-text); --muted:#4b5563;
+      --accent:#0ea5e9; --accent2:#22c55e; --border:#dbe5ef; --ring:rgba(14,165,233,.25); --chip:#e6f2ff; --chipText:#0b0f14; --shadow:0 10px 30px rgba(2,8,23,.08), inset 0 0 0 1px rgba(2,8,23,.04);
+    }
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,Segoe UI,Roboto,Inter,sans-serif}
+    .wrap{max-width:1200px;margin:0 auto;padding:18px}
+    .header{display:flex;gap:14px;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .title{font-weight:700;letter-spacing:.2px;font-size:18px;display:flex;gap:10px;align-items:center}
+    .title .badge{font-size:11px;padding:3px 8px;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#001b18;box-shadow:var(--shadow)}
+    .row{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
+    .card > .card-h{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+    .card > .card-b{padding:16px}
+    .muted{color:var(--muted)}
+    .btn{appearance:none;border:1px solid var(--border);background:transparent;color:var(--text);padding:8px 12px;border-radius:12px;cursor:pointer;transition:.2s;display:inline-flex;gap:8px;align-items:center}
+    .btn:hover{box-shadow:0 0 0 3px var(--ring);transform:translateY(-1px)}
+    .btn.primary{border-color:transparent;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#07240a}
+    .btn.ghost{background:transparent}
+    .btn.warn{border-color:var(--bad);color:var(--bad)}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    textarea,input[type="text"],input[type="search"]{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text);padding:10px 12px;outline:none}
+    textarea:focus,input:focus{box-shadow:0 0 0 3px var(--ring);border-color:transparent}
+    textarea{min-height:110px;resize:vertical}
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{background:var(--chip);color:var(--chipText);border:1px solid var(--border);padding:6px 10px;border-radius:999px;display:inline-flex;gap:8px;align-items:center}
+    .chip .x{cursor:pointer;opacity:.6}
+    .list{display:grid;gap:8px;max-height:300px;overflow:auto;padding-right:4px}
+    .target{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px dashed var(--border);border-radius:12px;background:rgba(255,255,255,.02)}
+    .target .tag{font-weight:600}
+    .target.pending{opacity:.9}
+    .target.found{border-color:rgba(22,163,74,.6);background:rgba(22,163,74,.10)}
+    .target.found .tag{color:var(--good)}
+    .target.found .pulse{width:10px;height:10px;border-radius:999px;background:var(--good);box-shadow:0 0 0 0 rgba(34,197,94,.7);animation:pulse 1.4s infinite}
+    @keyframes pulse{to{box-shadow:0 0 0 12px rgba(34,197,94,0)}}
+    .progress{display:flex;gap:12px;align-items:center}
+    .bar{flex:1;height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;border:1px solid var(--border)}
+    .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+    .kpi{display:flex;gap:12px}
+    .kpi .box{flex:1;background:rgba(255,255,255,.02);padding:10px;border-radius:12px;border:1px solid var(--border);text-align:center}
+    .kpi .box b{font-size:20px}
+    .options{display:grid;grid-template-columns:repeat(2, minmax(0,1fr));gap:10px}
+    .opt{display:flex;gap:10px;align-items:center}
+    .opt input[type="checkbox"]{width:18px;height:18px}
+    .opt label{user-select:none}
+    .radio{display:flex;gap:10px;align-items:center}
+    .radio input{margin-right:6px}
+    .history{max-height:180px;overflow:auto;border:1px dashed var(--border);border-radius:12px;padding:8px}
+    .history b{display:inline-block;min-width:90px}
+    .foundRow{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.02)}
+    .foundRow .id{font-weight:700;color:var(--good)}
+    .hint{font-size:12px;color:var(--muted)}
+    .inline{display:flex;gap:8px;align-items:center}
+    .right{margin-left:auto}
+    .ring{box-shadow:0 0 0 3px var(--ring)}
+    .glow{animation:glow .8s ease-out}
+    @keyframes glow{0%{box-shadow:0 0 0 0 rgba(39, 200, 130,.7)}100%{box-shadow:0 0 0 18px rgba(39,200,130,0)}}
+    .confetti{position:fixed;inset:0;pointer-events:none}
+    .sr{position:absolute;left:-9999px}
+  </style>
+</head>
+<body>
+  <div class="wrap" id="app">
+    <div class="header">
+      <div class="title">
+        <span>📦 Container Finder</span>
+        <span class="badge">Scan & Alert</span>
+      </div>
+      <div class="inline">
+        <button class="btn" id="toggleTheme" title="Toggle light/dark">Toggle Light/Dark</button>
+        <button class="btn" id="helpBtn">Help</button>
+      </div>
+    </div>
+
+    <!-- Top Progress / KPIs -->
+    <div class="card" aria-live="polite">
+      <div class="card-b">
+        <div class="progress" style="margin-bottom:10px">
+          <div class="bar" aria-label="progress"><i id="progressBar"></i></div>
+          <div class="kpi" style="min-width:260px">
+            <div class="box"><div class="muted">Total</div><b id="kpiTotal">0</b></div>
+            <div class="box"><div class="muted">Found</div><b id="kpiFound">0</b></div>
+            <div class="box"><div class="muted">Pending</div><b id="kpiPending">0</b></div>
+          </div>
+        </div>
+        <div class="hint">Tip: Keep the scan box focused. Most scanners send an ENTER key at the end of each scan.</div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:14px">
+      <!-- Targets Panel -->
+      <div class="card" id="targetsCard">
+        <div class="card-h">
+          <div><b>Targets to Find</b> <span class="muted">(paste or add individually)</span></div>
+          <div class="inline">
+            <button class="btn" id="btnSample">Add Sample</button>
+            <button class="btn warn" id="btnClearTargets">Clear</button>
+          </div>
+        </div>
+        <div class="card-b">
+          <div class="grid2">
+            <div>
+              <label class="muted">Bulk add (one per line, comma or space separated)</label>
+              <textarea id="bulk"></textarea>
+              <div class="inline" style="margin-top:8px">
+                <button class="btn primary" id="btnAddBulk">Add to Targets</button>
+                <button class="btn" id="btnSave">Save List</button>
+                <button class="btn" id="btnLoad">Load Saved</button>
+                <button class="btn" id="btnExportTargets">Export</button>
+              </div>
+            </div>
+            <div>
+              <label class="muted">Add single ID</label>
+              <div class="inline">
+                <input type="text" id="single" placeholder="e.g., C123456789" />
+                <button class="btn" id="btnAddSingle">Add</button>
+              </div>
+              <div class="options" style="margin-top:12px">
+                <div class="opt"><input type="checkbox" id="optCase" checked><label for="optCase">Case-insensitive</label></div>
+                <div class="opt"><input type="checkbox" id="optTrim" checked><label for="optTrim">Ignore spaces / dashes / underscores</label></div>
+                <div class="opt"><input type="checkbox" id="optSound" checked><label for="optSound">Sound on match</label></div>
+                <div class="opt"><input type="checkbox" id="optVibrate"><label for="optVibrate">Vibrate on match</label></div>
+              </div>
+              <div class="radio" style="margin-top:10px">
+                <label class="muted" style="min-width:100px">Match mode:</label>
+                <label><input type="radio" name="mode" value="exact" checked> Exact</label>
+                <label><input type="radio" name="mode" value="contains"> Contains</label>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px" class="chips" id="chips"></div>
+
+          <div class="list" id="targetsList" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <!-- Scanner Panel -->
+      <div class="card" id="scannerCard">
+        <div class="card-h">
+          <div><b>Scanner</b> <span class="muted">(auto-focus input; press Enter after each scan)</span></div>
+          <div class="inline">
+            <button class="btn" id="btnResetFound">Reset Found</button>
+            <button class="btn" id="btnExportFound">Export Found CSV</button>
+          </div>
+        </div>
+        <div class="card-b">
+          <label class="muted">Scan box</label>
+          <input id="scan" type="search" placeholder="Scan here..." autocomplete="off" autofocus />
+          <div class="inline" style="margin-top:8px">
+            <div><b>Last scan:</b> <span id="lastScan" class="muted">None</span></div>
+            <div class="right hint">The input will keep focus automatically.</div>
+          </div>
+
+          <div style="margin-top:12px">
+            <div class="muted" style="margin-bottom:6px">Scan history</div>
+            <div class="history" id="history"></div>
+          </div>
+
+          <div style="margin-top:12px">
+            <div class="muted" style="margin-bottom:6px">Found matches</div>
+            <div class="list" id="foundList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <canvas class="confetti" id="confetti" aria-hidden="true"></canvas>
+
+    <!-- Help Modal (simple) -->
+    <dialog id="help" style="border:1px solid var(--border);border-radius:14px;width:min(720px,90vw);background:var(--card);color:var(--text)">
+      <div class="card-h"><b>How it works</b><button class="btn" onclick="help.close()">Close</button></div>
+      <div class="card-b">
+        <ol>
+          <li>Paste or add your target container IDs in <b>Targets to Find</b>.</li>
+          <li>Choose your <b>Match mode</b> and options.</li>
+          <li>Click into the <b>Scan box</b> and start scanning. Most scanners send Enter automatically.</li>
+          <li>When a match is detected, you'll see a green highlight, sound/vibration (if enabled), and confetti.</li>
+        </ol>
+        <p class="hint">Lists and preferences are saved locally in your browser.</p>
+      </div>
+    </dialog>
+  </div>
+
+  <script>
+    // ====== State ======
+    const state = {
+      targets: new Map(), // id -> { id, normalized, found:false, foundAt:null, scanned:"" }
+      found: [], // { id, foundAt, scanned }
+      history: [], // recent scans (raw)
+      opts: {
+        caseInsensitive: true,
+        trimSeparators: true,
+        sound: true,
+        vibrate: false,
+        mode: 'exact', // 'exact' | 'contains'
+        theme: localStorage.getItem('cf-theme') || 'dark'
+      }
+    };
+
+    // ====== Elements ======
+    const el = (id)=>document.getElementById(id);
+    const chips = el('chips');
+    const list = el('targetsList');
+    const foundList = el('foundList');
+    const hist = el('history');
+    const progressBar = el('progressBar');
+    const kpiTotal = el('kpiTotal');
+    const kpiFound = el('kpiFound');
+    const kpiPending = el('kpiPending');
+    const scanBox = el('scan');
+    const lastScan = el('lastScan');
+    const confettiCanvas = el('confetti');
+    const help = el('help');
+
+    // ====== Utilities ======
+    const $ = (sel,root=document)=>Array.from(root.querySelectorAll(sel));
+
+    const save = ()=>{
+      const data = {
+        targets: Array.from(state.targets.values()),
+        opts: state.opts
+      };
+      localStorage.setItem('cf-data', JSON.stringify(data));
+    }
+
+    const load = ()=>{
+      const json = localStorage.getItem('cf-data');
+      if(!json) return false;
+      try{
+        const data = JSON.parse(json);
+        state.targets = new Map((data.targets||[]).map(o=>[o.id, {...o}]));
+        state.opts = {...state.opts, ...(data.opts||{})};
+        applyTheme();
+        renderAll();
+        return true;
+      }catch(e){console.warn('load failed', e);return false}
+    }
+
+    const normalize = (s)=>{
+      if(typeof s !== 'string') s = String(s||'');
+      let out = s;
+      if(state.opts.trimSeparators) out = out.replace(/[\s\-_]+/g,'');
+      if(state.opts.caseInsensitive) out = out.toUpperCase();
+      return out.trim();
+    }
+
+    const updateKPIs = ()=>{
+      const total = state.targets.size;
+      const found = Array.from(state.targets.values()).filter(t=>!!t.foundAt).length;
+      kpiTotal.textContent = total;
+      kpiFound.textContent = found;
+      kpiPending.textContent = Math.max(0, total-found);
+      const pct = total ? Math.round(found/total*100) : 0;
+      progressBar.style.width = pct+'%';
+    }
+
+    const renderChips = ()=>{
+      chips.innerHTML = '';
+      for(const t of state.targets.values()){
+        const c = document.createElement('span');
+        c.className = 'chip';
+        c.innerHTML = `<span>${escapeHtml(t.id)}</span><span class="x" title="Remove">✕</span>`;
+        c.querySelector('.x').onclick = ()=>removeTarget(t.id);
+        chips.appendChild(c);
+      }
+    }
+
+    const renderTargets = ()=>{
+      list.innerHTML = '';
+      for(const t of state.targets.values()){
+        const row = document.createElement('div');
+        row.className = 'target ' + (t.foundAt ? 'found' : 'pending');
+        row.innerHTML = `
+          <div class="inline" style="gap:10px">
+            <span class="pulse" aria-hidden="true" style="${t.foundAt?'':'visibility:hidden'}"></span>
+            <span class="tag">${escapeHtml(t.id)}</span>
+            ${t.foundAt?`<span class="muted">@ ${new Date(t.foundAt).toLocaleTimeString()}</span>`:''}
+          </div>
+          <div class="inline">
+            ${t.foundAt?`<span class="muted">Scanned: <b>${escapeHtml(t.scanned)}</b></span>`:''}
+            <button class="btn ghost" title="Remove" onclick="removeTarget('${escapeAttr(t.id)}')">Remove</button>
+          </div>
+        `;
+        list.appendChild(row);
+      }
+      updateKPIs();
+    }
+
+    const renderFound = ()=>{
+      foundList.innerHTML = '';
+      for(const f of state.found){
+        const row = document.createElement('div');
+        row.className = 'foundRow';
+        row.innerHTML = `
+          <span class="id">${escapeHtml(f.id)}</span>
+          <span class="muted">${new Date(f.foundAt).toLocaleTimeString()}</span>
+          <span class="muted">Scan: <b>${escapeHtml(f.scanned)}</b></span>
+        `;
+        foundList.prepend(row);
+      }
+    }
+
+    const renderHistory = ()=>{
+      hist.innerHTML = state.history.slice(-30).reverse().map((h,i)=>`<div><b>#${String(state.history.length-i).padStart(3,'0')}</b> <span>${escapeHtml(h)}</span></div>`).join('');
+    }
+
+    const renderAll = ()=>{ renderChips(); renderTargets(); renderFound(); renderHistory(); updateKPIs(); }
+
+    // ====== Target Management ======
+    function addTargets(items){
+      let added = 0;
+      for(const raw of items){
+        const id = String(raw||'').trim();
+        if(!id) continue;
+        if(state.targets.has(id)) continue; // keep original casing for display
+        state.targets.set(id, { id, normalized: normalize(id), foundAt:null, scanned:'' });
+        added++;
+      }
+      if(added>0){
+        save();
+        renderAll();
+        flash(el('targetsCard'));
+      }
+    }
+
+    function removeTarget(id){
+      state.targets.delete(id);
+      save();
+      renderAll();
+    }
+
+    function resetFound(){
+      for(const t of state.targets.values()){
+        t.foundAt = null; t.scanned = '';
+      }
+      state.found = [];
+      save(); renderAll();
+    }
+
+    // ====== Scanning & Matching ======
+    function onScan(raw){
+      if(!raw) return;
+      state.history.push(raw);
+      lastScan.textContent = raw;
+      renderHistory();
+
+      const scanNorm = normalize(raw);
+      const mode = state.opts.mode;
+      let matched = null;
+
+      for(const t of state.targets.values()){
+        if(t.foundAt) continue; // already matched
+        const a = t.normalized, b = scanNorm;
+        const hit = (mode==='exact') ? (a===b) : (b.includes(a));
+        if(hit){ matched = t; break; }
+      }
+
+      if(matched){
+        matched.foundAt = Date.now();
+        matched.scanned = raw;
+        state.found.push({ id: matched.id, foundAt: matched.foundAt, scanned: raw });
+        renderAll();
+        celebrate(matched.id);
+      } else {
+        // Optional: soft beep for no match
+        if(state.opts.sound) beep(220, 60, 0.03);
+      }
+
+      // Keep focus + clear input
+      scanBox.value = '';
+      scanBox.focus();
+      save();
+    }
+
+    // ====== Effects (Sound / Vibrate / Confetti) ======
+    let audioCtx = null;
+    function ensureAudio(){ audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+
+    function beep(freq=880, dur=140, vol=0.06){
+      if(!state.opts.sound) return;
+      const ctx = ensureAudio();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'square';
+      o.frequency.value = freq;
+      g.gain.value = vol;
+      o.connect(g); g.connect(ctx.destination);
+      o.start();
+      setTimeout(()=>{o.stop();}, dur);
+    }
+
+    function successTone(){
+      // little arpeggio
+      beep(987, 90); setTimeout(()=>beep(1319,110), 90); setTimeout(()=>beep(1760,130), 200);
+    }
+
+    function celebrate(id){
+      successTone();
+      if(state.opts.vibrate && navigator.vibrate) navigator.vibrate([120,40,120]);
+      flash(el('scannerCard'));
+      flash(el('targetsCard'));
+      confettiBurst();
+      announce(`Found ${id}`);
+    }
+
+    function flash(node){ node.classList.add('glow'); setTimeout(()=>node.classList.remove('glow'), 800); }
+
+    function announce(text){
+      // ARIA live already set on KPI card; also set document title briefly
+      const t = document.title; document.title = `✅ Found: ${text}`; setTimeout(()=>document.title = t, 1800);
+    }
+
+    // Simple confetti
+    function confettiBurst(){
+      const ctx = confettiCanvas.getContext('2d');
+      const w = confettiCanvas.width = window.innerWidth; const h = confettiCanvas.height = window.innerHeight;
+      const N = 150; const pieces = [];
+      for(let i=0;i<N;i++){
+        pieces.push({
+          x: Math.random()*w, y: -20 - Math.random()*h*.3,
+          w: 4+Math.random()*6, h: 6+Math.random()*10,
+          color: `hsl(${Math.random()*360}, 90%, 55%)`,
+          vx: -1+Math.random()*2, vy: 2+Math.random()*4, rot: Math.random()*Math.PI, vr: -.1+Math.random()*.2
+        });
+      }
+      const t0 = performance.now();
+      const dur = 1200;
+      (function draw(t){
+        const dt = Math.min(16, (t-(draw.t||t))); draw.t=t;
+        ctx.clearRect(0,0,w,h);
+        pieces.forEach(p=>{
+          p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.rot += p.vr;
+          ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+          ctx.fillStyle = p.color; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+        });
+        if(t - t0 < dur) requestAnimationFrame(draw); else ctx.clearRect(0,0,w,h);
+      })(t0);
+    }
+
+    // ====== Events ======
+    document.addEventListener('keydown', (e)=>{
+      // Keep focus on scan box unless typing in textarea/single
+      if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+      scanBox.focus();
+    });
+
+    scanBox.addEventListener('keydown', (e)=>{
+      if(e.key==='Enter'){
+        e.preventDefault();
+        onScan(scanBox.value.trim());
+      }
+    });
+
+    $('#btnAddBulk')[0].onclick = ()=>{
+      const raw = el('bulk').value;
+      const items = raw.split(/[\n,\s]+/g).map(s=>s.trim()).filter(Boolean);
+      addTargets(items);
+      el('bulk').value='';
+    }
+    $('#btnAddSingle')[0].onclick = ()=>{
+      const v = el('single').value.trim(); if(!v) return; addTargets([v]); el('single').value=''; scanBox.focus();
+    }
+    $('#btnClearTargets')[0].onclick = ()=>{ if(confirm('Clear all targets?')){ state.targets.clear(); save(); renderAll(); }}
+
+    $('#btnSample')[0].onclick = ()=>{
+      addTargets(['C123456','A-0007','WS-19','BIN_44','TO-TE-88','P3-DZ-101','QJUFLORE']);
+    }
+
+    $('#btnSave')[0].onclick = ()=>{ save(); flash(el('targetsCard')); }
+    $('#btnLoad')[0].onclick = ()=>{ if(!load()) alert('No saved list found.'); }
+
+    // Options
+    el('optCase').onchange = (e)=>{ state.opts.caseInsensitive = e.target.checked; rebuildNormalized(); }
+    el('optTrim').onchange = (e)=>{ state.opts.trimSeparators = e.target.checked; rebuildNormalized(); }
+    el('optSound').onchange = (e)=>{ state.opts.sound = e.target.checked; save(); }
+    el('optVibrate').onchange = (e)=>{ state.opts.vibrate = e.target.checked; save(); }
+    $('input[name="mode"]').forEach(r=> r.onchange = (e)=>{ if(e.target.checked){ state.opts.mode = e.target.value; save(); } });
+
+    function rebuildNormalized(){
+      for(const t of state.targets.values()) t.normalized = normalize(t.id);
+      save();
+      renderAll();
+    }
+
+    // Exports
+    $('#btnExportFound')[0].onclick = ()=>{
+      if(!state.found.length) return alert('No found items yet.');
+      const rows = [['ID','Found At','Scanned String']]
+        .concat(state.found.map(f=>[f.id, new Date(f.foundAt).toISOString(), f.scanned]));
+      downloadCSV('found.csv', rows);
+    }
+    $('#btnExportTargets')[0].onclick = ()=>{
+      const rows = [['ID','Found','Found At','Scanned']]
+        .concat(Array.from(state.targets.values()).map(t=>[t.id, t.foundAt? 'YES':'NO', t.foundAt? new Date(t.foundAt).toISOString():'', t.scanned||'']));
+      downloadCSV('targets.csv', rows);
+    }
+    $('#btnResetFound')[0].onclick = ()=>{ if(confirm('Reset found status for all targets?')) resetFound(); }
+
+    function downloadCSV(filename, rows){
+      const esc = (s)=>`"${String(s).replaceAll('"','""')}"`;
+      const csv = rows.map(r=>r.map(esc).join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+    }
+
+    // Theme toggle
+    function applyTheme(){
+      document.documentElement.setAttribute('data-theme', state.opts.theme==='light'?'light':'dark');
+      localStorage.setItem('cf-theme', state.opts.theme);
+    }
+    el('toggleTheme').onclick = ()=>{ state.opts.theme = (state.opts.theme==='light'?'dark':'light'); applyTheme(); }
+
+    // Help
+    el('helpBtn').onclick = ()=> help.showModal();
+
+    // ====== Init ======
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+    function escapeAttr(s){ return String(s).replace(/["']/g, m=> m==='"'?'&quot;':'&#39;'); }
+
+    applyTheme(); load(); renderAll(); scanBox.focus();
+  </script>
+</body>
+</html>
