@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>WS Assigner — Identical + 2 rows per line (STEALTH v2025.9.2 EN-fix-spacing + focus/scroll + theme)</title>
+  <title>WS Assigner — Identical + 2 rows per line (STEALTH v2025.9.2 EN — focus/scroll + theme + high-contrast day)</title>
 
   <style>
     /* ===== Theme tokens (Night = default) ===== */
@@ -11,62 +11,108 @@
       --bg:#0b0f14; --panel:#0f1623; --card:#121a2a; --text:#e6edf7; --muted:#8aa2c0;
       --accent:#6be675; --accent2:#7aa2f7; --border:#1c2a40; --bad:#ff6b6b; --ok:#25d07c;
       --shadow-ring:#25d07c77; --shadow-strong:#7aa2f777;
+
+      /* subtle surfaces for chips/pills */
+      --pill-bg: color-mix(in oklab, var(--card) 92%, transparent);
+      --pill-border: var(--border);
+      --pill-text: var(--muted);
+      --pill-free-bg: color-mix(in oklab, #16a34a 12%, #ffffff 0%);
+      --pill-free-text: #34d399; /* night can be brighter */
+      --pill-busy-bg: color-mix(in oklab, #60a5fa 12%, #ffffff 0%);
+      --pill-busy-text: #93c5fd;
+      --name-color: var(--ok);
     }
-    /* Day mode overrides (high-contrast light) */
+
+    /* ===== Day mode (alto contraste, sin amarillos sobre blanco) ===== */
     .theme-day{
-      --bg:#f7fbff; --panel:#f1f6ff; --card:#ffffff; --text:#0b1a2a; --muted:#335577;
-      --accent:#0ca678; --accent2:#2563eb; --border:#c9d9f0; --bad:#d72638; --ok:#0ca678;
-      --shadow-ring:#2563eb55; --shadow-strong:#2563eb88;
+      --bg:#f7fbff; --panel:#eef5ff; --card:#ffffff; --text:#0a1726; --muted:#23405b;
+      --accent:#0a8a63; --accent2:#1e3a8a; --border:#9fb8d6; --bad:#c81e1e; --ok:#0a7a43;
+      --shadow-ring:#1e3a8a55; --shadow-strong:#1e3a8a66;
+
+      /* pills y estados con fondo tenue para contraste AA */
+      --pill-bg:#f3f7ff;
+      --pill-border:#c9d9f0;
+      --pill-text:#1b3550;
+
+      /* “Free” (verde) y “Busy” (azul) con textos oscuros legibles */
+      --pill-free-bg:#e8f6ee;     /* verde muy tenue */
+      --pill-free-text:#0a7a43;   /* verde oscuro */
+      --pill-busy-bg:#eaf1ff;     /* azul muy tenue */
+      --pill-busy-text:#1e3a8a;   /* azul oscuro */
+
+      /* nombre de estación en color oscuro (no amarillo) */
+      --name-color:#0a7a43;
     }
 
     html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,Segoe UI,Roboto,Inter,sans-serif;}
     .wrap{max-width:1200px;margin:24px auto;padding:0 16px;}
     .top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:14px;}
     .group{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-    .pill{background:var(--card);border:1px solid var(--border);border-radius:999px;padding:6px 10px;color:var(--muted);}
-    .scan-in{height:40px;min-width:320px;padding:0 12px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);outline:none;}
+
+    .pill{
+      background:var(--pill-bg);
+      border:1px solid var(--pill-border);
+      border-radius:999px;
+      padding:6px 10px;
+      color:var(--pill-text);
+    }
+
+    .scan-in{
+      height:40px;min-width:320px;padding:0 12px;border-radius:12px;
+      border:1px solid var(--border);background:var(--card);color:var(--text);outline:none;
+    }
     .scan-in::placeholder{color:var(--muted);} 
     .scan-in:focus{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent);} 
-    .btn{padding:9px 14px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer}
+
+    .btn{
+      padding:9px 14px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer
+    }
     .btn:hover{filter:brightness(1.12);} 
+
     .grid{display:grid;grid-template-columns:1fr;gap:16px;}
-    .line{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:12px 12px;}
+    .line{
+      background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:12px 12px;
+      background-color: color-mix(in oklab, var(--panel) 85%, transparent);
+    }
     .line h3{margin:0 0 12px 0;color:var(--muted);} 
     .rows{display:grid;grid-template-rows:repeat(2, auto);gap:10px;}
     .stations-row{display:grid;gap:10px;}
 
     .station{
-      position:relative;
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:12px 12px;
-      min-height:96px;
-      padding-bottom:74px;
-      cursor:pointer;transition:.15s;
-      outline:none;           /* we will draw our own focus ring */
+      position:relative;background:var(--card);border:1px solid var(--border);border-radius:14px;
+      padding:12px 12px;min-height:96px;padding-bottom:74px;cursor:pointer;transition:.15s;
+      background-color: color-mix(in oklab, var(--card) 90%, transparent);
+      backdrop-filter: saturate(110%) blur(0.5px);
+      outline:none; /* custom focus */
     }
     .station:hover{transform:translateY(-1px);}
-    .station:focus{
-      box-shadow:0 0 0 3px var(--shadow-ring), 0 8px 24px -6px var(--shadow-strong);
-    }
+    .station:focus{box-shadow:0 0 0 3px var(--shadow-ring), 0 8px 24px -6px var(--shadow-strong);}
 
     .station .name{
-      font-weight:600;opacity:.95;display:block;margin-bottom:8px;position:relative;z-index:2;color:var(--ok);
+      font-weight:600;opacity:.98;display:block;margin-bottom:8px;position:relative;z-index:2;color:var(--name-color);
       border:1px solid var(--border);border-radius:8px;padding:2px 10px;background:transparent;
       max-width: calc(100% - 64px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      line-height:1.25;
     }
 
-    .station .meta{position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--muted);z-index:1;}
-    .station .pill{position:absolute;left:10px;bottom:30px;font-size:12px;padding:2px 8px;border-radius:8px;z-index:1;max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .station.free .pill{color:#98ffa7;border-color:#2b3;color:var(--ok)}
-    .station.busy .pill{border-color:#2a3a70; box-shadow: 0 0 0 1px rgba(122,162,247,0.35) inset; color:var(--accent2);}
+    .station .meta{
+      position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--muted);z-index:1;
+    }
+
+    .station .pill{
+      position:absolute;left:10px;bottom:30px;font-size:12px;padding:2px 8px;border-radius:8px;z-index:1;
+      max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      background:var(--pill-bg); color:var(--pill-text); border:1px solid var(--pill-border);
+    }
+    /* Estados con alto contraste (día y noche) */
+    .station.free .pill{ background:var(--pill-free-bg); color:var(--pill-free-text); border-color:color-mix(in oklab, var(--pill-free-text) 35%, #ffffff 0%); }
+    .station.busy .pill{ background:var(--pill-busy-bg); color:var(--pill-busy-text); border-color:color-mix(in oklab, var(--pill-busy-text) 35%, #ffffff 0%); }
 
     .station.ws-target{outline:2px solid var(--accent);box-shadow:0 0 12px #25d07c55;}
 
     .toast{position:fixed;right:16px;bottom:16px;background:var(--card);border:1px solid var(--border);padding:10px 12px;border-radius:12px;opacity:.97}
 
-    select.pill{background:var(--card);border:1px solid var(--border);color:var(--muted);padding:6px 10px;border-radius:999px;outline:none}
+    select.pill{background:var(--pill-bg);border:1px solid var(--pill-border);color:var(--pill-text);padding:6px 10px;border-radius:999px;outline:none}
 
     .station .avatar{
       position:absolute;right:10px;top:8px;width:44px;height:44px;border-radius:9999px;border:1px solid var(--border);object-fit:cover;display:none;background:#0e1524
@@ -76,17 +122,18 @@
     /* Mantener separación del nombre respecto al avatar cuando está ocupado */
     .station.busy .name{padding-right:80px}
 
-    /* Login bottom-right (y un poco más hacia adentro si hay avatar) */
+    /* ===== Login tag absolutamente en la esquina inferior derecha ===== */
     .station .login-tag{
       position:absolute;left:auto;right:10px;top:auto;bottom:10px;
       font-size:12px;padding:2px 8px;border-radius:8px;border:1px solid var(--border);
-      background:transparent;color:var(--accent2);cursor:pointer;display:none;z-index:3;
+      background:var(--pill-bg);color:var(--accent2);cursor:pointer;display:none;z-index:3;
       pointer-events:auto;max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis
     }
     .station.busy .login-tag{display:inline-block}
     .station.free .login-tag{display:none}
     .station .login-tag:hover{filter:brightness(1.12)}
-    .station.busy .login-tag{ right:56px; }  /* despega del avatar */
+    /* Eliminamos el offset que lo alejaba del borde derecho; ahora SIEMPRE bottom-right */
+    /* (no usar right:56px) */
 
     /* Neon + asignación reciente */
     @keyframes flashPop{
@@ -106,18 +153,14 @@
       box-shadow:0 0 0 2px rgba(122,162,247,0.6),0 0 22px rgba(122,162,247,0.55),0 0 48px rgba(122,162,247,0.40) !important
     }
 
-    /* Anti-overflow y transparencias suaves */
+    /* Anti-overflow */
     *,*::before,*::after{ box-sizing:border-box; }
     html,body{ max-width:100%; overflow-x:hidden; }
     .wrap{ max-width:100%; width:100%; }
-    .sides{ grid-template-columns:1fr 1fr; column-gap:12px; }
-    .grid{ gap:12px; }
-    .line{ padding:10px; background-color: color-mix(in oklab, var(--panel) 85%, transparent); }
-    .station{ background-color: color-mix(in oklab, var(--card) 85%, transparent); backdrop-filter: saturate(110%) blur(0.5px); }
+    .grid{ gap:12px; overflow-x:visible; }
+    .line{ padding:10px; overflow-x:visible; }
 
     :root{ --station-min: 260px; }
-    .line{ overflow-x: visible; }
-    .grid{ overflow-x: visible; }
   </style>
 </head>
 
@@ -134,15 +177,11 @@
       <div class="group">
         <input id="badge" class="scan-in" placeholder="Scan badge and press Enter" autofocus />
         <button id="openLink" class="btn">Open FCLM</button>
-
-        <!-- Strategy select inserts after this button (unchanged) -->
-
+        <!-- Strategy select se inserta después -->
         <button id="help" class="btn">Bridge Help</button>
         <button id="csv" class="btn">Export CSV</button>
         <button id="slack" class="btn">Copy Slack</button>
         <button id="reset" class="btn">Reset</button>
-
-        <!-- NEW: Theme toggle -->
         <button id="themeToggle" class="btn" title="Toggle Day/Night">Theme: Night</button>
       </div>
     </div>
@@ -151,11 +190,10 @@
       <div class="line" data-line="1"><h3>Line 1</h3><div class="rows"><div class="stations-row left"></div><div class="stations-row right"></div></div></div>
       <div class="line" data-line="2"><h3>Line 2</h3><div class="rows"><div class="stations-row left"></div><div class="stations-row right"></div></div></div>
       <div class="line" data-line="3"><h3>Line 3</h3><div class="rows"><div class="stations-row left"></div><div class="stations-row right"></div></div></div>
-      <!-- Line 4 & 5 pueden estar fuera del grid; se mantienen tal cual -->
     </div>
   </div>
 
-  <!-- Sección adicional tal como la tenías -->
+  <!-- Lines extra fuera del grid (como tenías) -->
   <div class="line" data-line="4"><h3>Line 4 — Problem Solvers</h3>
     <div class="rows">
       <div class="stations-row left"></div>
@@ -202,7 +240,6 @@
 
   const LINE_ROW_COUNTS = {"1": 10, "2": 10, "3": 8, "4": 8, "5": 8};
 
-  // Build left/right station sets per line from LAYOUT pairs
   const LEFT_BY_LINE  = {
     "1": new Set((LAYOUT["1"]||[]).map(p=>p[0])),
     "2": new Set((LAYOUT["2"]||[]).map(p=>p[0])),
@@ -224,9 +261,7 @@
     const btn = document.getElementById('themeToggle');
     if(btn) btn.textContent = 'Theme: ' + (v==='day' ? 'Day' : 'Night');
   }
-  // init theme
   setTheme(getTheme());
-  // wire toggle
   window.addEventListener('DOMContentLoaded', () => {
     const tbtn = document.getElementById('themeToggle');
     if(tbtn){ tbtn.addEventListener('click', () => setTheme(getTheme()==='day' ? 'night' : 'day')); }
@@ -243,7 +278,6 @@
   let pendingScan = null;
   let lastAssignedStation = null;
 
-  // Persisted preference to alternate sides per line (L/R)
   const SIDE_PREF_KEY = 'ws_side_pref_v1';
   let sidePref = (function(){ try { return JSON.parse(localStorage.getItem(SIDE_PREF_KEY)||'') || {1:'L',2:'L',3:'L'}; } catch { return {1:'L',2:'L',3:'L'}; } })();
   function saveSidePref(){ try { localStorage.setItem(SIDE_PREF_KEY, JSON.stringify(sidePref)); } catch {} }
@@ -300,17 +334,15 @@
     assignments = assignments.filter(a => STATIONS.includes(a.station));
     assignments.sort((a,b) => new Date(b.ts) - new Date(a.ts));
     const seen = new Set(), dedup=[];
-    for(const a of assignments){ if(seen.has(a.station)) continue; seen.add(a.station); dedup.push(a); }
+    for(const a of assignments){ if(seen.has(a.station)) continue; seen.add(a); dedup.push(a); }
     assignments = dedup; save(STORAGE.ASSIGNS, assignments);
   }
 
-  // ====== Focus & smooth scroll helpers (NEW) ======
+  // ====== Focus & smooth scroll helpers ======
   function focusAndScrollStation(st){
     const el = document.querySelector('.station[data-station="'+st+'"]');
     if(!el) return;
-    // Ensure focusable once, then focus
     if(!el.hasAttribute('tabindex')) el.setAttribute('tabindex','-1');
-    // Slight delay to ensure render/DOM updates before scrolling
     requestAnimationFrame(()=>{
       try{ el.scrollIntoView({ behavior:'smooth', block:'center', inline:'center' }); }catch{}
       try{ el.focus({ preventScroll:true }); }catch{}
@@ -372,7 +404,6 @@
       if(selectedStation===name){ selectedStation=null; toast('Target canceled'); updateSel(); return; }
       selectedStation=name; toast('Target: ' + name + (isBusy(name)?' (occupied — swap)':'')); updateSel();
       const a = whoAt(name); if(a) announce(name, pretty(a));
-      // NEW: when selecting a target, also bring into view
       focusAndScrollStation(name);
     });
 
@@ -397,7 +428,9 @@
       const st = el.dataset.station;
       el.querySelector('.name').textContent = st;
       const pill = el.querySelector('.pill');
-      const meta = el.querySelector('.meta'); const loginTag = el.querySelector('.login-tag'); const avatar = el.querySelector('.avatar');
+      const meta = el.querySelector('.meta');
+      const loginTag = el.querySelector('.login-tag');
+      const avatar = el.querySelector('.avatar');
       const a = whoAt(st);
       if(a){
         el.classList.remove('free'); el.classList.add('busy');
@@ -451,7 +484,6 @@
       lastAssignedStation = st;
       render();
       highlightStation(st);
-      // Al liberar, centra la estación para confirmar visualmente
       focusAndScrollStation(st);
 
       const el2=document.querySelector('.station[data-station="'+st+'"]');
@@ -483,10 +515,7 @@
     lastAssignedStation = st;
     render();
     highlightStation(st);
-
-    // NEW: En asignación, centra y enfoca la estación para que el empleado la vea
     focusAndScrollStation(st);
-
     announce(st, info?.name||info?.login||('Badge '+badge));
     selectedStation=null; updateSel();
   }
@@ -583,7 +612,7 @@
     obs.observe(grid, { attributes:true, subtree:true, attributeFilter:['class'] });
   })();
 
-  // ======= Strategies (unchanged) =======
+  // ======= Strategies =======
   const STRAT_KEY = 'ws_assign_strategy_v1';
   function getStrategy(){
     try{ return localStorage.getItem(STRAT_KEY) || 'smartL1Cascade'; }catch{ return 'smartL1Cascade'; }
@@ -598,7 +627,6 @@
   function pickFirst(list){ return list.length ? list[0] : null; }
   function pickRandom(list){ return list.length ? list[Math.floor(Math.random()*list.length)] : null; }
 
-  // Determine the side (L/R) of a station using the sets
   function stationSide(st){
     const ln = stationLine(st);
     if(!ln) return null;
