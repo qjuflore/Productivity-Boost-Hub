@@ -3,146 +3,124 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>WS Assigner — Identical + 2 rows per line (STEALTH v2025.9.2 EN-fix-spacing)</title>
+  <title>WS Assigner — Identical + 2 rows per line (STEALTH v2025.9.2 EN-fix-spacing + focus/scroll + theme)</title>
+
   <style>
+    /* ===== Theme tokens (Night = default) ===== */
     :root{
       --bg:#0b0f14; --panel:#0f1623; --card:#121a2a; --text:#e6edf7; --muted:#8aa2c0;
       --accent:#6be675; --accent2:#7aa2f7; --border:#1c2a40; --bad:#ff6b6b; --ok:#25d07c;
+      --shadow-ring:#25d07c77; --shadow-strong:#7aa2f777;
     }
+    /* Day mode overrides (high-contrast light) */
+    .theme-day{
+      --bg:#f7fbff; --panel:#f1f6ff; --card:#ffffff; --text:#0b1a2a; --muted:#335577;
+      --accent:#0ca678; --accent2:#2563eb; --border:#c9d9f0; --bad:#d72638; --ok:#0ca678;
+      --shadow-ring:#2563eb55; --shadow-strong:#2563eb88;
+    }
+
     html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,Segoe UI,Roboto,Inter,sans-serif;}
     .wrap{max-width:1200px;margin:24px auto;padding:0 16px;}
     .top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:14px;}
     .group{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
     .pill{background:var(--card);border:1px solid var(--border);border-radius:999px;padding:6px 10px;color:var(--muted);}
-    .scan-in{height:40px;min-width:320px;padding:0 12px;border-radius:12px;border:1px solid var(--border);background:#0e1524;color:var(--text);outline:none;}
-    .scan-in::placeholder{color:var(--muted);} .scan-in:focus{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent);} 
+    .scan-in{height:40px;min-width:320px;padding:0 12px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);outline:none;}
+    .scan-in::placeholder{color:var(--muted);} 
+    .scan-in:focus{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent);} 
     .btn{padding:9px 14px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer}
-    .btn:hover{filter:brightness(1.15);} 
+    .btn:hover{filter:brightness(1.12);} 
     .grid{display:grid;grid-template-columns:1fr;gap:16px;}
     .line{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:12px 12px;}
     .line h3{margin:0 0 12px 0;color:var(--muted);} 
     .rows{display:grid;grid-template-rows:repeat(2, auto);gap:10px;}
     .stations-row{display:grid;gap:10px;}
-    .station{padding-bottom:74px;position:relative;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 12px;min-height:96px;cursor:pointer;transition:.15s}
-    .station:hover{transform:translateY(-1px);} .station .name{font-weight:600;opacity:.95;display:block;margin-bottom:6px;position:relative;z-index:2;color:var(--ok)}
-    .station .meta{position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--muted);z-index:1;}
-    .station .pill{position:absolute;left:10px;bottom: 30px;font-size:12px;padding:2px 8px;border-radius:8px;z-index:1;max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .station.free .pill{color:#98ffa7;border-color:#2b3;color:var(--ok)} .station.busy .pill{color: var(--accent2);border-color: #2a3a70;color: var(--ok); box-shadow: 0 0 0 1px rgba(122,162,247,0.35) inset;}
-    .station.ws-target{outline:2px solid var(--accent);box-shadow:0 0 12px #25d07c55;}
-    .toast{position:fixed;right:16px;bottom:16px;background:#0b131f;border:1px solid var(--border);padding:10px 12px;border-radius:12px;opacity:.97}
-    select.pill{background:var(--card);border:1px solid var(--border);color:var(--muted);padding:6px 10px;border-radius:999px;outline:none}
-    .station .avatar{position:absolute;right:10px;top:8px;width:36px;height:36px;border-radius:9999px;border:1px solid var(--border);object-fit:cover;display:none;background:#0e1524}
-    .station.busy .avatar{display:block}
-    /* NEW: Keep a bit more distance between the photo and the station name */
-    .station.busy .name{padding-right:80px} /* increased gap so name never collides with avatar */
-/* Also add a gutter on the right for login/pill/meta when avatar is visible */
-$1/* Override: pequeño espacio solo para el login, que se vea completo sin irse debajo del avatar */
-.station.busy .login-tag{ right:56px; }
 
-    @keyframes neonPulse{from{box-shadow:0 0 0 2px rgba(122,162,247,0.45),0 0 14px rgba(122,162,247,0.35),0 0 28px rgba(122,162,247,0.25)}to{box-shadow:0 0 0 2px rgba(122,162,247,0.75),0 0 22px rgba(122,162,247,0.55),0 0 48px rgba(122,162,247,0.40)}}
-    .station.neon-last{outline:2px solid var(--accent2) !important;border-radius:12px;animation:neonPulse 1.5s ease-in-out infinite alternate;box-shadow:0 0 0 2px rgba(122,162,247,0.65),0 0 22px rgba(122,162,247,0.55),0 0 48px rgba(122,162,247,0.40) !important}
+    .station{
+      position:relative;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px 12px;
+      min-height:96px;
+      padding-bottom:74px;
+      cursor:pointer;transition:.15s;
+      outline:none;           /* we will draw our own focus ring */
+    }
+    .station:hover{transform:translateY(-1px);}
+    .station:focus{
+      box-shadow:0 0 0 3px var(--shadow-ring), 0 8px 24px -6px var(--shadow-strong);
+    }
+
+    .station .name{
+      font-weight:600;opacity:.95;display:block;margin-bottom:8px;position:relative;z-index:2;color:var(--ok);
+      border:1px solid var(--border);border-radius:8px;padding:2px 10px;background:transparent;
+      max-width: calc(100% - 64px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+
+    .station .meta{position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--muted);z-index:1;}
+    .station .pill{position:absolute;left:10px;bottom:30px;font-size:12px;padding:2px 8px;border-radius:8px;z-index:1;max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .station.free .pill{color:#98ffa7;border-color:#2b3;color:var(--ok)}
+    .station.busy .pill{border-color:#2a3a70; box-shadow: 0 0 0 1px rgba(122,162,247,0.35) inset; color:var(--accent2);}
+
+    .station.ws-target{outline:2px solid var(--accent);box-shadow:0 0 12px #25d07c55;}
+
+    .toast{position:fixed;right:16px;bottom:16px;background:var(--card);border:1px solid var(--border);padding:10px 12px;border-radius:12px;opacity:.97}
+
+    select.pill{background:var(--card);border:1px solid var(--border);color:var(--muted);padding:6px 10px;border-radius:999px;outline:none}
+
+    .station .avatar{
+      position:absolute;right:10px;top:8px;width:44px;height:44px;border-radius:9999px;border:1px solid var(--border);object-fit:cover;display:none;background:#0e1524
+    }
+    .station.busy .avatar{display:block}
+
+    /* Mantener separación del nombre respecto al avatar cuando está ocupado */
+    .station.busy .name{padding-right:80px}
+
+    /* Login bottom-right (y un poco más hacia adentro si hay avatar) */
+    .station .login-tag{
+      position:absolute;left:auto;right:10px;top:auto;bottom:10px;
+      font-size:12px;padding:2px 8px;border-radius:8px;border:1px solid var(--border);
+      background:transparent;color:var(--accent2);cursor:pointer;display:none;z-index:3;
+      pointer-events:auto;max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+    }
+    .station.busy .login-tag{display:inline-block}
+    .station.free .login-tag{display:none}
+    .station .login-tag:hover{filter:brightness(1.12)}
+    .station.busy .login-tag{ right:56px; }  /* despega del avatar */
+
+    /* Neon + asignación reciente */
     @keyframes flashPop{
-      0%   { transform: scale(0.98); box-shadow: 0 0 0 0 rgba(122,162,247,0.45); }
-      60%  { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(122,162,247,0.00); }
-      100% { transform: scale(1.00); box-shadow: 0 0 0 0 rgba(122,162,247,0.00); }
+      0%{ transform:scale(0.98); box-shadow:0 0 0 0 rgba(122,162,247,0.45) }
+      60%{ transform:scale(1.02); box-shadow:0 0 0 10px rgba(122,162,247,0.00) }
+      100%{ transform:scale(1.00); box-shadow:0 0 0 0 rgba(122,162,247,0.00) }
     }
     .station.just-assigned{ animation: flashPop 700ms ease-out; }
+
     @keyframes neonPulseBlueStrong{
       0%{box-shadow:0 0 0 2px rgba(122,162,247,0.5),0 0 16px rgba(122,162,247,0.45),0 0 32px rgba(122,162,247,0.35)}
       100%{box-shadow:0 0 0 3px rgba(122,162,247,0.8),0 0 26px rgba(122,162,247,0.65),0 0 58px rgba(122,162,247,0.50)}
     }
-    .station.neon-last{outline:2px solid var(--accent2) !important;border-radius:12px;animation:neonPulseBlueStrong 1.4s ease-in-out infinite alternate !important;box-shadow:0 0 0 2px rgba(122,162,247,0.6),0 0 22px rgba(122,162,247,0.55),0 0 48px rgba(122,162,247,0.40) !important}
-    .station .login-tag{position:absolute;left:10px;bottom: 56px;font-size:12px;padding:2px 8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--accent2);cursor:pointer;display:none;z-index:3;pointer-events:auto;max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .station.busy .login-tag{display:inline-block}
-    .station.free .login-tag{display:none}
-    .station .login-tag:hover{filter:brightness(1.15)}
-  /* Capsule style for station name (keeps consistent spacing like login/login-tag) */
-.station .name{
-  display:inline-block;
-  border:1px solid var(--border);
-  border-radius:8px;
-  padding:2px 10px; /* tag look */
-  background:transparent;
-  margin-bottom:8px;
-  max-width: calc(100% - 64px); /* leaves room for avatar on the right */
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-/* Ensure full station name is visible (wrap instead of ellipsis) */
-.station .name{
-  white-space: normal;      /* allow multiple lines */
-  overflow: visible;        /* don't hide text */
-  text-overflow: clip;      /* no ellipsis */
-  display: block;           /* block for full-width wrapping */
-  word-break: break-word;   /* break long tokens if needed */
-  overflow-wrap: anywhere;  /* wrap generously */
-}
-:root{ --station-min: 260px; }
-.wrap{ max-width:100%; width:100%; }
-.line{ overflow-x: visible; }
-.grid{ overflow-x: visible; }
-/* OVERRIDE: keep station name on a single line and use extra width */
-.station .name{ white-space: nowrap; overflow: visible; text-overflow: clip; max-width: calc(100% - 64px); }
-</style>
+    .station.neon-last{
+      outline:2px solid var(--accent2) !important;border-radius:12px;
+      animation:neonPulseBlueStrong 1.4s ease-in-out infinite alternate !important;
+      box-shadow:0 0 0 2px rgba(122,162,247,0.6),0 0 22px rgba(122,162,247,0.55),0 0 48px rgba(122,162,247,0.40) !important
+    }
 
-<style id="onepass-overrides-v2025_09_02j">
-  /* General anti-overflow */
-  *,*::before,*::after{ box-sizing:border-box; }
-  html,body{ max-width:100%; overflow-x:hidden; margin:0; }
+    /* Anti-overflow y transparencias suaves */
+    *,*::before,*::after{ box-sizing:border-box; }
+    html,body{ max-width:100%; overflow-x:hidden; }
+    .wrap{ max-width:100%; width:100%; }
+    .sides{ grid-template-columns:1fr 1fr; column-gap:12px; }
+    .grid{ gap:12px; }
+    .line{ padding:10px; background-color: color-mix(in oklab, var(--panel) 85%, transparent); }
+    .station{ background-color: color-mix(in oklab, var(--card) 85%, transparent); backdrop-filter: saturate(110%) blur(0.5px); }
 
-  /* Keep layout widths sane */
-  .wrap{ max-width:100% !important; width:100% !important; }
-  .sides{ grid-template-columns:1fr 1fr !important; column-gap:12px; }
-  .grid{ gap:12px !important; }
-  .line{ padding:10px !important; }
-
-  /* Station name: ALWAYS horizontal single line in ALL states */
-  .station .name,
-  .station.assigned .name,
-  .station.occupied .name,
-  .station.in-use .name,
-  .station.just-assigned .name {
-    writing-mode: horizontal-tb !important;
-    text-orientation: mixed !important;
-    transform: none !important;
-    display: block !important;
-    max-width: 100% !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    line-height: 1.15 !important;
-    position: relative;
-    z-index: 3 !important;
-    padding-right: 64px !important; /* reserve for avatar */
-  }
-
-  /* Login bottom-right */
-  .station{ position: relative; }
-  .station .login-tag{
-    position: absolute !important;
-    left: auto !important;
-    right: 10px !important;
-    top: auto !important;
-    bottom: 10px !important;
-  }
-
-  /* Avatar slightly larger */
-  .station .avatar{
-    width: 44px !important;
-    height: 44px !important;
-  }
-
-  /* Make backgrounds more transparent */
-  .station{
-    background-color: rgba(15, 22, 35, 0.55) !important; /* softer card */
-    backdrop-filter: saturate(110%) blur(0.5px);
-  }
-  .line{
-    background-color: rgba(15, 22, 35, 0.35) !important; /* lighter panel */
-  }
-</style>
+    :root{ --station-min: 260px; }
+    .line{ overflow-x: visible; }
+    .grid{ overflow-x: visible; }
+  </style>
 </head>
+
 <body>
   <div class="wrap">
     <div class="top">
@@ -156,10 +134,16 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
       <div class="group">
         <input id="badge" class="scan-in" placeholder="Scan badge and press Enter" autofocus />
         <button id="openLink" class="btn">Open FCLM</button>
+
+        <!-- Strategy select inserts after this button (unchanged) -->
+
         <button id="help" class="btn">Bridge Help</button>
         <button id="csv" class="btn">Export CSV</button>
         <button id="slack" class="btn">Copy Slack</button>
         <button id="reset" class="btn">Reset</button>
+
+        <!-- NEW: Theme toggle -->
+        <button id="themeToggle" class="btn" title="Toggle Day/Night">Theme: Night</button>
       </div>
     </div>
 
@@ -167,21 +151,23 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
       <div class="line" data-line="1"><h3>Line 1</h3><div class="rows"><div class="stations-row left"></div><div class="stations-row right"></div></div></div>
       <div class="line" data-line="2"><h3>Line 2</h3><div class="rows"><div class="stations-row left"></div><div class="stations-row right"></div></div></div>
       <div class="line" data-line="3"><h3>Line 3</h3><div class="rows"><div class="stations-row left"></div><div class="stations-row right"></div></div></div>
+      <!-- Line 4 & 5 pueden estar fuera del grid; se mantienen tal cual -->
     </div>
   </div>
-      <div class="line" data-line="4"><h3>Line 4 — Problem Solvers</h3>
-        <div class="rows">
-          <div class="stations-row left"></div>
-          <div class="stations-row right"></div>
-        </div>
-      </div>
-      <div class="line" data-line="5"><h3>Line 5 — Indirects</h3>
-        <div class="rows">
-          <div class="stations-row left"></div>
-          <div class="stations-row right"></div>
-        </div>
-      </div>
 
+  <!-- Sección adicional tal como la tenías -->
+  <div class="line" data-line="4"><h3>Line 4 — Problem Solvers</h3>
+    <div class="rows">
+      <div class="stations-row left"></div>
+      <div class="stations-row right"></div>
+    </div>
+  </div>
+  <div class="line" data-line="5"><h3>Line 5 — Indirects</h3>
+    <div class="rows">
+      <div class="stations-row left"></div>
+      <div class="stations-row right"></div>
+    </div>
+  </div>
 
   <div id="toast" class="toast" style="display:none"></div>
 
@@ -199,8 +185,8 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
           ["WS 1-18", "WS 1-17"], ["WS 1-20", "WS 1-19"]],
     "4": [['PS 2', 'PS 1'], ['PS 4', 'PS 3'], ['PS 6', 'PS 5'], ['PS 8', 'PS 7'], ['PS 10', 'PS 9'], ['PS 12', 'PS 11'], ['PS 14', 'PS 13'], ['PS 16', 'PS 15']],
     "5": [['Indirect 2', 'Indirect 1'], ['Indirect 4', 'Indirect 3'], ['Indirect 6', 'Indirect 5'], ['Indirect 8', 'Indirect 7'], ['Indirect 10', 'Indirect 9'], ['Indirect 12', 'Indirect 11'], ['Indirect 14', 'Indirect 13'], ['Indirect 16', 'Indirect 15']]
-  
   };
+
   const STATIONS = [
     "WS 1-2","WS 1-4","WS 1-6","WS 1-8","WS 1-10","WS 1-12","WS 1-14","WS 1-16","WS 1-18","WS 1-20",
     "WS 1-1","WS 1-3","WS 1-5","WS 1-7","WS 1-9","WS 1-11","WS 1-13","WS 1-15","WS 1-17","WS 1-19",
@@ -213,7 +199,9 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
     "Indirect 2", "Indirect 4", "Indirect 6", "Indirect 8", "Indirect 10", "Indirect 12", "Indirect 14", "Indirect 16",
     "Indirect 1", "Indirect 3", "Indirect 5", "Indirect 7", "Indirect 9", "Indirect 11", "Indirect 13", "Indirect 15"
   ];
+
   const LINE_ROW_COUNTS = {"1": 10, "2": 10, "3": 8, "4": 8, "5": 8};
+
   // Build left/right station sets per line from LAYOUT pairs
   const LEFT_BY_LINE  = {
     "1": new Set((LAYOUT["1"]||[]).map(p=>p[0])),
@@ -226,7 +214,23 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
     "3": new Set((LAYOUT["3"]||[]).map(p=>p[1])),
   };
 
-
+  // ======= Theme toggle (persist) =======
+  const THEME_KEY = 'ws_theme_pref_v1';
+  function getTheme(){ try { return localStorage.getItem(THEME_KEY) || 'night'; } catch { return 'night'; } }
+  function setTheme(v){
+    try { localStorage.setItem(THEME_KEY, v); } catch {}
+    const root = document.documentElement;
+    if(v==='day'){ root.classList.add('theme-day'); } else { root.classList.remove('theme-day'); }
+    const btn = document.getElementById('themeToggle');
+    if(btn) btn.textContent = 'Theme: ' + (v==='day' ? 'Day' : 'Night');
+  }
+  // init theme
+  setTheme(getTheme());
+  // wire toggle
+  window.addEventListener('DOMContentLoaded', () => {
+    const tbtn = document.getElementById('themeToggle');
+    if(tbtn){ tbtn.addEventListener('click', () => setTheme(getTheme()==='day' ? 'night' : 'day')); }
+  });
 
   // ======= State =======
   const STORAGE = { ASSIGNS: 'ws_assignments_identical_2rows_v1', CACHE: 'ws_emp_cache_identical_2rows_v1' };
@@ -239,12 +243,12 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
   let pendingScan = null;
   let lastAssignedStation = null;
 
-  
   // Persisted preference to alternate sides per line (L/R)
   const SIDE_PREF_KEY = 'ws_side_pref_v1';
   let sidePref = (function(){ try { return JSON.parse(localStorage.getItem(SIDE_PREF_KEY)||'') || {1:'L',2:'L',3:'L'}; } catch { return {1:'L',2:'L',3:'L'}; } })();
   function saveSidePref(){ try { localStorage.setItem(SIDE_PREF_KEY, JSON.stringify(sidePref)); } catch {} }
-// ======= STEALTH WINDOW =======
+
+  // ======= STEALTH WINDOW =======
   let FCLM_WIN = null;
   function offscreenXY(){
     let L = (screen && typeof screen.availWidth==='number') ? (screen.availWidth + 200) : 99999;
@@ -300,6 +304,19 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
     assignments = dedup; save(STORAGE.ASSIGNS, assignments);
   }
 
+  // ====== Focus & smooth scroll helpers (NEW) ======
+  function focusAndScrollStation(st){
+    const el = document.querySelector('.station[data-station="'+st+'"]');
+    if(!el) return;
+    // Ensure focusable once, then focus
+    if(!el.hasAttribute('tabindex')) el.setAttribute('tabindex','-1');
+    // Slight delay to ensure render/DOM updates before scrolling
+    requestAnimationFrame(()=>{
+      try{ el.scrollIntoView({ behavior:'smooth', block:'center', inline:'center' }); }catch{}
+      try{ el.focus({ preventScroll:true }); }catch{}
+    });
+  }
+
   function buildGrid(){
     Object.keys(LAYOUT).sort((a,b)=>Number(a)-Number(b)).forEach(line => {
       const leftNames  = (LAYOUT[line]||[]).map(p=>p[0]);
@@ -315,12 +332,14 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
       leftRow.innerHTML = ''; rightRow.innerHTML='';
       for(const name of leftNames){
         const el = document.createElement('div');
-        el.className = 'station'; el.dataset.station = name; el.innerHTML = '<div class="name"></div><img class="avatar" alt=""><span class="pill"></span><span class="meta"></span><span class="login-tag" title="Click to copy login"></span>';
+        el.className = 'station'; el.dataset.station = name; el.setAttribute('tabindex','-1');
+        el.innerHTML = '<div class="name"></div><img class="avatar" alt=""><span class="pill"></span><span class="meta"></span><span class="login-tag" title="Click to copy login"></span>';
         leftRow.appendChild(el); bindStation(el, name);
       }
       for(const name of rightNames){
         const el = document.createElement('div');
-        el.className = 'station'; el.dataset.station = name; el.innerHTML = '<div class="name"></div><img class="avatar" alt=""><span class="pill"></span><span class="meta"></span><span class="login-tag" title="Click to copy login"></span>';
+        el.className = 'station'; el.dataset.station = name; el.setAttribute('tabindex','-1');
+        el.innerHTML = '<div class="name"></div><img class="avatar" alt=""><span class="pill"></span><span class="meta"></span><span class="login-tag" title="Click to copy login"></span>';
         rightRow.appendChild(el); bindStation(el, name);
       }
     });
@@ -343,7 +362,9 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
     if(tag){
       tag.addEventListener('click', (ev)=>{ ev.stopPropagation(); ev.preventDefault();
         const a = whoAt(name);
-        let val = (a && a.login) ? a.login : (tag && tag.textContent ? tag.textContent : ''); if(!val){ toast('No login'); return; } navigator.clipboard.writeText(String(val)).then(()=>toast('Copied: ' + val)).catch(()=>toast('Could not copy'));
+        let val = (a && a.login) ? a.login : (tag && tag.textContent ? tag.textContent : '');
+        if(!val){ toast('No login'); return; }
+        navigator.clipboard.writeText(String(val)).then(()=>toast('Copied: ' + val)).catch(()=>toast('Could not copy'));
       });
     }
 
@@ -351,7 +372,10 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
       if(selectedStation===name){ selectedStation=null; toast('Target canceled'); updateSel(); return; }
       selectedStation=name; toast('Target: ' + name + (isBusy(name)?' (occupied — swap)':'')); updateSel();
       const a = whoAt(name); if(a) announce(name, pretty(a));
+      // NEW: when selecting a target, also bring into view
+      focusAndScrollStation(name);
     });
+
     el.addEventListener('contextmenu', (ev) => { ev.preventDefault(); freeStation(name); });
   }
 
@@ -427,6 +451,9 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
       lastAssignedStation = st;
       render();
       highlightStation(st);
+      // Al liberar, centra la estación para confirmar visualmente
+      focusAndScrollStation(st);
+
       const el2=document.querySelector('.station[data-station="'+st+'"]');
       if(el2){ el2.click(); const b=document.getElementById('badge'); if(b){ b.value=''; b.focus(); } }
       toast('Freed ' + st);
@@ -456,6 +483,10 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
     lastAssignedStation = st;
     render();
     highlightStation(st);
+
+    // NEW: En asignación, centra y enfoca la estación para que el empleado la vea
+    focusAndScrollStation(st);
+
     announce(st, info?.name||info?.login||('Badge '+badge));
     selectedStation=null; updateSel();
   }
@@ -512,11 +543,16 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
     const blob = new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href=url; a.download='ws-assignments.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(url), 2000);
   });
+
   document.getElementById('slack').addEventListener('click', () => {
     const lines = assignments.slice().reverse().map(a=>`• ${a.station} — ${pretty(a)}`);
     navigator.clipboard.writeText(lines.join('\n')).then(()=>toast('Copied to clipboard for Slack'));
   });
-  document.getElementById('reset').addEventListener('click', () => { if(confirm('Reset all assignments?')){ assignments=[]; save(STORAGE.ASSIGNS, assignments); render(); } });
+
+  document.getElementById('reset').addEventListener('click', () => {
+    if(confirm('Reset all assignments?')){ assignments=[]; save(STORAGE.ASSIGNS, assignments); render(); }
+  });
+
   document.getElementById('help').addEventListener('click', () => {
     alert('Install Tampermonkey and then the Bridge:\n1) Open the .user.js I gave you\n2) Accept the install\n3) Scan the badge here; FCLM opens in the background and the Bridge sends data back for auto-assign.');
   });
@@ -547,7 +583,7 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
     obs.observe(grid, { attributes:true, subtree:true, attributeFilter:['class'] });
   })();
 
-  // ======= Strategies =======
+  // ======= Strategies (unchanged) =======
   const STRAT_KEY = 'ws_assign_strategy_v1';
   function getStrategy(){
     try{ return localStorage.getItem(STRAT_KEY) || 'smartL1Cascade'; }catch{ return 'smartL1Cascade'; }
@@ -562,7 +598,6 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
   function pickFirst(list){ return list.length ? list[0] : null; }
   function pickRandom(list){ return list.length ? list[Math.floor(Math.random()*list.length)] : null; }
 
-  
   // Determine the side (L/R) of a station using the sets
   function stationSide(st){
     const ln = stationLine(st);
@@ -588,7 +623,7 @@ $1/* Override: pequeño espacio solo para el login, que se vea completo sin irse
     }
     return pick || null;
   }
-function totalsByLine(){
+  function totalsByLine(){
     const lines = Array.from(new Set(STATIONS.map(stationLine).filter(Boolean)));
     const totals = {};
     for(const ln of lines){
@@ -661,6 +696,7 @@ function totalsByLine(){
     }
   };
 
+  // ===== Boot =====
   buildGrid(); scrub(); render();
   window.handleScanToken = handleScanToken;
 })();
