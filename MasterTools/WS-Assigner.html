@@ -3,21 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>WS Assigner — Identical + 2 rows per line (STEALTH v2025.9.2 EN — focus/scroll + theme + high-contrast day)</title>
+  <title>WS Assigner — Identical + 2 rows per line (STEALTH v2025.9.2 EN — focus/scroll + theme + high-contrast day + scan-keep-focus)</title>
 
   <style>
     /* ===== Theme tokens (Night = default) ===== */
     :root{
       --bg:#0b0f14; --panel:#0f1623; --card:#121a2a; --text:#e6edf7; --muted:#8aa2c0;
-      --accent:#6be675; --accent2:#7aa2f7; --border:#1c2a40; --bad:#ff6b6b; --ok:#25d07c;
+      --accent:#0ca678; --accent2:#7aa2f7; --border:#1c2a40; --bad:#ff6b6b; --ok:#25d07c;
       --shadow-ring:#25d07c77; --shadow-strong:#7aa2f777;
 
-      /* subtle surfaces for chips/pills */
       --pill-bg: color-mix(in oklab, var(--card) 92%, transparent);
       --pill-border: var(--border);
       --pill-text: var(--muted);
       --pill-free-bg: color-mix(in oklab, #16a34a 12%, #ffffff 0%);
-      --pill-free-text: #34d399; /* night can be brighter */
+      --pill-free-text: #34d399;
       --pill-busy-bg: color-mix(in oklab, #60a5fa 12%, #ffffff 0%);
       --pill-busy-text: #93c5fd;
       --name-color: var(--ok);
@@ -29,18 +28,15 @@
       --accent:#0a8a63; --accent2:#1e3a8a; --border:#9fb8d6; --bad:#c81e1e; --ok:#0a7a43;
       --shadow-ring:#1e3a8a55; --shadow-strong:#1e3a8a66;
 
-      /* pills y estados con fondo tenue para contraste AA */
       --pill-bg:#f3f7ff;
       --pill-border:#c9d9f0;
       --pill-text:#1b3550;
 
-      /* “Free” (verde) y “Busy” (azul) con textos oscuros legibles */
-      --pill-free-bg:#e8f6ee;     /* verde muy tenue */
-      --pill-free-text:#0a7a43;   /* verde oscuro */
-      --pill-busy-bg:#eaf1ff;     /* azul muy tenue */
-      --pill-busy-text:#1e3a8a;   /* azul oscuro */
+      --pill-free-bg:#e8f6ee;
+      --pill-free-text:#0a7a43;
+      --pill-busy-bg:#eaf1ff;
+      --pill-busy-text:#1e3a8a;
 
-      /* nombre de estación en color oscuro (no amarillo) */
       --name-color:#0a7a43;
     }
 
@@ -83,7 +79,7 @@
       padding:12px 12px;min-height:96px;padding-bottom:74px;cursor:pointer;transition:.15s;
       background-color: color-mix(in oklab, var(--card) 90%, transparent);
       backdrop-filter: saturate(110%) blur(0.5px);
-      outline:none; /* custom focus */
+      outline:none;
     }
     .station:hover{transform:translateY(-1px);}
     .station:focus{box-shadow:0 0 0 3px var(--shadow-ring), 0 8px 24px -6px var(--shadow-strong);}
@@ -104,7 +100,6 @@
       max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
       background:var(--pill-bg); color:var(--pill-text); border:1px solid var(--pill-border);
     }
-    /* Estados con alto contraste (día y noche) */
     .station.free .pill{ background:var(--pill-free-bg); color:var(--pill-free-text); border-color:color-mix(in oklab, var(--pill-free-text) 35%, #ffffff 0%); }
     .station.busy .pill{ background:var(--pill-busy-bg); color:var(--pill-busy-text); border-color:color-mix(in oklab, var(--pill-busy-text) 35%, #ffffff 0%); }
 
@@ -118,11 +113,9 @@
       position:absolute;right:10px;top:8px;width:44px;height:44px;border-radius:9999px;border:1px solid var(--border);object-fit:cover;display:none;background:#0e1524
     }
     .station.busy .avatar{display:block}
-
-    /* Mantener separación del nombre respecto al avatar cuando está ocupado */
     .station.busy .name{padding-right:80px}
 
-    /* ===== Login tag absolutamente en la esquina inferior derecha ===== */
+    /* Login bien en la esquina inferior derecha */
     .station .login-tag{
       position:absolute;left:auto;right:10px;top:auto;bottom:10px;
       font-size:12px;padding:2px 8px;border-radius:8px;border:1px solid var(--border);
@@ -130,12 +123,7 @@
       pointer-events:auto;max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis
     }
     .station.busy .login-tag{display:inline-block}
-    .station.free .login-tag{display:none}
-    .station .login-tag:hover{filter:brightness(1.12)}
-    /* Eliminamos el offset que lo alejaba del borde derecho; ahora SIEMPRE bottom-right */
-    /* (no usar right:56px) */
 
-    /* Neon + asignación reciente */
     @keyframes flashPop{
       0%{ transform:scale(0.98); box-shadow:0 0 0 0 rgba(122,162,247,0.45) }
       60%{ transform:scale(1.02); box-shadow:0 0 0 10px rgba(122,162,247,0.00) }
@@ -153,13 +141,11 @@
       box-shadow:0 0 0 2px rgba(122,162,247,0.6),0 0 22px rgba(122,162,247,0.55),0 0 48px rgba(122,162,247,0.40) !important
     }
 
-    /* Anti-overflow */
     *,*::before,*::after{ box-sizing:border-box; }
     html,body{ max-width:100%; overflow-x:hidden; }
     .wrap{ max-width:100%; width:100%; }
     .grid{ gap:12px; overflow-x:visible; }
     .line{ padding:10px; overflow-x:visible; }
-
     :root{ --station-min: 260px; }
   </style>
 </head>
@@ -240,16 +226,8 @@
 
   const LINE_ROW_COUNTS = {"1": 10, "2": 10, "3": 8, "4": 8, "5": 8};
 
-  const LEFT_BY_LINE  = {
-    "1": new Set((LAYOUT["1"]||[]).map(p=>p[0])),
-    "2": new Set((LAYOUT["2"]||[]).map(p=>p[0])),
-    "3": new Set((LAYOUT["3"]||[]).map(p=>p[0])),
-  };
-  const RIGHT_BY_LINE = {
-    "1": new Set((LAYOUT["1"]||[]).map(p=>p[1])),
-    "2": new Set((LAYOUT["2"]||[]).map(p=>p[1])),
-    "3": new Set((LAYOUT["3"]||[]).map(p=>p[1])),
-  };
+  const LEFT_BY_LINE  = { "1": new Set((LAYOUT["1"]||[]).map(p=>p[0])), "2": new Set((LAYOUT["2"]||[]).map(p=>p[0])), "3": new Set((LAYOUT["3"]||[]).map(p=>p[0])) };
+  const RIGHT_BY_LINE = { "1": new Set((LAYOUT["1"]||[]).map(p=>p[1])), "2": new Set((LAYOUT["2"]||[]).map(p=>p[1])), "3": new Set((LAYOUT["3"]||[]).map(p=>p[1])) };
 
   // ======= Theme toggle (persist) =======
   const THEME_KEY = 'ws_theme_pref_v1';
@@ -334,19 +312,21 @@
     assignments = assignments.filter(a => STATIONS.includes(a.station));
     assignments.sort((a,b) => new Date(b.ts) - new Date(a.ts));
     const seen = new Set(), dedup=[];
-    for(const a of assignments){ if(seen.has(a.station)) continue; seen.add(a); dedup.push(a); }
+    for(const a of assignments){ if(seen.has(a.station)) continue; seen.add(a.station); dedup.push(a); }
     assignments = dedup; save(STORAGE.ASSIGNS, assignments);
   }
 
-  // ====== Focus & smooth scroll helpers ======
+  // ====== Focus helpers ======
+  function refocusBadge(delay=60){
+    setTimeout(()=>{ const b = document.getElementById('badge'); if(b){ try{ b.focus(); }catch{} } }, delay);
+  }
   function focusAndScrollStation(st){
     const el = document.querySelector('.station[data-station="'+st+'"]');
     if(!el) return;
-    if(!el.hasAttribute('tabindex')) el.setAttribute('tabindex','-1');
-    requestAnimationFrame(()=>{
-      try{ el.scrollIntoView({ behavior:'smooth', block:'center', inline:'center' }); }catch{}
-      try{ el.focus({ preventScroll:true }); }catch{}
-    });
+    // No cambiamos el foco “real”: solo scroll al centro
+    try{ el.scrollIntoView({ behavior:'smooth', block:'center', inline:'center' }); }catch{}
+    // Mantener flujo de escaneo
+    refocusBadge(220);
   }
 
   function buildGrid(){
@@ -401,10 +381,10 @@
     }
 
     el.addEventListener('click', () => {
-      if(selectedStation===name){ selectedStation=null; toast('Target canceled'); updateSel(); return; }
+      if(selectedStation===name){ selectedStation=null; toast('Target canceled'); updateSel(); refocusBadge(); return; }
       selectedStation=name; toast('Target: ' + name + (isBusy(name)?' (occupied — swap)':'')); updateSel();
       const a = whoAt(name); if(a) announce(name, pretty(a));
-      focusAndScrollStation(name);
+      focusAndScrollStation(name); // centra vista
     });
 
     el.addEventListener('contextmenu', (ev) => { ev.preventDefault(); freeStation(name); });
@@ -485,7 +465,7 @@
       render();
       highlightStation(st);
       focusAndScrollStation(st);
-
+      refocusBadge(); // <- seguir escaneando
       const el2=document.querySelector('.station[data-station="'+st+'"]');
       if(el2){ el2.click(); const b=document.getElementById('badge'); if(b){ b.value=''; b.focus(); } }
       toast('Freed ' + st);
@@ -504,11 +484,7 @@
       assignments[idx] = newcomer;
       assignments.unshift(moved);
     } else {
-      const rec = {
-        ts: now, badge,
-        name: info?.name||'', login: info?.login||'', emplId: info?.emplId||'', photo: info?.photo||'',
-        station: st
-      };
+      const rec = { ts: now, badge, name: info?.name||'', login: info?.login||'', emplId: info?.emplId||'', photo: info?.photo||'', station: st };
       assignments.unshift(rec);
     }
     save(STORAGE.ASSIGNS, assignments);
@@ -516,6 +492,7 @@
     render();
     highlightStation(st);
     focusAndScrollStation(st);
+    refocusBadge(); // <- seguir escaneando
     announce(st, info?.name||info?.login||('Badge '+badge));
     selectedStation=null; updateSel();
   }
@@ -543,6 +520,33 @@
   const $badge = document.getElementById('badge');
   $badge.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key==='Tab'){ e.preventDefault(); document.getElementById('openLink')?.click(); } });
 
+  // ======= Captura global de escaneo (fallback) =======
+  let scanBuf = '';
+  let scanTimer = null;
+  window.addEventListener('keydown', (e) => {
+    const tgt = e.target;
+    const isBadge = tgt && (tgt.id === 'badge');
+    if(isBadge) return; // el input ya gestiona el escaneo
+
+    // Sólo caracteres "normales" sin modifiers
+    if(e.key === 'Enter'){
+      if(scanBuf.length >= 3){ // umbral mínimo
+        const b = document.getElementById('badge');
+        if(b){
+          b.value = scanBuf;
+          document.getElementById('openLink')?.click();
+          refocusBadge();
+        }
+        scanBuf = '';
+        e.preventDefault();
+      }
+    }else if(e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey){
+      scanBuf += e.key;
+      if(scanTimer) clearTimeout(scanTimer);
+      scanTimer = setTimeout(()=>{ scanBuf=''; }, 500);
+    }
+  });
+
   window.addEventListener('message', (ev)=>{ try{
     const data = ev.data || {};
     if(data && data.type==='fclmEmployee'){
@@ -562,6 +566,7 @@
         const exists = assignments.some(a=>a.badge===data.badge) || (data.login && assignments.some(a=>a.login===data.login));
         if(!exists){ const t = selectTargetOrNext(); if(t) assignTo(t, data.badge||data.login||'', info); }
       }
+      refocusBadge(); // <- mantener flujo de escaneo tras recibir datos
       toast(`Data received: ${data.name||'—'} (${data.login||'—'})`);
     }
   }catch(e){ console.warn(e); } });
@@ -579,7 +584,7 @@
   });
 
   document.getElementById('reset').addEventListener('click', () => {
-    if(confirm('Reset all assignments?')){ assignments=[]; save(STORAGE.ASSIGNS, assignments); render(); }
+    if(confirm('Reset all assignments?')){ assignments=[]; save(STORAGE.ASSIGNS, assignments); render(); refocusBadge(); }
   });
 
   document.getElementById('help').addEventListener('click', () => {
@@ -591,16 +596,11 @@
     if(!v){ toast('Enter login or badge'); return; }
     requirePopupGesture();
     openFCLMFor(v);
+    // limpiar y enfocar para el siguiente escaneo
+    setTimeout(()=>{ const b=document.getElementById('badge'); if(b){ b.value=''; b.focus(); } }, 0);
   });
 
-  (function(){
-    const btn = document.getElementById('openLink');
-    const b = document.getElementById('badge');
-    if(btn && b){
-      btn.addEventListener('click', ()=>{ setTimeout(()=>{ b.value=''; b.focus(); }, 0); });
-    }
-  })();
-
+  // Cuando cambia el “último asignado”, retomamos foco en badge
   (function(){
     const grid = document.getElementById('grid');
     const b = document.getElementById('badge');
@@ -612,7 +612,7 @@
     obs.observe(grid, { attributes:true, subtree:true, attributeFilter:['class'] });
   })();
 
-  // ======= Strategies =======
+  // ======= Estrategias =======
   const STRAT_KEY = 'ws_assign_strategy_v1';
   function getStrategy(){
     try{ return localStorage.getItem(STRAT_KEY) || 'smartL1Cascade'; }catch{ return 'smartL1Cascade'; }
