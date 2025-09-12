@@ -10,9 +10,5 @@
   {
     "title": "HRV Report",
     "content": "💎 *HRV Problem Solve & WIP Report*\n_For each “[ ]”, enter a number and specify “totes” or “U-boats”._\n\n*1. Ready to Inject:* [ ]  \n↳ Move *U-boats to Decant* for reinjection; verify `dz-P-LIBRARY` routing\n\n*2. Needing Sorting:* [ ]\n\n*3. Ready to Stow (Q330):* [ ]\n\n*4. Ready to Stow (Q364):* [ ]\n\n*5. Ready to Stow (IB Dock):* [ ]\n\n*6. Problem Solve:* [ ]  \n↳ *IDRT →* `dz-P-DockPS`"
-  },
-  {
-    "title": "IDRT Report",
-    "content": "📊 *IDRT Report – FMC Hub & IB Rodeo*\n_Metrics overview for inventory flow alignment._\n\n🟩 *FMC Hub*  \n*Total Stow WIP:* ( )  \n– *Stow Mod Inventory:* ( ) ⚠️ _Key Metric_  \n– `dz-P`: ( )  \n– `dzg-VRET`: ( )\n\n🔄 *Transition to IB Rodeo*\n\n🟦 *IB Rodeo*  \n*Total Pending Stow:* ( ) ⚠️ _Key Metric_  \n– *Conveyor:* ( )  \n (Transfers to Drop Zone Prime once queued & IDRT’d.)  \n– *Drop Zone Prime:* ( )  \n (Keep aligned with FMC Hub Stow Mod inventory.)  \n– *Currently Being Stowed:* ( )  \n (In progress across stowers.)\n\n✅ *IDRT Items Completed*  \n– *Login:* ( ) *Total Units:* ( )\n– *Total IDRT Units This Shift:* ( )\n\n⚠ *Discrepancy between *Stow Mod Inventory* and *Drop Zone Prime* (~0.0k)*"
   }
 ]
