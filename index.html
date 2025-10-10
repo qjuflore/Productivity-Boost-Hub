@@ -42,7 +42,7 @@
 
   <div class="controls">
     <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
-    <button class="btn" onclick="loadReports()">↻ Refresh</button>
+    <button class="btn" id="syncBtn">↻ Sync</button>
     <div id="viewInfo">👁️ Total Views: Loading…</div>
   </div>
 
@@ -73,41 +73,11 @@
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
-  <!-- ===== PB Views (cliente) ===== -->
-  <!-- pega aquí O enlaza como archivo externo el bloque pb-views.js de arriba -->
-  <script>
-  /*!
-    PB Views (cliente) — v3 (inline)
-    *Si prefieres, guarda este bloque como pb-views.js y referencia con <script src="pb-views.js"></script>
-  */
-  (function (w) {
-    const BASE  = 'https://script.google.com/macros/s/AKfycbzrMg3MWq5YT53rNweaxuFa--9CMwoz4k1PDio8y8fbl-3hSb_fk_WWYPhPaDPKe90P3g/exec';
-    const TOKEN = '';
-    const POLL_MS = 10000;
-    const KEY_TOTAL = 'pb.views.total';
-    const P_TOOL = (id)=> `pb.views.tool.${String(id)}`;
-    const P_AREA = (id)=> `pb.views.area.${String(id)}`;
-    function q(params){ const u=new URLSearchParams(params||{}); if(TOKEN)u.append('token',TOKEN); u.append('t',Date.now().toString()); return u.toString(); }
-    async function api(op, params={}, opts={}){ const url=`${BASE}?${q({op,...params})}`; const res=await fetch(url,{method:'GET',keepalive:!!opts.keepalive}); if(!res.ok) throw new Error('fetch failed'); return res.json(); }
-    function get(key,opts){ return api('get',{key},opts); }
-    function incMulti(keys,n=1,opts){ const list=Array.isArray(keys)?keys.join(','):String(keys||''); return api('inc_multi',{keys:list,n:String(n)},opts); }
-    function counts(keys,opts){ const list=Array.isArray(keys)?keys.join(','):String(keys||''); return api('counts',{keys:list},opts); }
-    function setTotalUI(n){ const el=document.getElementById('viewInfo'); if(el && typeof n==='number') el.textContent=`👁️ Total Views: ${n.toLocaleString()}`; }
-    function setToolUI(id,n){ const span=document.querySelector(`.tool-views[data-id="${id}"]`); if(span && typeof n==='number') span.textContent=`👁️ ${n.toLocaleString()}`; }
-    function listToolIds(){ return Array.from(document.querySelectorAll('#masterGrid .card')).map(c=>c.dataset.id).filter(Boolean); }
-    w.PBViews = {
-      async bumpOnLoad(area='hub'){ try{ const resp=await incMulti([KEY_TOTAL,P_AREA(area)],1); const total=resp?.values?.[KEY_TOTAL]; if(typeof total==='number') setTotalUI(total);}catch(_){ } },
-      async loadToolBadges(){ const ids=listToolIds(); if(!ids.length) return; try{ const resp=await counts(ids.map(P_TOOL)); const vals=resp?.values||{}; ids.forEach(id=> setToolUI(id, Number(vals[P_TOOL(id)]||0))); }catch(_){ } },
-      bumpToolAndTotalOnOpen(id){ incMulti([P_TOOL(id),KEY_TOTAL],1,{keepalive:true}).catch(()=>{}); },
-      async pollAll(){ try{ const t=await get(KEY_TOTAL); if(typeof t?.value==='number') setTotalUI(t.value);}catch(_){ } try{ await this.loadToolBadges(); }catch(_){ } }
-    };
-  })(window);
-  </script>
+  <!-- Cliente de vistas -->
+  <!-- OJO: si prefieres inline, pega el bloque del archivo pb-views.js aquí; de lo contrario referencia el archivo: -->
+  <script src="pb-views.js"></script>
 
-  <!-- Tu script principal (si lo tienes) -->
-  <script src="script.js"></script>
-
-  <!-- Tabs -->
+  <!-- Tabs + UI básica -->
   <script>
     (function(){
       function setActiveTab(id){
@@ -119,17 +89,26 @@
                         || (t.textContent.includes('MasterTools') && id==='mastertools');
           t.classList.toggle('active', isTarget);
         });
-        try{ localStorage.setItem('pb.activeTab', id);
-          const u=new URL(location.href); u.searchParams.set('tab',id); u.hash='#'+id; history.replaceState(null,'',u);
+        try{
+          localStorage.setItem('pb.activeTab', id);
+          const u = new URL(location.href); u.searchParams.set('tab', id); u.hash = '#'+id; history.replaceState(null,'',u);
         }catch(e){}
       }
       window.showSection = (function(orig){ return function(id){ if(typeof orig==='function'){ try{ orig(id);}catch(e){} } setActiveTab(id); } })(window.showSection);
       const initialId = new URL(location.href).searchParams.get('tab') || (location.hash||'').slice(1) || localStorage.getItem('pb.activeTab') || (document.querySelector('.section.active')?.id) || 'reports';
       setActiveTab(initialId);
+
+      // Botones simples
+      const emojiBtn = document.getElementById('emojiToggle');
+      if (emojiBtn) emojiBtn.addEventListener('click', ()=>{
+        emojiBtn.textContent = emojiBtn.textContent.includes('ON') ? '😶 Emojis: OFF' : '😎 Emojis: ON';
+      });
+      const syncBtn = document.getElementById('syncBtn');
+      if (syncBtn) syncBtn.addEventListener('click', ()=> window.PBViews?.pollAll());
     })();
   </script>
 
-  <!-- MasterTools (render + hooks de conteo) -->
+  <!-- MasterTools (render + conteo) -->
   <script>
     const LS_FAVS='pb.master.favorites';
     const tools=[
@@ -139,6 +118,7 @@
     const getFavs=()=>{ try{return JSON.parse(localStorage.getItem(LS_FAVS)||'[]');}catch{return[];} };
     const setFavs=(arr)=>localStorage.setItem(LS_FAVS, JSON.stringify(arr));
     const isFav=(id)=>getFavs().includes(id);
+
     function toggleFav(id){ const s=new Set(getFavs()); s.has(id)?s.delete(id):s.add(id); setFavs([...s]); renderMasterTools(); }
 
     function renderMasterTools(){
@@ -166,7 +146,6 @@
         const open = card.querySelector('.tool-link');
         const send = ()=> window.PBViews?.bumpToolAndTotalOnOpen(t.id);
         open.addEventListener('pointerdown', send, {passive:true});
-        open.addEventListener('mousedown', send, {passive:true});
         wrap.appendChild(card);
       }
     }
