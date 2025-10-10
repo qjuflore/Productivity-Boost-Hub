@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,39 +7,27 @@
   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-      --card-bg: rgba(255, 255, 255, 0.05);
-      --border: rgba(255, 255, 255, 0.1);
-      --accent: #00fff7;
-      --accent-2: #9ef5ff;
-      --text: #e0f7fa;
-      --muted: #b7dfe6;
-      --button-bg: #00fff7;
-      --button-text: #000;
-      --button-glow: 0 0 10px #00fff7;
-      --radius: 14px;
-    }
-    * { box-sizing:border-box; }
-    body { margin:0; padding:2rem; font-family:'Orbitron',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; }
-    h1 { font-size:2.2rem; margin-bottom:2rem; color:var(--accent); text-shadow:0 0 5px #00fff7; }
-    .tabs { display:flex; gap:1rem; margin-bottom:1rem; flex-wrap:wrap; }
-    .tab { padding:.5rem 1rem; border-radius:10px; background:var(--card-bg); border:1px solid var(--border); cursor:pointer; }
-    .tab.active { background:var(--accent); color:#000; box-shadow:0 0 10px #00fff7; }
-    .controls { display:flex; gap:1rem; flex-wrap:wrap; align-items:center; margin-bottom:1rem; }
-    .btn { background:var(--button-bg); color:#000; padding:.5rem 1rem; border:none; border-radius:8px; font-weight:700; cursor:pointer; box-shadow:0 0 10px #00fff7; }
-    .section{ display:none; } .section.active{ display:block; }
-    .footer{ margin-top:auto; text-align:center; color:#aaa; }
-    .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:.8rem; }
-    .card{ border:1px solid var(--border); background:rgba(255,255,255,.05); border-radius:14px; padding:.9rem; display:flex; flex-direction:column; gap:.7rem; }
-    .card h3{ margin:0; font-size:1rem; color:var(--accent-2); }
-    .card p{ margin:0; color:var(--muted); font-size:.92rem; min-height:2.2em; }
-    .card .row{ display:flex; gap:.5rem; align-items:center; }
-    .tool-link{ background:var(--accent); color:#000!important; font-weight:900; border:none; box-shadow:0 0 10px #00fff7; padding:.5rem 1rem; border-radius:10px; }
-    .icon-btn{ background:transparent; border:1px solid var(--border); border-radius:10px; padding:.45rem .6rem; color:inherit; cursor:pointer; }
-    .tool-views{ margin-left:auto; font-size:.9rem; color:#b7dfe6; padding:.15rem .45rem; border:1px solid var(--border); border-radius:999px; background:rgba(255,255,255,.03); white-space:nowrap; }
-    #viewInfo{ font-size:1.05rem; user-select:none; padding:.4rem .7rem; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,.05); }
-    .search{ margin-bottom:1rem; padding:.7rem 1rem; width:100%; border-radius:10px; border:1px solid var(--border); background:rgba(255,255,255,.05); color:inherit; }
+    :root { --bg:linear-gradient(135deg,#0f2027,#203a43,#2c5364); --card-bg:rgba(255,255,255,.05); --border:rgba(255,255,255,.1); --accent:#00fff7; --accent-2:#9ef5ff; --text:#e0f7fa; --muted:#b7dfe6; --radius:14px; }
+    *{box-sizing:border-box}
+    body{margin:0;padding:2rem;font-family:'Orbitron',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+    h1{font-size:2.2rem;margin-bottom:2rem;color:var(--accent);text-shadow:0 0 5px #00fff7}
+    .tabs{display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
+    .tab{padding:.5rem 1rem;border-radius:10px;background:var(--card-bg);border:1px solid var(--border);cursor:pointer}
+    .tab.active{background:var(--accent);color:#000;box-shadow:0 0 10px #00fff7}
+    .controls{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center}
+    .btn{background:var(--accent);color:#000;padding:.5rem 1rem;border:none;border-radius:8px;font-weight:700;cursor:pointer;box-shadow:0 0 10px #00fff7}
+    .section{display:none}.section.active{display:block}
+    .search{margin-bottom:1rem;padding:.7rem 1rem;width:100%;border-radius:10px;border:1px solid var(--border);background:var(--card-bg);color:inherit}
+    #viewInfo{font-size:1.05rem;user-select:none;padding:.4rem .7rem;border:1px solid var(--border);border-radius:10px;background:var(--card-bg)}
+    .footer{margin-top:auto;text-align:center;color:#aaa}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.8rem}
+    .card{border:1px solid var(--border);background:var(--card-bg);border-radius:var(--radius);padding:.9rem;display:flex;flex-direction:column;gap:.7rem}
+    .card h3{margin:0;font-size:1rem;color:var(--accent-2)}
+    .card p{margin:0;color:var(--muted);font-size:.92rem;min-height:2.2em}
+    .card .row{display:flex;gap:.5rem;align-items:center}
+    .tool-link{background:var(--accent);color:#000!important;font-weight:900;border:none;box-shadow:0 0 10px #00fff7;padding:.5rem 1rem;border-radius:10px}
+    .icon-btn{background:transparent;border:1px solid var(--border);border-radius:10px;padding:.45rem .6rem;color:inherit;cursor:pointer}
+    .tool-views{margin-left:auto;font-size:.9rem;color:var(--muted);padding:.15rem .45rem;border:1px solid var(--border);border-radius:999px;background:rgba(255,255,255,.03);white-space:nowrap}
   </style>
 </head>
 <body>
@@ -71,12 +59,13 @@
 
   <div id="scripts" class="section">
     <input type="text" id="scriptSearch" placeholder="🔍 Search scripts..." class="search">
-    <div class="submit-card" style="background:rgba(255,255,255,.05); padding:1rem; border:1px dashed var(--accent); border-radius:10px; text-align:center; margin-bottom:2rem;">
+    <div class="submit-card" style="background:var(--card-bg); padding:1rem; border:1px dashed var(--accent); border-radius:10px; text-align:center; margin-bottom:2rem;">
       📝 Want to share your script? <a href="https://docs.google.com/forms/d/e/1FAIpQLSdVhvhkmE28nIxDH2DAo4FR7W14zqUxp2KlGHvib6baAMplEQ/viewform" target="_blank">Submit it here</a>
     </div>
     <div id="scriptContainer"></div>
   </div>
 
+  <!-- MasterTools -->
   <div id="mastertools" class="section">
     <input type="text" id="masterSearch" placeholder="🔍 Search MasterTools..." class="search">
     <div class="grid" id="masterGrid" style="margin-top:.8rem"></div>
@@ -84,105 +73,33 @@
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
-  <!-- === PBViews (Apps Script sólo, rápido y sincronizado) === -->
+  <!-- ===== PB Views (cliente) ===== -->
+  <!-- pega aquí O enlaza como archivo externo el bloque pb-views.js de arriba -->
   <script>
-  (function(w){
-    const BASE = 'https://script.google.com/macros/s/AKfycbzrMg3MWq5YT53rNweaxuFa--9CMwoz4k1PDio8y8fbl-3hSb_fk_WWYPhPaDPKe90P3g/exec';
-    const TOKEN = ''; // si lo pones en Code.gs, añade aquí el mismo
-
-    // Keys
+  /*!
+    PB Views (cliente) — v3 (inline)
+    *Si prefieres, guarda este bloque como pb-views.js y referencia con <script src="pb-views.js"></script>
+  */
+  (function (w) {
+    const BASE  = 'https://script.google.com/macros/s/AKfycbzrMg3MWq5YT53rNweaxuFa--9CMwoz4k1PDio8y8fbl-3hSb_fk_WWYPhPaDPKe90P3g/exec';
+    const TOKEN = '';
+    const POLL_MS = 10000;
     const KEY_TOTAL = 'pb.views.total';
     const P_TOOL = (id)=> `pb.views.tool.${String(id)}`;
     const P_AREA = (id)=> `pb.views.area.${String(id)}`;
-
-    // Tools list (mismo que abajo)
-    const TOOLS = [
-      {id:'trailer-plan'},
-      {id:'inbound-flow-planner'}
-    ];
-
-    // Core fetchers
-    async function apiPOST(payload, opts={}) {
-      const body = JSON.stringify(TOKEN ? {...payload, token:TOKEN} : payload);
-      const res = await fetch(BASE, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body,
-        keepalive: !!opts.keepalive
-      });
-      return res.json();
-    }
-    async function apiGET(params) {
-      const q = new URLSearchParams(TOKEN ? {...params, token:TOKEN} : params);
-      const res = await fetch(`${BASE}?${q.toString()}`, { method:'GET' });
-      return res.json();
-    }
-
-    // UI helpers
-    function setTotalUI(n){
-      const el = document.getElementById('viewInfo');
-      if (el && typeof n === 'number') el.textContent = `👁️ Total Views: ${n.toLocaleString()}`;
-    }
-    function setToolUI(id, n){
-      const span = document.querySelector(`.tool-views[data-id="${id}"]`);
-      if (span && typeof n === 'number') span.textContent = `👁️ ${n.toLocaleString()}`;
-    }
-
-    // Batch helpers
-    function allToolKeys(){
-      return TOOLS.map(t=>P_TOOL(t.id));
-    }
-
+    function q(params){ const u=new URLSearchParams(params||{}); if(TOKEN)u.append('token',TOKEN); u.append('t',Date.now().toString()); return u.toString(); }
+    async function api(op, params={}, opts={}){ const url=`${BASE}?${q({op,...params})}`; const res=await fetch(url,{method:'GET',keepalive:!!opts.keepalive}); if(!res.ok) throw new Error('fetch failed'); return res.json(); }
+    function get(key,opts){ return api('get',{key},opts); }
+    function incMulti(keys,n=1,opts){ const list=Array.isArray(keys)?keys.join(','):String(keys||''); return api('inc_multi',{keys:list,n:String(n)},opts); }
+    function counts(keys,opts){ const list=Array.isArray(keys)?keys.join(','):String(keys||''); return api('counts',{keys:list},opts); }
+    function setTotalUI(n){ const el=document.getElementById('viewInfo'); if(el && typeof n==='number') el.textContent=`👁️ Total Views: ${n.toLocaleString()}`; }
+    function setToolUI(id,n){ const span=document.querySelector(`.tool-views[data-id="${id}"]`); if(span && typeof n==='number') span.textContent=`👁️ ${n.toLocaleString()}`; }
+    function listToolIds(){ return Array.from(document.querySelectorAll('#masterGrid .card')).map(c=>c.dataset.id).filter(Boolean); }
     w.PBViews = {
-      // 1) En cada carga: +1 a total y +1 a área (atómico en una llamada)
-      async bumpOnLoad(area='hub'){
-        try {
-          const keys = [KEY_TOTAL, P_AREA(area)];
-          const resp = await apiPOST({ op:'inc_multi', keys, n:1 });
-          const total = resp?.values?.[KEY_TOTAL];
-          if (typeof total === 'number') setTotalUI(total);
-        } catch(e){
-          // si falla, lo siguiente (polling/focus) lo corregirá
-        }
-      },
-
-      // 2) Carga inicial de badges (una llamada)
-      async loadToolBadges(){
-        try {
-          const keys = allToolKeys();
-          if (keys.length === 0) return;
-          const resp = await apiPOST({ op:'counts', keys });
-          const values = resp?.values || {};
-          TOOLS.forEach(t => setToolUI(t.id, Number(values[P_TOOL(t.id)]||0)));
-        } catch(e){}
-      },
-
-      // 3) Click herramienta: +1 tool y +1 total (en una sola POST, sin bloquear)
-      bumpToolAndTotalOnOpen(id){
-        const payload = { op:'inc_multi', keys:[P_TOOL(id), KEY_TOTAL], n:1, ...(TOKEN?{token:TOKEN}:{}) };
-        const data = JSON.stringify(payload);
-        // sendBeacon (rápido, no espera respuesta)
-        if (navigator.sendBeacon) {
-          const blob = new Blob([data], { type:'application/json' });
-          const ok = navigator.sendBeacon(BASE, blob);
-          if (ok) return;
-        }
-        // fallback
-        fetch(BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body:data, keepalive:true }).catch(()=>{});
-      },
-
-      // 4) Sincronía periódica (total + todas las tools en una tanda y un get)
-      async pollAll(){
-        try {
-          const t = await apiGET({ op:'get', key: KEY_TOTAL });
-          if (typeof t?.value === 'number') setTotalUI(t.value);
-        } catch(e){}
-        try {
-          const resp = await apiPOST({ op:'counts', keys: allToolKeys() });
-          const values = resp?.values || {};
-          TOOLS.forEach(t => setToolUI(t.id, Number(values[P_TOOL(t.id)]||0)));
-        } catch(e){}
-      }
+      async bumpOnLoad(area='hub'){ try{ const resp=await incMulti([KEY_TOTAL,P_AREA(area)],1); const total=resp?.values?.[KEY_TOTAL]; if(typeof total==='number') setTotalUI(total);}catch(_){ } },
+      async loadToolBadges(){ const ids=listToolIds(); if(!ids.length) return; try{ const resp=await counts(ids.map(P_TOOL)); const vals=resp?.values||{}; ids.forEach(id=> setToolUI(id, Number(vals[P_TOOL(id)]||0))); }catch(_){ } },
+      bumpToolAndTotalOnOpen(id){ incMulti([P_TOOL(id),KEY_TOTAL],1,{keepalive:true}).catch(()=>{}); },
+      async pollAll(){ try{ const t=await get(KEY_TOTAL); if(typeof t?.value==='number') setTotalUI(t.value);}catch(_){ } try{ await this.loadToolBadges(); }catch(_){ } }
     };
   })(window);
   </script>
@@ -202,12 +119,11 @@
                         || (t.textContent.includes('MasterTools') && id==='mastertools');
           t.classList.toggle('active', isTarget);
         });
-        try{
-          localStorage.setItem('pb.activeTab', id);
-          const u = new URL(location.href); u.searchParams.set('tab', id); u.hash = '#'+id; history.replaceState(null,'',u);
+        try{ localStorage.setItem('pb.activeTab', id);
+          const u=new URL(location.href); u.searchParams.set('tab',id); u.hash='#'+id; history.replaceState(null,'',u);
         }catch(e){}
       }
-      window.showSection = (function(orig){ return function(id){ if(typeof orig==='function'){ try{ orig(id);}catch(e){} } setActiveTab(id);} })(window.showSection);
+      window.showSection = (function(orig){ return function(id){ if(typeof orig==='function'){ try{ orig(id);}catch(e){} } setActiveTab(id); } })(window.showSection);
       const initialId = new URL(location.href).searchParams.get('tab') || (location.hash||'').slice(1) || localStorage.getItem('pb.activeTab') || (document.querySelector('.section.active')?.id) || 'reports';
       setActiveTab(initialId);
     })();
@@ -223,7 +139,6 @@
     const getFavs=()=>{ try{return JSON.parse(localStorage.getItem(LS_FAVS)||'[]');}catch{return[];} };
     const setFavs=(arr)=>localStorage.setItem(LS_FAVS, JSON.stringify(arr));
     const isFav=(id)=>getFavs().includes(id);
-
     function toggleFav(id){ const s=new Set(getFavs()); s.has(id)?s.delete(id):s.add(id); setFavs([...s]); renderMasterTools(); }
 
     function renderMasterTools(){
@@ -241,11 +156,13 @@
             <span class="tool-views" data-id="${t.id}">👁️ 0</span>
           </div>`;
         card.querySelector('.favorite').addEventListener('click', ()=>toggleFav(t.id));
-        const copyBtn = card.querySelector('.copy-btn');
+        const copyBtn=card.querySelector('.copy-btn');
         copyBtn.addEventListener('click', async ()=>{
-          try{ await navigator.clipboard.writeText(new URL(t.href, location.href).href); const old=copyBtn.textContent; copyBtn.textContent='✔'; setTimeout(()=>copyBtn.textContent=old,900);}catch(e){}
+          try{ await navigator.clipboard.writeText(new URL(t.href, location.href).href);
+            const old=copyBtn.textContent; copyBtn.textContent='✔'; setTimeout(()=>copyBtn.textContent=old, 900);
+          }catch(e){}
         });
-        // Contar herramienta + total en UNA sola llamada al abrir
+        // Contar herramienta + total ANTES de navegar (GET keepalive)
         const open = card.querySelector('.tool-link');
         const send = ()=> window.PBViews?.bumpToolAndTotalOnOpen(t.id);
         open.addEventListener('pointerdown', send, {passive:true});
@@ -254,13 +171,13 @@
       }
     }
 
+    // Render + contadores
     renderMasterTools();
 
-    // Arranque contadores
     (async function startCounters(){
-      await window.PBViews?.bumpOnLoad('hub');   // +1 total +1 área (siempre, en cada refresh)
+      await window.PBViews?.bumpOnLoad('hub');   // +1 total + área en CADA refresh
       await window.PBViews?.loadToolBadges();    // carga inicial de badges
-      // Sincronía cada 10s y al recuperar foco
+      // Sincronía entre navegadores
       setInterval(()=> window.PBViews?.pollAll(), 10000);
       window.addEventListener('focus', ()=> window.PBViews?.pollAll());
       document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) window.PBViews?.pollAll(); });
