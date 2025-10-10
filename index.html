@@ -22,128 +22,24 @@
       --focus: 0 0 0 3px rgba(0, 255, 247, 0.35);
       --radius: 14px;
     }
-
     * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      padding: 2rem;
-      font-family: 'Orbitron', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    h1 {
-      font-size: 2.2rem;
-      margin-bottom: 2rem;
-      color: var(--accent);
-      text-shadow: var(--text-glow);
-      animation: fadeInUp 1s ease-out;
-    }
-
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .tabs {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-    }
-
-    .tab {
-      padding: 0.5rem 1rem;
-      border-radius: 10px;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .tab.active {
-      background: var(--accent);
-      color: black;
-      box-shadow: var(--button-glow);
-    }
-
-    .controls {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin-bottom: 1rem;
-      align-items: center;
-    }
-
-    .btn {
-      background: var(--button-bg);
-      color: var(--button-text);
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      box-shadow: var(--button-glow);
-      transition: transform 0.2s ease;
-    }
-
+    body { margin: 0; padding: 2rem; font-family: 'Orbitron', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    h1 { font-size: 2.2rem; margin-bottom: 2rem; color: var(--accent); text-shadow: var(--text-glow); animation: fadeInUp 1s ease-out; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .tabs { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .tab { padding: 0.5rem 1rem; border-radius: 10px; background: var(--card-bg); border: 1px solid var(--border); cursor: pointer; transition: all 0.3s ease; }
+    .tab.active { background: var(--accent); color: black; box-shadow: var(--button-glow); }
+    .controls { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
+    .btn { background: var(--button-bg); color: var(--button-text); padding: 0.5rem 1rem; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: var(--button-glow); transition: transform 0.2s ease; }
     .btn:hover { transform: scale(1.05); }
-
-    .section { display: none; }
-    .section.active { display: block; }
-
-    .category {
-      background: var(--card-bg);
-      margin-bottom: 1rem;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-    }
-
-    .category-header {
-      padding: 1rem;
-      font-size: 1.2rem;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: rgba(255, 255, 255, 0.07);
-    }
-
-    .category-content {
-      display: none;
-      padding: 1rem;
-      white-space: pre-wrap;
-      border-top: 1px solid var(--border);
-    }
-
+    .section { display: none; } .section.active { display: block; }
+    .category { background: var(--card-bg); margin-bottom: 1rem; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+    .category-header { padding: 1rem; font-size: 1.2rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background-color: rgba(255, 255, 255, 0.07); }
+    .category-content { display: none; padding: 1rem; white-space: pre-wrap; border-top: 1px solid var(--border); }
     .visible { display: block; }
-
-    .copy-btn {
-      background: var(--button-bg);
-      color: var(--button-text);
-      padding: 0.4rem 0.8rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      box-shadow: var(--button-glow);
-      transition: all 0.3s ease;
-      margin-left: 0.5rem;
-    }
+    .copy-btn { background: var(--button-bg); color: var(--button-text); padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; box-shadow: var(--button-glow); transition: all 0.3s ease; margin-left: 0.5rem; }
     .copy-btn.copied { background-color: #00c851; color: white; }
-
-    .footer {
-      margin-top: auto;
-      text-align: center;
-      font-size: 0.9rem;
-      padding: 1rem;
-      color: #aaa;
-    }
-
+    .footer { margin-top: auto; text-align: center; font-size: 0.9rem; padding: 1rem; color: #aaa; }
     /* MasterTools */
     .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .8rem; }
     .card { border:1px solid var(--border); background: var(--card-bg); border-radius: var(--radius); padding: .9rem; display:flex; flex-direction:column; gap:.7rem; }
@@ -153,54 +49,11 @@
     .icon-btn { background: transparent; border:1px solid var(--border); border-radius: 10px; padding:.45rem .6rem; color: var(--text); cursor: pointer; }
     .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
     .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
-
-    /* Botón Open en MasterTools */
-    .tool-link {
-      background: var(--accent);
-      color: #000 !important;
-      font-weight: 900;
-      border: none;
-      box-shadow: var(--button-glow);
-      transition: transform .2s ease;
-      padding: 0.5rem 1rem;
-      border-radius: 10px;
-    }
+    .tool-link { background: var(--accent); color: #000 !important; font-weight: 900; border: none; box-shadow: var(--button-glow); transition: transform .2s ease; padding: 0.5rem 1rem; border-radius: 10px; }
     .tool-link:hover { transform: scale(1.05); }
-
-    /* Barras de búsqueda unificadas */
-    .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch {
-      margin-bottom: 1rem;
-      padding: 0.7rem 1rem;
-      width: 100%;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--card-bg);
-      color: var(--text);
-      font-size: 1rem;
-    }
-
-    /* Contador de vistas (header) */
-    #viewInfo {
-      font-size: 1.05rem;
-      user-select: none;
-      padding: .4rem .7rem;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--card-bg);
-    }
-
-    /* Badge de vistas por tool (compacto) */
-    .tool-views {
-      margin-left: auto;
-      font-size: .9rem;
-      color: var(--muted);
-      padding: .15rem .45rem;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: rgba(255,255,255,0.03);
-      white-space: nowrap;
-      line-height: 1.1;
-    }
+    .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch { margin-bottom: 1rem; padding: 0.7rem 1rem; width: 100%; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); font-size: 1rem; }
+    #viewInfo { font-size: 1.05rem; user-select: none; padding: .4rem .7rem; border: 1px solid var(--border); border-radius: 10px; background: var(--card-bg); }
+    .tool-views { margin-left: auto; font-size: .9rem; color: var(--muted); padding: .15rem .45rem; border: 1px solid var(--border); border-radius: 999px; background: rgba(255,255,255,0.03); white-space: nowrap; line-height: 1.1; }
   </style>
 </head>
 <body>
@@ -216,7 +69,6 @@
   <div class="controls">
     <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
     <button class="btn" onclick="loadReports()">↻ Refresh</button>
-    <!-- Solo una opción: Total Views -->
     <div id="viewInfo">👁️ Total Views: Loading…</div>
   </div>
 
@@ -239,7 +91,6 @@
     <div id="scriptContainer"></div>
   </div>
 
-  <!-- MasterTools -->
   <div id="mastertools" class="section">
     <input type="text" id="masterSearch" placeholder="🔍 Search MasterTools..." class="search">
     <div class="grid" id="masterGrid" style="margin-top:.8rem"></div>
@@ -247,87 +98,85 @@
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
-  <!-- PBViews (SINCRONIZADO CON SERVIDOR) -->
+  <!-- PBViews (SINCRONIZADO via JSONP a tu Apps Script) -->
   <script>
     (function (w) {
-      // === CONFIG (cambia BASE si redeployas) ===
       const BASE  = 'https://script.google.com/macros/s/AKfycbzrMg3MWq5YT53rNweaxuFa--9CMwoz4k1PDio8y8fbl-3hSb_fk_WWYPhPaDPKe90P3g/exec';
-      const TOKEN = '';      // si usas APP_TOKEN en el servidor, ponlo aquí
-      const POLL_MS = 10000; // sincronía entre navegadores
-
-      // === KEYS ===
+      const TOKEN = ''; // si usas APP_TOKEN, ponlo aquí
       const KEY_TOTAL = 'pb.views.total';
       const P_TOOL = (id)=> `pb.views.tool.${String(id)}`;
       const P_AREA = (id)=> `pb.views.area.${String(id)}`;
 
-      // === HTTP helpers (GET sin preflight) ===
-      function qs(params){
-        const u = new URLSearchParams(params||{});
-        if (TOKEN) u.append('token', TOKEN);
-        u.append('t', Date.now().toString()); // anti-cache
-        return u.toString();
+      // --- JSONP loader (evita CORS) ---
+      function jsonp(params={}, {timeout=6000} = {}){
+        return new Promise((resolve, reject)=>{
+          const cb = 'PBV_CB_' + Math.random().toString(36).slice(2);
+          const u = new URL(BASE);
+          Object.entries(params).forEach(([k,v])=> u.searchParams.append(k, v));
+          if (TOKEN) u.searchParams.append('token', TOKEN);
+          u.searchParams.append('callback', cb);
+          const s = document.createElement('script');
+          let done = false;
+          const timer = setTimeout(()=>{
+            if(done) return;
+            done = true;
+            cleanup();
+            reject(new Error('JSONP timeout'));
+          }, timeout);
+          function cleanup(){
+            clearTimeout(timer);
+            try{ delete w[cb]; }catch(_){ w[cb]=undefined; }
+            if (s.parentNode) s.parentNode.removeChild(s);
+          }
+          w[cb] = (data)=>{ if(done) return; done = true; cleanup(); resolve(data); };
+          s.src = u.toString();
+          s.onerror = ()=>{ if(done) return; done = true; cleanup(); reject(new Error('JSONP error')); };
+          document.head.appendChild(s);
+        });
       }
-      async function api(op, params={}, opts={}){
-        const url = `${BASE}?${qs({ op, ...params })}`;
-        const res = await fetch(url, { method:'GET', keepalive: !!opts.keepalive });
-        if (!res.ok) throw new Error('fetch failed');
-        return res.json();
-      }
-      const get   = (key, opts)=> api('get', { key }, opts);
-      const inc   = (key, n=1, opts)=> api('inc', { key, n:String(n) }, opts);
-      const incMulti = (keys, n=1, opts)=>{
-        const list = Array.isArray(keys) ? keys.join(',') : String(keys||'');
-        return api('inc_multi', { keys:list, n:String(n) }, opts);
-      };
-      const counts = (keys, opts)=>{
-        const list = Array.isArray(keys) ? keys.join(',') : String(keys||'');
-        return api('counts', { keys:list }, opts);
-      };
 
-      // === UI helpers ===
+      // --- API usando JSONP ---
+      function api(op, extra){ return jsonp({ op, ...(extra||{}) }); }
+      function get(key){ return api('get', { key }); }
+      function inc(key, n=1){ return api('inc', { key, n:String(n) }); }
+      function incMulti(keys, n=1){
+        const list = Array.isArray(keys) ? keys.join(',') : String(keys||'');
+        return api('inc_multi', { keys:list, n:String(n) });
+      }
+      function counts(keys){
+        const list = Array.isArray(keys) ? keys.join(',') : String(keys||'');
+        return api('counts', { keys:list });
+      }
+
+      // --- UI helpers ---
       function setTotalUI(n){
         const el = document.getElementById('viewInfo');
         if (el && typeof n === 'number') el.textContent = `👁️ Total Views: ${n.toLocaleString()}`;
-      }
-      function parseBadge(span){
-        const txt = (span?.textContent||'').replace(/[^\d]/g,'');
-        const n = parseInt(txt||'0',10); return isNaN(n)?0:n;
       }
       function setToolUI(id, n){
         const span = document.querySelector(`.tool-views[data-id="${id}"]`);
         if (span && typeof n === 'number') span.textContent = `👁️ ${n.toLocaleString()}`;
       }
+      function parseBadge(span){
+        const txt = (span?.textContent||'').replace(/[^\d]/g,'');
+        const n = parseInt(txt||'0',10); return isNaN(n)?0:n;
+      }
       function listToolIds(){
         return Array.from(document.querySelectorAll('#masterGrid .card')).map(c=>c.dataset.id).filter(Boolean);
       }
 
-      // === API pública (compat + nuevas) ===
+      // --- API pública (misma interfaz que ya usabas) ---
       w.PBViews = {
-        // Compat (por si algún otro código lo usa):
-        async bumpTotal(n=1){ const r = await inc(KEY_TOTAL, n); setTotalUI(r?.value); return r?.value; },
-        async getTotal(){ const r = await get(KEY_TOTAL); return r?.value || 0; },
-        async bumpTool(id,n=1){ const r = await inc(P_TOOL(id), n); setToolUI(id, r?.value); return r?.value; },
-        async getTool(id){ const r = await get(P_TOOL(id)); return r?.value || 0; },
-        async bumpArea(id,n=1){ return (await inc(P_AREA(id), n))?.value; },
-        async getArea(id){ const r = await get(P_AREA(id)); return r?.value || 0; },
-
-        // Carga: +1 total y +1 área SIEMPRE (cada refresh)
         async bumpOnLoad(area='hub'){
           try{
             const resp = await incMulti([KEY_TOTAL, P_AREA(area)], 1);
             const total = resp?.values?.[KEY_TOTAL];
             if (typeof total === 'number') setTotalUI(total);
-          }catch(e){
-            // Fallback por si inc_multi falla: incrementa total (y luego área) individualmente
-            try {
-              const t = await inc(KEY_TOTAL, 1);
-              if (typeof t?.value === 'number') setTotalUI(t.value);
-              await inc(P_AREA(area), 1);
-            } catch(_) {}
+          }catch(_){
+            // Fallback por si JSONP se corta: al menos intenta total
+            try{ const t = await inc(KEY_TOTAL, 1); if (typeof t?.value === 'number') setTotalUI(t.value); }catch(_){}
           }
         },
-
-        // Carga badges de todas las tools en lote
         async loadToolBadges(){
           const ids = listToolIds();
           if (!ids.length) return;
@@ -337,34 +186,31 @@
             ids.forEach(id => setToolUI(id, Number(vals[P_TOOL(id)] || 0)));
           }catch(_){}
         },
-
-        // Click herramienta: +1 tool y +1 total (atómico) + actualización optimista inmediata
         bumpToolAndTotalOnOpen(id){
-          // Optimista en UI:
+          // Optimista en UI
           const span = document.querySelector(`.tool-views[data-id="${id}"]`);
           setToolUI(id, parseBadge(span) + 1);
-          const totalEl = document.getElementById('viewInfo');
-          const totalNow = parseInt((totalEl?.textContent||'').replace(/[^\d]/g,'')||'0',10) || 0;
+          const totalNow = parseInt((document.getElementById('viewInfo')?.textContent||'').replace(/[^\d]/g,'')||'0',10) || 0;
           setTotalUI(totalNow + 1);
 
-          // Llamada real (con keepalive) y fallback dual si falla inc_multi
-          incMulti([P_TOOL(id), KEY_TOTAL], 1, { keepalive:true })
-            .catch(async ()=>{
-              try {
-                await inc(P_TOOL(id), 1, { keepalive:true });
-                await inc(KEY_TOTAL, 1, { keepalive:true });
-              } catch(_) {}
-            });
+          // 1) intento atómico con JSONP
+          incMulti([P_TOOL(id), KEY_TOTAL], 1).catch(()=>{
+            // 2) fallback doble ping (Image) para asegurar incremento aun si se navega ya
+            try { new Image().src = `${BASE}?op=inc&key=${encodeURIComponent(P_TOOL(id))}&n=1`; } catch(_){}
+            try { new Image().src = `${BASE}?op=inc&key=${encodeURIComponent(KEY_TOTAL)}&n=1`; } catch(_){}
+          });
         },
-
-        // Sincronía periódica (total + badges)
         async pollAll(){
-          try {
-            const t = await get(KEY_TOTAL);
-            if (typeof t?.value === 'number') setTotalUI(t.value);
-          } catch(_){}
-          try { await this.loadToolBadges(); } catch(_){}
-        }
+          try{ const t = await get(KEY_TOTAL); if (typeof t?.value === 'number') setTotalUI(t.value); }catch(_){}
+          try{ await this.loadToolBadges(); }catch(_){}
+        },
+        // Compat (si algo más en tu site lo usa)
+        async bumpTotal(n=1){ const r = await inc(KEY_TOTAL, n); setTotalUI(r?.value); return r?.value; },
+        async getTotal(){ const r = await get(KEY_TOTAL); return r?.value||0; },
+        async bumpTool(id,n=1){ const r = await inc(P_TOOL(id), n); setToolUI(id, r?.value); return r?.value; },
+        async getTool(id){ const r = await get(P_TOOL(id)); return r?.value||0; },
+        async bumpArea(id,n=1){ return (await inc(P_AREA(id), n))?.value; },
+        async getArea(id){ const r = await get(P_AREA(id)); return r?.value||0; }
       };
     })(window);
   </script>
@@ -372,21 +218,21 @@
   <!-- Tu script principal -->
   <script src="script.js"></script>
 
-  <!-- Sincronía de pestañas + tabs + contadores -->
+  <!-- Sincronía + tabs (tus funciones intactas) -->
   <script>
     (function(){
-      // +1 al cargar (cada refresh cuenta) y primer pintado desde servidor
-      (async ()=>{
+      async function bootstrap(){
         try{ await window.PBViews?.bumpOnLoad('hub'); }catch(_){}
         try{ await window.PBViews?.pollAll(); }catch(_){}
-      })();
+      }
+      bootstrap();
 
       // Mantener sincronizado entre navegadores/pestañas
       setInterval(()=> window.PBViews?.pollAll(), 10000);
       window.addEventListener('focus', ()=> window.PBViews?.pollAll());
       document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) window.PBViews?.pollAll(); });
 
-      // ---- Tabs (intacto) ----
+      // ---- Tabs (tus funciones) ----
       const tabs = document.querySelectorAll('.tab');
       const sections = document.querySelectorAll('.section');
       function setActiveTab(id){
@@ -421,7 +267,7 @@
     })();
   </script>
 
-  <!-- Lógica MasterTools con badge de vistas por tool (👁️ N) -->
+  <!-- MasterTools (igual que lo tenías; solo se añade el ping antes de navegar y la carga de badges) -->
   <script>
     const LS_FAVS = 'pb.master.favorites';
     const tools = [
@@ -454,15 +300,13 @@
         card.innerHTML=`<h3>${t.icon} ${t.name}</h3>
           <p>${t.desc||''}</p>
           <div class="row">
-            <!-- Abrir en la misma pestaña -->
             <a class="tool-link" href="${t.href}">Open</a>
             <button class="icon-btn favorite" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
             <button class="icon-btn copy-btn" title="Copy link">⧉</button>
             <span class="tool-views" data-id="${t.id}">👁️ 0</span>
           </div>`;
 
-        const favBtn = card.querySelector('.favorite');
-        favBtn.addEventListener('click', ()=> toggleFav(t.id));
+        card.querySelector('.favorite').addEventListener('click', ()=> toggleFav(t.id));
 
         const copyBtn = card.querySelector('.copy-btn');
         copyBtn.addEventListener('click', async ()=>{
@@ -474,7 +318,7 @@
           }catch(e){ /* ignore */ }
         });
 
-        // suma herramienta + total ANTES de navegar (ping + UI optimista)
+        // ⬇️ suma herramienta + total ANTES de navegar (JSONP + fallback ping)
         const openLink = card.querySelector('.tool-link');
         const ping = ()=> window.PBViews?.bumpToolAndTotalOnOpen(t.id);
         openLink.addEventListener('pointerdown', ping, { passive:true });
@@ -497,8 +341,8 @@
       });
     }
 
-    // Render inicial y mantener badges al día si cambian en otra pestaña/ventana
     renderMasterTools();
+    // mantener badges al día si cambia el foco
     window.addEventListener('focus', ()=> window.PBViews?.loadToolBadges());
   </script>
 </body>
