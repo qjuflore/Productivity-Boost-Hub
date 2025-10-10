@@ -2,15 +2,16 @@
 /*!
   PB Views (cliente) — v3
   - Sólo usa GET (sin CORS preflight).
-  - +1 total en CADA carga.
+  - +1 total en CADA carga (y +1 al área).
   - Click tool: +1 tool y +1 total (atómico).
-  - Batch para leer múltiples keys.
+  - Lectura en batch (counts) para badges.
+  - Polling ligero para sincronía entre navegadores.
 */
 (function (w) {
   // ==== CONFIG ====
   const BASE  = 'https://script.google.com/macros/s/AKfycbzrMg3MWq5YT53rNweaxuFa--9CMwoz4k1PDio8y8fbl-3hSb_fk_WWYPhPaDPKe90P3g/exec'; // <-- tu /exec
-  const TOKEN = ''; // si pones token en Code.gs, colócalo aquí
-  const POLL_MS = 10000; // sincronía entre navegadores
+  const TOKEN = ''; // si activas APP_TOKEN en Code.gs, ponlo aquí
+  const POLL_MS = 10000; // sincronía entre navegadores (10 s)
 
   // ==== KEYS ====
   const KEY_TOTAL = 'pb.views.total';
@@ -31,7 +32,6 @@
     return res.json();
   }
   function get(key, opts){ return api('get', { key }, opts); }
-  function inc(key, n=1, opts){ return api('inc', { key, n:String(n) }, opts); }
   function incMulti(keys, n=1, opts){
     const list = Array.isArray(keys) ? keys.join(',') : String(keys||'');
     return api('inc_multi', { keys: list, n:String(n) }, opts);
@@ -58,18 +58,16 @@
 
   // ==== API pública ====
   w.PBViews = {
-    // Suma +1 al total y +1 al área en cada refresh (atómico)
+    // +1 al total y +1 al área en cada carga (atómico)
     async bumpOnLoad(area='hub'){
       try {
         const resp = await incMulti([KEY_TOTAL, P_AREA(area)], 1);
         const total = resp && resp.values ? resp.values[KEY_TOTAL] : null;
         if (typeof total === 'number') setTotalUI(total);
-      } catch(_) {
-        // deja "Loading…" hasta el próximo poll/focus
-      }
+      } catch(_) { /* el siguiente poll lo actualizará */ }
     },
 
-    // Carga badges de todas las herramientas en una llamada
+    // Carga inicial de badges (una llamada)
     async loadToolBadges(){
       const ids = listToolIds();
       if (!ids.length) return;
@@ -77,28 +75,23 @@
       try {
         const resp = await counts(keys);
         const vals = (resp && resp.values) || {};
-        for (const id of ids) {
-          setToolUI(id, Number(vals[P_TOOL(id)] || 0));
-        }
-      } catch(_){}
+        for (const id of ids) setToolUI(id, Number(vals[P_TOOL(id)]||0));
+      } catch(_) {}
     },
 
-    // Click herramienta: +1 tool y +1 total (atómico). No bloquea navegación.
+    // Click en herramienta: +1 tool y +1 total (atómico). No bloquea navegación.
     bumpToolAndTotalOnOpen(id){
       const keys = [P_TOOL(id), KEY_TOTAL];
-      // Dispara GET con keepalive; el UI se actualizará en el siguiente poll
       incMulti(keys, 1, { keepalive: true }).catch(()=>{});
     },
 
-    // Poll: refresca total y badges (servidor autoritativo)
+    // Poll general: refresca total + badges
     async pollAll(){
       try {
         const t = await get(KEY_TOTAL);
         if (typeof t?.value === 'number') setTotalUI(t.value);
       } catch(_){}
-      try {
-        await this.loadToolBadges();
-      } catch(_){}
+      try { await this.loadToolBadges(); } catch(_){}
     }
   };
 })(window);
