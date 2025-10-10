@@ -22,67 +22,32 @@
       --focus: 0 0 0 3px rgba(0, 255, 247, 0.35);
       --radius: 14px;
     }
-
     * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      padding: 2rem;
-      font-family: 'Orbitron', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    h1 {
-      font-size: 2.2rem;
-      margin-bottom: 2rem;
-      color: var(--accent);
-      text-shadow: var(--text-glow);
-      animation: fadeInUp 1s ease-out;
-    }
-
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
+    body { margin: 0; padding: 2rem; font-family: 'Orbitron', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display:flex; flex-direction:column; }
+    h1 { font-size: 2.2rem; margin-bottom: 2rem; color: var(--accent); text-shadow: var(--text-glow); animation: fadeInUp 1s ease-out; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .tabs { display:flex; gap:1rem; margin-bottom:1rem; flex-wrap:wrap; }
-    .tab { padding:.5rem 1rem; border-radius:10px; background:var(--card-bg); border:1px solid var(--border); cursor:pointer; transition:.3s; }
-    .tab.active { background:var(--accent); color:#000; box-shadow:var(--button-glow); }
-
+    .tab { padding:.5rem 1rem; border-radius:10px; background:var(--card-bg); border:1px solid var(--border); cursor:pointer; transition:.3s ease; }
+    .tab.active { background:var(--accent); color:#000; box-shadow: var(--button-glow); }
     .controls { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem; align-items:center; }
-    .btn { background:var(--button-bg); color:var(--button-text); padding:.5rem 1rem; border:none; border-radius:8px; cursor:pointer; font-weight:700; box-shadow:var(--button-glow); transition:.2s; }
+    .btn { background:var(--button-bg); color:var(--button-text); padding:.5rem 1rem; border:none; border-radius:8px; cursor:pointer; font-weight:700; box-shadow:var(--button-glow); transition:.2s ease; }
     .btn:hover{ transform:scale(1.05); }
-
     .section{ display:none; } .section.active{ display:block; }
-
     .copy-btn { background:var(--button-bg); color:var(--button-text); padding:.4rem .8rem; border-radius:6px; cursor:pointer; font-size:.9rem; box-shadow:var(--button-glow); transition:.3s; margin-left:.5rem; }
     .copy-btn.copied { background:#00c851; color:#fff; }
-
     .footer { margin-top:auto; text-align:center; font-size:.9rem; padding:1rem; color:#aaa; }
-
-    /* MasterTools */
     .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:.8rem; }
     .card { border:1px solid var(--border); background:var(--card-bg); border-radius:var(--radius); padding:.9rem; display:flex; flex-direction:column; gap:.7rem; }
-    .card h3 { margin:0; font-size:1rem; color:var(--accent-2); }
-    .card p { margin:0; color:var(--muted); font-size:.92rem; min-height:2.2em; }
+    .card h3 { margin:0; font-size:1rem; color: var(--accent-2); }
+    .card p { margin:0; color: var(--muted); font-size:.92rem; min-height:2.2em; }
     .card .row { display:flex; gap:.5rem; align-items:center; }
     .icon-btn { background:transparent; border:1px solid var(--border); border-radius:10px; padding:.45rem .6rem; color:var(--text); cursor:pointer; }
     .icon-btn:hover { border-color:var(--accent); box-shadow:var(--button-glow); }
     .favorite[aria-pressed="true"] { border-color:var(--accent); box-shadow:var(--button-glow); }
-
     .tool-link { background:var(--accent); color:#000!important; font-weight:900; border:none; box-shadow:var(--button-glow); transition:.2s; padding:.5rem 1rem; border-radius:10px; }
     .tool-link:hover { transform:scale(1.05); }
-
-    .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch {
-      margin-bottom:1rem; padding:.7rem 1rem; width:100%; border-radius:10px; border:1px solid var(--border); background:var(--card-bg); color:var(--text); font-size:1rem;
-    }
-
+    .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch { margin-bottom:1rem; padding:.7rem 1rem; width:100%; border-radius:10px; border:1px solid var(--border); background:var(--card-bg); color:var(--text); font-size:1rem; }
     #viewInfo { font-size:1.05rem; user-select:none; padding:.4rem .7rem; border:1px solid var(--border); border-radius:10px; background:var(--card-bg); }
-
     .tool-views { margin-left:auto; font-size:.9rem; color:var(--muted); padding:.15rem .45rem; border:1px solid var(--border); border-radius:999px; background:rgba(255,255,255,.03); white-space:nowrap; line-height:1.1; }
   </style>
 </head>
@@ -129,95 +94,124 @@
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
-  <!-- PBViews: servidor autoritativo, +1 en CADA carga, polling de sincronía -->
+  <!-- PBViews: CountAPI (rápido) + espejo Apps Script (background) -->
   <script>
   (function (w) {
-    const BASE  = 'https://script.google.com/macros/s/AKfycbzrMg3MWq5YT53rNweaxuFa--9CMwoz4k1PDio8y8fbl-3hSb_fk_WWYPhPaDPKe90P3g/exec';
-    const TOKEN = '';
-    const TIMEOUT_MS = 4000;
-    const POLL_MS = 15000; // refresco de sincronía entre equipos
+    // === CONFIG ===
+    const COUNT_BASE = 'https://api.countapi.xyz';
+    const NS = 'qjuflore-pbh'; // namespace único (puedes cambiarlo si quieres)
+    const GAS_BASE  = 'https://script.google.com/macros/s/AKfycbzrMg3MWq5YT53rNweaxuFa--9CMwoz4k1PDio8y8fbl-3hSb_fk_WWYPhPaDPKe90P3g/exec';
+    const POLL_MS = 10000; // sincronía cada 10s
 
+    // === KEYS ===
     const KEY_TOTAL = 'pb.views.total';
     const P_TOOL = (id)=> `pb.views.tool.${String(id)}`;
     const P_AREA = (id)=> `pb.views.area.${String(id)}`;
 
-    function withTimeout(p, ms=TIMEOUT_MS) {
-      const ctrl = new AbortController();
-      const t = setTimeout(()=>ctrl.abort('timeout'), ms);
-      return p(ctrl.signal).finally(()=>clearTimeout(t));
+    // === CountAPI helpers (rápidos) ===
+    const enc = encodeURIComponent;
+    async function ensure(key){
+      try { await fetch(`${COUNT_BASE}/get/${enc(NS)}/${enc(key)}`); }
+      catch {}
     }
-    async function api(op, params={}, opts={}) {
-      const q = new URLSearchParams({ op, ...(params||{}) });
-      if (TOKEN) q.append('token', TOKEN);
-      const url = `${BASE}?${q.toString()}`;
-      const req = (signal)=> fetch(url, { method:'GET', signal, keepalive: !!opts.keepalive });
-      const res = await withTimeout(req, opts.timeout || TIMEOUT_MS);
-      if (!res.ok) throw new Error('fetch failed');
-      return res.json();
+    async function capiInc(key, amount=1){
+      await ensure(key);
+      const r = await fetch(`${COUNT_BASE}/update/${enc(NS)}/${enc(key)}?amount=${enc(amount)}`);
+      const j = await r.json();
+      return j.value | 0;
     }
-
-    async function bump(key, n=1, opts={}) {
-      const j = await api('inc', { key, n:String(n) }, opts);
-      return (j && typeof j.value !== 'undefined') ? Number(j.value) : null;
-    }
-    async function get(key, opts={}) {
-      const j = await api('get', { key }, opts);
-      return (j && typeof j.value !== 'undefined') ? Number(j.value) : null;
+    async function capiGet(key){
+      await ensure(key);
+      const r = await fetch(`${COUNT_BASE}/get/${enc(NS)}/${enc(key)}`);
+      const j = await r.json();
+      return j.value | 0;
     }
 
+    // === Espejo Apps Script (no bloquea UI) ===
+    function mirrorIncToGAS(key, n=1){
+      const url = `${GAS_BASE}?op=inc&key=${enc(key)}&n=${enc(String(n))}`;
+      // fetch GET con keepalive (no esperamos respuesta)
+      try { fetch(url, { method:'GET', keepalive:true }).catch(()=>{}); } catch {}
+    }
+
+    // === UI ===
     function setTotalUI(n){
       const el = document.querySelector('#viewInfo');
-      if (el && typeof n === 'number') el.textContent = `👁️ Total Views: ${n.toLocaleString()}`;
+      if (el) el.textContent = `👁️ Total Views: ${Number(n||0).toLocaleString()}`;
     }
     function setToolUI(id, n){
       const span = document.querySelector(`.tool-views[data-id="${id}"]`);
-      if (span && typeof n === 'number') span.textContent = `👁️ ${n.toLocaleString()}`;
+      if (span) span.textContent = `👁️ ${Number(n||0).toLocaleString()}`;
     }
 
-    async function refreshAllTools() {
-      const cards = document.querySelectorAll('#masterGrid .card');
-      for (const card of cards) {
-        const id = card.dataset.id;
-        if (!id) continue;
-        try { const n = await get(P_TOOL(id), { timeout: 2500 }); setToolUI(id, n); } catch(_){}
-      }
-    }
-    async function refreshTotal() {
-      try { const n = await get(KEY_TOTAL, { timeout: 2500 }); setTotalUI(n); } catch(_){}
-    }
-
+    // === API global ===
     w.PBViews = {
-      async init({ area='hub' } = {}) {
-        // +1 AL CARGAR SIEMPRE (cada refresh cuenta)
+      async init({ area='hub' } = {}){
+        // +1 en carga (CountAPI autoritativo y veloz)
         try {
-          const n = await bump(KEY_TOTAL, 1);   // servidor devuelve el número final
-          setTotalUI(n);
-        } catch(_) {
-          // si falla, dejamos "syncing…" y el próximo refresh/poll lo arregla
-        }
+          const total = await capiInc(KEY_TOTAL, 1);
+          setTotalUI(total);
+          mirrorIncToGAS(KEY_TOTAL, 1);   // espejo (no bloqueante)
+          mirrorIncToGAS(P_AREA(area), 1);// tracking área
+        } catch { /* deja syncing… y el polling lo resolverá */ }
 
-        // tracking de área (no se muestra en UI principal)
-        try { await bump(P_AREA(area), 1); } catch(_){}
+        // Inicializa badges (leer del servidor rápido)
+        try {
+          const cards = document.querySelectorAll('#masterGrid .card');
+          for (const card of cards) {
+            const id = card.dataset.id;
+            if (!id) continue;
+            capiGet(P_TOOL(id)).then(n => setToolUI(id, n)).catch(()=>{});
+          }
+        } catch {}
 
-        // badges de herramientas (solo servidor)
-        try { await refreshAllTools(); } catch(_){}
+        // Polling de sincronía (entre pestañas/dispositivos)
+        setInterval(async ()=>{
+          try {
+            const t = await capiGet(KEY_TOTAL);
+            setTotalUI(t);
+            const cards = document.querySelectorAll('#masterGrid .card');
+            for (const card of cards) {
+              const id = card.dataset.id;
+              if (!id) continue;
+              const v = await capiGet(P_TOOL(id));
+              setToolUI(id, v);
+            }
+          } catch {}
+        }, POLL_MS);
 
-        // sincronía con otros navegadores
-        setInterval(()=>{ refreshTotal(); refreshAllTools(); }, POLL_MS);
-        window.addEventListener('focus', ()=>{ refreshTotal(); refreshAllTools(); });
-        document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ refreshTotal(); refreshAllTools(); }});
+        window.addEventListener('focus', async ()=>{
+          try {
+            const t = await capiGet(KEY_TOTAL); setTotalUI(t);
+            const cards = document.querySelectorAll('#masterGrid .card');
+            for (const card of cards) {
+              const id = card.dataset.id; if (!id) continue;
+              const v = await capiGet(P_TOOL(id)); setToolUI(id, v);
+            }
+          } catch {}
+        });
       },
 
-      // Click en herramienta: +1 herramienta y +1 total (servidor), incluso si la página de destino no cuenta
-      bumpToolAndTotalOnOpen(id){
-        bump(P_TOOL(id), 1, { keepalive: true }).catch(()=>{});
-        bump(KEY_TOTAL, 1, { keepalive: true }).catch(()=>{});
+      // Al abrir una herramienta: +1 tool y +1 total (ambos CountAPI), espejo a GAS
+      async bumpToolAndTotalOnOpen(id){
+        try {
+          const [toolVal, totalVal] = await Promise.all([
+            capiInc(P_TOOL(id), 1),
+            capiInc(KEY_TOTAL, 1)
+          ]);
+          setToolUI(id, toolVal);
+          setTotalUI(totalVal);
+          mirrorIncToGAS(P_TOOL(id), 1);
+          mirrorIncToGAS(KEY_TOTAL, 1);
+        } catch {
+          // si falla CountAPI (raro), el polling/focus lo corregirá
+        }
       }
     };
   })(window);
   </script>
 
-  <!-- Tu script principal -->
+  <!-- Tu script principal (deja tu lógica existente) -->
   <script src="script.js"></script>
 
   <!-- Tabs -->
@@ -242,14 +236,12 @@
           history.replaceState(null,'',u);
         }catch(e){}
       }
-
       window.showSection = (function(original){
         return function(id){
           if(typeof original === 'function'){ try{ original(id); }catch(e){} }
           setActiveTab(id);
         }
       })(window.showSection);
-
       const initialId =
         new URL(location.href).searchParams.get('tab')
         || (location.hash || '').slice(1)
@@ -260,7 +252,7 @@
     })();
   </script>
 
-  <!-- MasterTools (cuenta click: +1 tool y +1 total; badges solo servidor) -->
+  <!-- MasterTools (usa CountAPI para badges + click suma tool+total) -->
   <script>
     const LS_FAVS = 'pb.master.favorites';
     const tools = [
@@ -312,10 +304,10 @@
         });
 
         const openLink = card.querySelector('.tool-link');
-        // mousedown / pointerdown antes de navegar → garantiza el ping
-        const ping = ()=> window.PBViews?.bumpToolAndTotalOnOpen(t.id);
-        openLink.addEventListener('pointerdown', ping, { passive:true });
-        openLink.addEventListener('mousedown', ping, { passive:true });
+
+        // Usa pointerdown y "once" para evitar doble disparo (pointerdown/mousedown/touchstart)
+        const handler = ()=> window.PBViews?.bumpToolAndTotalOnOpen(t.id);
+        openLink.addEventListener('pointerdown', handler, { passive:true, once:true });
 
         wrap.appendChild(card);
       }
@@ -332,9 +324,8 @@
       });
     }
 
+    // Render inicial + arrancar PBViews
     renderMasterTools();
-
-    // Inicia PBViews tras render
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', ()=> window.PBViews?.init());
     } else {
