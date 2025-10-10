@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,27 +7,200 @@
   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <style>
-    :root { --bg:linear-gradient(135deg,#0f2027,#203a43,#2c5364); --card-bg:rgba(255,255,255,.05); --border:rgba(255,255,255,.1); --accent:#00fff7; --accent-2:#9ef5ff; --text:#e0f7fa; --muted:#b7dfe6; --radius:14px; }
-    *{box-sizing:border-box}
-    body{margin:0;padding:2rem;font-family:'Orbitron',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
-    h1{font-size:2.2rem;margin-bottom:2rem;color:var(--accent);text-shadow:0 0 5px #00fff7}
-    .tabs{display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
-    .tab{padding:.5rem 1rem;border-radius:10px;background:var(--card-bg);border:1px solid var(--border);cursor:pointer}
-    .tab.active{background:var(--accent);color:#000;box-shadow:0 0 10px #00fff7}
-    .controls{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center}
-    .btn{background:var(--accent);color:#000;padding:.5rem 1rem;border:none;border-radius:8px;font-weight:700;cursor:pointer;box-shadow:0 0 10px #00fff7}
-    .section{display:none}.section.active{display:block}
-    .search{margin-bottom:1rem;padding:.7rem 1rem;width:100%;border-radius:10px;border:1px solid var(--border);background:var(--card-bg);color:inherit}
-    #viewInfo{font-size:1.05rem;user-select:none;padding:.4rem .7rem;border:1px solid var(--border);border-radius:10px;background:var(--card-bg)}
-    .footer{margin-top:auto;text-align:center;color:#aaa}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.8rem}
-    .card{border:1px solid var(--border);background:var(--card-bg);border-radius:var(--radius);padding:.9rem;display:flex;flex-direction:column;gap:.7rem}
-    .card h3{margin:0;font-size:1rem;color:var(--accent-2)}
-    .card p{margin:0;color:var(--muted);font-size:.92rem;min-height:2.2em}
-    .card .row{display:flex;gap:.5rem;align-items:center}
-    .tool-link{background:var(--accent);color:#000!important;font-weight:900;border:none;box-shadow:0 0 10px #00fff7;padding:.5rem 1rem;border-radius:10px}
-    .icon-btn{background:transparent;border:1px solid var(--border);border-radius:10px;padding:.45rem .6rem;color:inherit;cursor:pointer}
-    .tool-views{margin-left:auto;font-size:.9rem;color:var(--muted);padding:.15rem .45rem;border:1px solid var(--border);border-radius:999px;background:rgba(255,255,255,.03);white-space:nowrap}
+    :root {
+      --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --border: rgba(255, 255, 255, 0.1);
+      --accent: #00fff7;
+      --accent-2: #9ef5ff;
+      --text: #e0f7fa;
+      --muted: #b7dfe6;
+      --text-glow: 0 0 5px #00fff7;
+      --button-bg: #00fff7;
+      --button-text: #000;
+      --button-glow: 0 0 10px #00fff7;
+      --focus: 0 0 0 3px rgba(0, 255, 247, 0.35);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 2rem;
+      font-family: 'Orbitron', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 2rem;
+      color: var(--accent);
+      text-shadow: var(--text-glow);
+      animation: fadeInUp 1s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: black;
+      box-shadow: var(--button-glow);
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+
+    .btn {
+      background: var(--button-bg);
+      color: var(--button-text);
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: var(--button-glow);
+      transition: transform 0.2s ease;
+    }
+
+    .btn:hover { transform: scale(1.05); }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .category {
+      background: var(--card-bg);
+      margin-bottom: 1rem;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .category-header {
+      padding: 1rem;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.07);
+    }
+
+    .category-content {
+      display: none;
+      padding: 1rem;
+      white-space: pre-wrap;
+      border-top: 1px solid var(--border);
+    }
+
+    .visible { display: block; }
+
+    .copy-btn {
+      background: var(--button-bg);
+      color: var(--button-text);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      box-shadow: var(--button-glow);
+      transition: all 0.3s ease;
+      margin-left: 0.5rem;
+    }
+    .copy-btn.copied { background-color: #00c851; color: white; }
+
+    .footer {
+      margin-top: auto;
+      text-align: center;
+      font-size: 0.9rem;
+      padding: 1rem;
+      color: #aaa;
+    }
+
+    /* MasterTools */
+    .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .8rem; }
+    .card { border:1px solid var(--border); background: var(--card-bg); border-radius: var(--radius); padding: .9rem; display:flex; flex-direction:column; gap:.7rem; }
+    .card h3 { margin:0; font-size:1rem; color: var(--accent-2); }
+    .card p { margin:0; color: var(--muted); font-size:.92rem; min-height: 2.2em; }
+    .card .row { display:flex; gap:.5rem; align-items:center; }
+    .icon-btn { background: transparent; border:1px solid var(--border); border-radius: 10px; padding:.45rem .6rem; color: var(--text); cursor: pointer; }
+    .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
+    .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
+
+    /* Botón Open en MasterTools */
+    .tool-link {
+      background: var(--accent);
+      color: #000 !important;
+      font-weight: 900;
+      border: none;
+      box-shadow: var(--button-glow);
+      transition: transform .2s ease;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+    }
+    .tool-link:hover { transform: scale(1.05); }
+
+    /* Barras de búsqueda unificadas */
+    .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch {
+      margin-bottom: 1rem;
+      padding: 0.7rem 1rem;
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    /* Contador de vistas (header) */
+    #viewInfo {
+      font-size: 1.05rem;
+      user-select: none;
+      padding: .4rem .7rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--card-bg);
+    }
+
+    /* Badge de vistas por tool (compacto) */
+    .tool-views {
+      margin-left: auto;
+      font-size: .9rem;
+      color: var(--muted);
+      padding: .15rem .45rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.03);
+      white-space: nowrap;
+      line-height: 1.1;
+    }
   </style>
 </head>
 <body>
@@ -42,7 +215,8 @@
 
   <div class="controls">
     <button class="btn" id="emojiToggle">😎 Emojis: ON</button>
-    <button class="btn" id="syncBtn">↻ Sync</button>
+    <button class="btn" onclick="loadReports()">↻ Refresh</button>
+    <!-- Solo una opción: Total Views -->
     <div id="viewInfo">👁️ Total Views: Loading…</div>
   </div>
 
@@ -73,16 +247,118 @@
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
-  <!-- Cliente de vistas -->
-  <!-- OJO: si prefieres inline, pega el bloque del archivo pb-views.js aquí; de lo contrario referencia el archivo: -->
-  <script src="pb-views.js"></script>
+  <!-- PBViews (SINCRONIZADO CON SERVIDOR) -->
+  <script>
+    (function (w) {
+      // === CONFIG ===
+      const BASE  = 'https://script.google.com/macros/s/AKfycbzrMg3MWq5YT53rNweaxuFa--9CMwoz4k1PDio8y8fbl-3hSb_fk_WWYPhPaDPKe90P3g/exec'; // tu /exec
+      const TOKEN = '';     // si activas APP_TOKEN en Code.gs, colócalo aquí
+      const POLL_MS = 10000; // sincronía entre navegadores
 
-  <!-- Tabs + UI básica -->
+      // === KEYS ===
+      const KEY_TOTAL = 'pb.views.total';
+      const P_TOOL = (id)=> `pb.views.tool.${String(id)}`;
+      const P_AREA = (id)=> `pb.views.area.${String(id)}`;
+
+      // === HTTP helpers (GET sin preflight) ===
+      function qs(params){
+        const u = new URLSearchParams(params||{});
+        if (TOKEN) u.append('token', TOKEN);
+        u.append('t', Date.now().toString()); // anti-cache
+        return u.toString();
+      }
+      async function api(op, params={}, opts={}){
+        const url = `${BASE}?${qs({ op, ...params })}`;
+        const res = await fetch(url, { method:'GET', keepalive: !!opts.keepalive });
+        if (!res.ok) throw new Error('fetch failed');
+        return res.json();
+      }
+      const get   = (key, opts)=> api('get', { key }, opts);
+      const inc   = (key, n=1, opts)=> api('inc', { key, n:String(n) }, opts);
+      const incMulti = (keys, n=1, opts)=>{
+        const list = Array.isArray(keys) ? keys.join(',') : String(keys||'');
+        return api('inc_multi', { keys:list, n:String(n) }, opts);
+      };
+      const counts = (keys, opts)=>{
+        const list = Array.isArray(keys) ? keys.join(',') : String(keys||'');
+        return api('counts', { keys:list }, opts);
+      };
+
+      // === UI helpers ===
+      function setTotalUI(n){
+        const el = document.getElementById('viewInfo');
+        if (el && typeof n === 'number') el.textContent = `👁️ Total Views: ${n.toLocaleString()}`;
+      }
+      function setToolUI(id, n){
+        const span = document.querySelector(`.tool-views[data-id="${id}"]`);
+        if (span && typeof n === 'number') span.textContent = `👁️ ${n.toLocaleString()}`;
+      }
+      function listToolIds(){
+        return Array.from(document.querySelectorAll('#masterGrid .card')).map(c=>c.dataset.id).filter(Boolean);
+      }
+
+      w.PBViews = {
+        async bumpOnLoad(area='hub'){
+          try {
+            // +1 total y +1 área en CADA refresh (atómico)
+            const resp = await incMulti([KEY_TOTAL, P_AREA(area)], 1);
+            const total = resp?.values?.[KEY_TOTAL];
+            if (typeof total === 'number') setTotalUI(total);
+          } catch(_) {}
+        },
+        async loadToolBadges(){
+          const ids = listToolIds();
+          if (!ids.length) return;
+          try {
+            const resp = await counts(ids.map(P_TOOL));
+            const vals = resp?.values || {};
+            ids.forEach(id => setToolUI(id, Number(vals[P_TOOL(id)] || 0)));
+          } catch(_) {}
+        },
+        bumpToolAndTotalOnOpen(id){
+          // +1 herramienta y +1 total — no bloquea navegación
+          incMulti([P_TOOL(id), KEY_TOTAL], 1, { keepalive: true }).catch(()=>{});
+        },
+        async pollAll(){
+          try { const t = await get(KEY_TOTAL); if (typeof t?.value === 'number') setTotalUI(t.value); } catch(_){}
+          try { await this.loadToolBadges(); } catch(_){}
+        }
+      };
+    })(window);
+  </script>
+
+  <!-- Tu script principal -->
+  <script src="script.js"></script>
+
+  <!-- Sincronía de pestañas + tabs + contadores (con servidor) -->
   <script>
     (function(){
+      async function renderGlobalViews(){
+        try{
+          // lee desde el servidor autoritativo
+          const r = await window.PBViews?.pollAll();
+        }catch(_){}
+      }
+
+      // +1 al cargar (cada refresh cuenta) y primer pintado
+      (async ()=>{
+        try{
+          await window.PBViews?.bumpOnLoad('hub');
+        }catch(_){}
+        renderGlobalViews();
+      })();
+
+      // Mantener sincronizado entre navegadores/pestañas
+      setInterval(()=> window.PBViews?.pollAll(), 10000);
+      window.addEventListener('focus', ()=> window.PBViews?.pollAll());
+      document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) window.PBViews?.pollAll(); });
+
+      // ---- Tabs (intacto) ----
+      const tabs = document.querySelectorAll('.tab');
+      const sections = document.querySelectorAll('.section');
       function setActiveTab(id){
-        document.querySelectorAll('.section').forEach(s => s.classList.toggle('active', s.id === id));
-        document.querySelectorAll('.tab').forEach(t => {
+        sections.forEach(s => s.classList.toggle('active', s.id === id));
+        tabs.forEach(t => {
           const isTarget = (t.textContent.includes('Share Reports') && id==='reports')
                         || (t.textContent.includes('Problem Solve Guide') && id==='guide')
                         || (t.textContent.includes('Tampermonkey Scripts') && id==='scripts')
@@ -91,76 +367,106 @@
         });
         try{
           localStorage.setItem('pb.activeTab', id);
-          const u = new URL(location.href); u.searchParams.set('tab', id); u.hash = '#'+id; history.replaceState(null,'',u);
+          const u = new URL(location.href);
+          u.searchParams.set('tab', id);
+          u.hash = '#'+id;
+          history.replaceState(null,'',u);
         }catch(e){}
       }
-      window.showSection = (function(orig){ return function(id){ if(typeof orig==='function'){ try{ orig(id);}catch(e){} } setActiveTab(id); } })(window.showSection);
-      const initialId = new URL(location.href).searchParams.get('tab') || (location.hash||'').slice(1) || localStorage.getItem('pb.activeTab') || (document.querySelector('.section.active')?.id) || 'reports';
+      const original = window.showSection;
+      window.showSection = function(id){
+        if(typeof original === 'function'){ try{ original(id); }catch(e){} }
+        setActiveTab(id);
+      };
+      const initialId =
+        new URL(location.href).searchParams.get('tab')
+        || (location.hash || '').slice(1)
+        || localStorage.getItem('pb.activeTab')
+        || (document.querySelector('.section.active')?.id)
+        || 'reports';
       setActiveTab(initialId);
-
-      // Botones simples
-      const emojiBtn = document.getElementById('emojiToggle');
-      if (emojiBtn) emojiBtn.addEventListener('click', ()=>{
-        emojiBtn.textContent = emojiBtn.textContent.includes('ON') ? '😶 Emojis: OFF' : '😎 Emojis: ON';
-      });
-      const syncBtn = document.getElementById('syncBtn');
-      if (syncBtn) syncBtn.addEventListener('click', ()=> window.PBViews?.pollAll());
     })();
   </script>
 
-  <!-- MasterTools (render + conteo) -->
+  <!-- Lógica MasterTools con badge de vistas por tool (👁️ N) -->
   <script>
-    const LS_FAVS='pb.master.favorites';
-    const tools=[
+    const LS_FAVS = 'pb.master.favorites';
+    const tools = [
       {id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'https://qjuflore.github.io/Productivity-Boost-Hub/MasterTools/trailer-plan.html', desc:'Plan injection, density & severity attributes for trailers.'},
       {id:'inbound-flow-planner', icon:'📦', name:'Inbound Flow Planner', href:'https://qjuflore.github.io/Productivity-Boost-Hub/MasterTools/Inbound%20Flow%20Planner.html', desc:'Optimize inbound flow & labor planning.'}
     ];
-    const getFavs=()=>{ try{return JSON.parse(localStorage.getItem(LS_FAVS)||'[]');}catch{return[];} };
-    const setFavs=(arr)=>localStorage.setItem(LS_FAVS, JSON.stringify(arr));
-    const isFav=(id)=>getFavs().includes(id);
 
-    function toggleFav(id){ const s=new Set(getFavs()); s.has(id)?s.delete(id):s.add(id); setFavs([...s]); renderMasterTools(); }
+    const getFavs = () => { try { return JSON.parse(localStorage.getItem(LS_FAVS) || '[]'); } catch { return []; } };
+    const setFavs = (arr) => localStorage.setItem(LS_FAVS, JSON.stringify(arr));
+    const isFav = (id) => getFavs().includes(id);
+
+    function toggleFav(id){
+      const favs = new Set(getFavs());
+      if (favs.has(id)) favs.delete(id); else favs.add(id);
+      setFavs([...favs]);
+      renderMasterTools();
+    }
 
     function renderMasterTools(){
-      const wrap=document.getElementById('masterGrid'); if(!wrap) return;
-      wrap.innerHTML=''; const data=[...tools];
+      const wrap=document.getElementById('masterGrid');
+      if(!wrap) return;
+      wrap.innerHTML='';
+      const data=[...tools];
       data.sort((a,b)=> (isFav(b.id)-isFav(a.id)) || a.name.localeCompare(b.name));
+
       for(const t of data){
-        const card=document.createElement('div'); card.className='card'; card.dataset.id=t.id;
+        const card=document.createElement('div');
+        card.className='card';
+        card.dataset.id=t.id;
         card.innerHTML=`<h3>${t.icon} ${t.name}</h3>
           <p>${t.desc||''}</p>
           <div class="row">
+            <!-- Abrir en misma pestaña como pediste -->
             <a class="tool-link" href="${t.href}">Open</a>
             <button class="icon-btn favorite" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
             <button class="icon-btn copy-btn" title="Copy link">⧉</button>
-            <span class="tool-views" data-id="${t.id}">👁️ 0</span>
+            <span class="tool-views" data-id="${t.id}">👁️ Loading…</span>
           </div>`;
-        card.querySelector('.favorite').addEventListener('click', ()=>toggleFav(t.id));
-        const copyBtn=card.querySelector('.copy-btn');
+
+        const favBtn = card.querySelector('.favorite');
+        favBtn.addEventListener('click', ()=> toggleFav(t.id));
+
+        const copyBtn = card.querySelector('.copy-btn');
         copyBtn.addEventListener('click', async ()=>{
-          try{ await navigator.clipboard.writeText(new URL(t.href, location.href).href);
-            const old=copyBtn.textContent; copyBtn.textContent='✔'; setTimeout(()=>copyBtn.textContent=old, 900);
-          }catch(e){}
+          try{
+            const url = new URL(t.href, location.href).href;
+            await navigator.clipboard.writeText(url);
+            const old = copyBtn.textContent; copyBtn.textContent='✔';
+            setTimeout(()=>copyBtn.textContent=old, 900);
+          }catch(e){ /* ignore */ }
         });
-        // Contar herramienta + total ANTES de navegar (GET keepalive)
-        const open = card.querySelector('.tool-link');
-        const send = ()=> window.PBViews?.bumpToolAndTotalOnOpen(t.id);
-        open.addEventListener('pointerdown', send, {passive:true});
+
+        // 👇 suma herramienta + total ANTES de navegar (para no perder el ping)
+        const openLink = card.querySelector('.tool-link');
+        const ping = ()=> window.PBViews?.bumpToolAndTotalOnOpen(t.id);
+        openLink.addEventListener('pointerdown', ping, { passive:true });
+
         wrap.appendChild(card);
       }
+
+      // Cargar badges desde el servidor para todas las tools
+      window.PBViews?.loadToolBadges();
     }
 
-    // Render + contadores
-    renderMasterTools();
+    const masterSearch = document.getElementById('masterSearch');
+    if(masterSearch){
+      masterSearch.addEventListener('input', ()=>{
+        const q = masterSearch.value.trim().toLowerCase();
+        document.querySelectorAll('#masterGrid .card').forEach(card=>{
+          const txt = card.textContent.toLowerCase();
+          card.style.display = q ? (txt.includes(q) ? '' : 'none') : '';
+        });
+      });
+    }
 
-    (async function startCounters(){
-      await window.PBViews?.bumpOnLoad('hub');   // +1 total + área en CADA refresh
-      await window.PBViews?.loadToolBadges();    // carga inicial de badges
-      // Sincronía entre navegadores
-      setInterval(()=> window.PBViews?.pollAll(), 10000);
-      window.addEventListener('focus', ()=> window.PBViews?.pollAll());
-      document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) window.PBViews?.pollAll(); });
-    })();
+    // Render inicial + mantener badges al día si cambia el foco
+    renderMasterTools();
+    window.addEventListener('focus', ()=> window.PBViews?.loadToolBadges());
   </script>
 </body>
 </html>
