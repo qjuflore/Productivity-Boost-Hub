@@ -250,9 +250,9 @@
   <!-- PBViews (SINCRONIZADO CON SERVIDOR) -->
   <script>
     (function (w) {
-      // === CONFIG ===
-      const BASE  = 'https://script.google.com/macros/s/AKfycbzrMg3MWq5YT53rNweaxuFa--9CMwoz4k1PDio8y8fbl-3hSb_fk_WWYPhPaDPKe90P3g/exec'; // tu /exec
-      const TOKEN = '';     // si activas APP_TOKEN en Code.gs, colócalo aquí
+      // === CONFIG (cambia BASE si redeployas) ===
+      const BASE  = 'https://script.google.com/macros/s/AKfycbzrMg3MWq5YT53rNweaxuFa--9CMwoz4k1PDio8y8fbl-3hSb_fk_WWYPhPaDPKe90P3g/exec';
+      const TOKEN = '';      // si usas APP_TOKEN en el servidor, ponlo aquí
       const POLL_MS = 10000; // sincronía entre navegadores
 
       // === KEYS ===
@@ -289,6 +289,10 @@
         const el = document.getElementById('viewInfo');
         if (el && typeof n === 'number') el.textContent = `👁️ Total Views: ${n.toLocaleString()}`;
       }
+      function parseBadge(span){
+        const txt = (span?.textContent||'').replace(/[^\d]/g,'');
+        const n = parseInt(txt||'0',10); return isNaN(n)?0:n;
+      }
       function setToolUI(id, n){
         const span = document.querySelector(`.tool-views[data-id="${id}"]`);
         if (span && typeof n === 'number') span.textContent = `👁️ ${n.toLocaleString()}`;
@@ -297,30 +301,68 @@
         return Array.from(document.querySelectorAll('#masterGrid .card')).map(c=>c.dataset.id).filter(Boolean);
       }
 
+      // === API pública (compat + nuevas) ===
       w.PBViews = {
+        // Compat (por si algún otro código lo usa):
+        async bumpTotal(n=1){ const r = await inc(KEY_TOTAL, n); setTotalUI(r?.value); return r?.value; },
+        async getTotal(){ const r = await get(KEY_TOTAL); return r?.value || 0; },
+        async bumpTool(id,n=1){ const r = await inc(P_TOOL(id), n); setToolUI(id, r?.value); return r?.value; },
+        async getTool(id){ const r = await get(P_TOOL(id)); return r?.value || 0; },
+        async bumpArea(id,n=1){ return (await inc(P_AREA(id), n))?.value; },
+        async getArea(id){ const r = await get(P_AREA(id)); return r?.value || 0; },
+
+        // Carga: +1 total y +1 área SIEMPRE (cada refresh)
         async bumpOnLoad(area='hub'){
-          try {
-            // +1 total y +1 área en CADA refresh (atómico)
+          try{
             const resp = await incMulti([KEY_TOTAL, P_AREA(area)], 1);
             const total = resp?.values?.[KEY_TOTAL];
             if (typeof total === 'number') setTotalUI(total);
-          } catch(_) {}
+          }catch(e){
+            // Fallback por si inc_multi falla: incrementa total (y luego área) individualmente
+            try {
+              const t = await inc(KEY_TOTAL, 1);
+              if (typeof t?.value === 'number') setTotalUI(t.value);
+              await inc(P_AREA(area), 1);
+            } catch(_) {}
+          }
         },
+
+        // Carga badges de todas las tools en lote
         async loadToolBadges(){
           const ids = listToolIds();
           if (!ids.length) return;
-          try {
+          try{
             const resp = await counts(ids.map(P_TOOL));
             const vals = resp?.values || {};
             ids.forEach(id => setToolUI(id, Number(vals[P_TOOL(id)] || 0)));
-          } catch(_) {}
+          }catch(_){}
         },
+
+        // Click herramienta: +1 tool y +1 total (atómico) + actualización optimista inmediata
         bumpToolAndTotalOnOpen(id){
-          // +1 herramienta y +1 total — no bloquea navegación
-          incMulti([P_TOOL(id), KEY_TOTAL], 1, { keepalive: true }).catch(()=>{});
+          // Optimista en UI:
+          const span = document.querySelector(`.tool-views[data-id="${id}"]`);
+          setToolUI(id, parseBadge(span) + 1);
+          const totalEl = document.getElementById('viewInfo');
+          const totalNow = parseInt((totalEl?.textContent||'').replace(/[^\d]/g,'')||'0',10) || 0;
+          setTotalUI(totalNow + 1);
+
+          // Llamada real (con keepalive) y fallback dual si falla inc_multi
+          incMulti([P_TOOL(id), KEY_TOTAL], 1, { keepalive:true })
+            .catch(async ()=>{
+              try {
+                await inc(P_TOOL(id), 1, { keepalive:true });
+                await inc(KEY_TOTAL, 1, { keepalive:true });
+              } catch(_) {}
+            });
         },
+
+        // Sincronía periódica (total + badges)
         async pollAll(){
-          try { const t = await get(KEY_TOTAL); if (typeof t?.value === 'number') setTotalUI(t.value); } catch(_){}
+          try {
+            const t = await get(KEY_TOTAL);
+            if (typeof t?.value === 'number') setTotalUI(t.value);
+          } catch(_){}
           try { await this.loadToolBadges(); } catch(_){}
         }
       };
@@ -330,22 +372,13 @@
   <!-- Tu script principal -->
   <script src="script.js"></script>
 
-  <!-- Sincronía de pestañas + tabs + contadores (con servidor) -->
+  <!-- Sincronía de pestañas + tabs + contadores -->
   <script>
     (function(){
-      async function renderGlobalViews(){
-        try{
-          // lee desde el servidor autoritativo
-          const r = await window.PBViews?.pollAll();
-        }catch(_){}
-      }
-
-      // +1 al cargar (cada refresh cuenta) y primer pintado
+      // +1 al cargar (cada refresh cuenta) y primer pintado desde servidor
       (async ()=>{
-        try{
-          await window.PBViews?.bumpOnLoad('hub');
-        }catch(_){}
-        renderGlobalViews();
+        try{ await window.PBViews?.bumpOnLoad('hub'); }catch(_){}
+        try{ await window.PBViews?.pollAll(); }catch(_){}
       })();
 
       // Mantener sincronizado entre navegadores/pestañas
@@ -421,11 +454,11 @@
         card.innerHTML=`<h3>${t.icon} ${t.name}</h3>
           <p>${t.desc||''}</p>
           <div class="row">
-            <!-- Abrir en misma pestaña como pediste -->
+            <!-- Abrir en la misma pestaña -->
             <a class="tool-link" href="${t.href}">Open</a>
             <button class="icon-btn favorite" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
             <button class="icon-btn copy-btn" title="Copy link">⧉</button>
-            <span class="tool-views" data-id="${t.id}">👁️ Loading…</span>
+            <span class="tool-views" data-id="${t.id}">👁️ 0</span>
           </div>`;
 
         const favBtn = card.querySelector('.favorite');
@@ -441,7 +474,7 @@
           }catch(e){ /* ignore */ }
         });
 
-        // 👇 suma herramienta + total ANTES de navegar (para no perder el ping)
+        // suma herramienta + total ANTES de navegar (ping + UI optimista)
         const openLink = card.querySelector('.tool-link');
         const ping = ()=> window.PBViews?.bumpToolAndTotalOnOpen(t.id);
         openLink.addEventListener('pointerdown', ping, { passive:true });
@@ -449,7 +482,7 @@
         wrap.appendChild(card);
       }
 
-      // Cargar badges desde el servidor para todas las tools
+      // cargar badges desde servidor (lote)
       window.PBViews?.loadToolBadges();
     }
 
@@ -464,7 +497,7 @@
       });
     }
 
-    // Render inicial + mantener badges al día si cambia el foco
+    // Render inicial y mantener badges al día si cambian en otra pestaña/ventana
     renderMasterTools();
     window.addEventListener('focus', ()=> window.PBViews?.loadToolBadges());
   </script>
