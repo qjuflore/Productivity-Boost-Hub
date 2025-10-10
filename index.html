@@ -244,87 +244,177 @@
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
-  <!-- PBViews GLOBAL (Apps Script backend + fallback local) -->
+  <!-- PBViews GLOBAL Optimista (Apps Script + timeout + fallback + keepalive) -->
   <script>
   (function (w) {
-    const BASE  = 'https://script.google.com/macros/s/AKfycbzrMg3MWq5YT53rNweaxuFa--9CMwoz4k1PDio8y8fbl-3hSb_fk_WWYPhPaDPKe90P3g/exec'; // tu /exec
-    const TOKEN = ''; // si configuraste APP_TOKEN en el servidor, ponlo aquí
+    const BASE  = 'https://script.google.com/macros/s/AKfycbzrMg3MWq5YT53rNweaxuFa--9CMwoz4k1PDio8y8fbl-3hSb_fk_WWYPhPaDPKe90P3g/exec';
+    const TOKEN = '';
+    const TIMEOUT_MS = 1500; // red rápida; si tarda más, mostramos local y reconciliamos luego
 
     const NUM = (x)=>{ const n=parseInt(x,10); return isNaN(n)?0:n; };
     const getLS = (k)=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
     const setLS = (k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} };
 
-    async function api(op, params) {
+    function withTimeout(p, ms=TIMEOUT_MS) {
+      const ctrl = new AbortController();
+      const t = setTimeout(()=>ctrl.abort('timeout'), ms);
+      return p(ctrl.signal).finally(()=>clearTimeout(t));
+    }
+
+    async function api(op, params={}, opts={}) {
       const q = new URLSearchParams({ op, ...(params||{}) });
       if (TOKEN) q.append('token', TOKEN);
       const url = `${BASE}?${q.toString()}`;
-      const res = await fetch(url, { method: 'GET' }); // GET simple
+      const req = (signal)=> fetch(url, { method:'GET', signal, keepalive: !!opts.keepalive });
+      const res = await withTimeout(req, opts.timeout || TIMEOUT_MS);
       if (!res.ok) throw new Error('fetch failed');
       return res.json();
     }
-    async function bumpRemote(key, n=1) {
-      try { const j = await api('inc', { key, n:String(n) }); return NUM(j.value); }
-      catch { const cur = NUM(getLS(key)); const val = cur + (n|0); setLS(key, String(val)); return val; }
+
+    async function bumpRemote(key, n=1, opts={}) {
+      try {
+        const j = await api('inc', { key, n:String(n) }, opts);
+        return NUM(j.value);
+      } catch (e) {
+        // fallback local (optimista)
+        const cur = NUM(getLS(key));
+        const val = cur + (n|0);
+        setLS(key, String(val));
+        return val;
+      }
     }
-    async function getRemote(key) {
-      try { const j = await api('get', { key }); return NUM(j.value); }
-      catch { return NUM(getLS(key)); }
+    async function getRemote(key, opts={}) {
+      try {
+        const j = await api('get', { key }, opts);
+        return NUM(j.value);
+      } catch (e) {
+        return NUM(getLS(key));
+      }
     }
 
     const KEY_TOTAL = 'pb.views.total';
     const P_TOOL = (id)=> `pb.views.tool.${String(id)}`;
     const P_AREA = (id)=> `pb.views.area.${String(id)}`;
 
-    w.PBViews = {
-      bumpTotal(n=1){ return bumpRemote(KEY_TOTAL, n); },
-      getTotal(){ return getRemote(KEY_TOTAL); },
-      bumpTool(id, n=1){ return bumpRemote(P_TOOL(id), n); },
-      getTool(id){ return getRemote(P_TOOL(id)); },
-      bumpArea(id, n=1){ return bumpRemote(P_AREA(id), n); },
-      getArea(id){ return getRemote(P_AREA(id)); },
-      bumpCountry(n=1){ return api('inccountry', { n:String(n) }).catch(()=>null); },
+    // Helpers UI
+    function updateText(sel, formatter){
+      const el = typeof sel==='string' ? document.querySelector(sel) : sel;
+      if (!el) return;
+      const n = formatter(el.textContent);
+      el.textContent = n;
+    }
+    function parseCountFromView(text){
+      const m = String(text||'').match(/(\d[\d,]*)$/);
+      return m ? NUM(m[1].replace(/,/g,'')) : 0;
+    }
 
-      // Auto-init: suma total + área 'hub', pinta #viewInfo, actualiza badges y cuenta clicks en .tool-link
+    w.PBViews = {
+      // API pública (compat) con opciones extra {keepalive}
+      bumpTotal(n=1, opts){ return bumpRemote(KEY_TOTAL, n, opts||{}); },
+      getTotal(opts){ return getRemote(KEY_TOTAL, opts||{}); },
+      bumpTool(id, n=1, opts){ return bumpRemote(P_TOOL(id), n, opts||{}); },
+      getTool(id, opts){ return getRemote(P_TOOL(id), opts||{}); },
+      bumpArea(id, n=1, opts){ return bumpRemote(P_AREA(id), n, opts||{}); },
+      getArea(id, opts){ return getRemote(P_AREA(id), opts||{}); },
+
+      // Init con UI optimista + reconciliación
       async init({ area='hub', viewSelector='#viewInfo', masterGrid='#masterGrid' } = {}) {
-        try { await w.PBViews.bumpTotal(1); await w.PBViews.bumpArea(area, 1); } catch(_){}
-        // Render total
+        // 1) Mostrar aproximado local +1 inmediato (optimista)
         try {
-          const total = await w.PBViews.getTotal();
+          const approx = NUM(getLS(KEY_TOTAL)) + 1;
           const el = document.querySelector(viewSelector);
-          if (el) el.textContent = `👁️ Total Views: ${Number(total||0).toLocaleString()}`;
-        } catch(_){}
-        // Badges por herramienta + contar al abrir
+          if (el) el.textContent = `👁️ Total Views: ${approx.toLocaleString()}`;
+          setLS(KEY_TOTAL, String(approx)); // reflejo local
+        } catch(_) {}
+
+        // 2) Incrementos reales (total y área) en paralelo (remoto con timeout)
+        try {
+          await Promise.all([
+            w.PBViews.bumpTotal(0), // ya sumamos optimista arriba; ponemos 0 aquí y reconciliamos abajo
+            w.PBViews.bumpArea(area, 1)
+          ]);
+        } catch(_) {}
+
+        // 3) Reconciliar contra valor remoto real del total
+        try {
+          const real = await w.PBViews.getTotal();
+          const el = document.querySelector(viewSelector);
+          if (el) el.textContent = `👁️ Total Views: ${Number(real||0).toLocaleString()}`;
+          setLS(KEY_TOTAL, String(real||0));
+        } catch(_) {}
+
+        // 4) Cargar badges por herramienta: primero local rápido, luego remoto
         try {
           const cards = document.querySelectorAll(`${masterGrid} .card`);
           for (const card of cards) {
             const id = card.dataset.id;
             const span = card.querySelector(`.tool-views[data-id="${id}"]`);
-            if (id && span) {
-              const n = await w.PBViews.getTool(id);
+            if (!id || !span) continue;
+
+            // Local rápido
+            const localVal = NUM(getLS(P_TOOL(id)));
+            span.textContent = `👁️ ${localVal.toLocaleString()}`;
+
+            // Remoto (reconciliar)
+            w.PBViews.getTool(id).then(n=>{
               span.textContent = `👁️ ${Number(n||0).toLocaleString()}`;
-            }
-            const open = card.querySelector('.tool-link');
-            if (open && id) {
-              open.addEventListener('click', ()=> { w.PBViews.bumpTool(id, 1); }, { passive:true });
-            }
+              setLS(P_TOOL(id), String(n||0));
+            }).catch(()=>{});
           }
-        } catch(_){}
+        } catch(_) {}
+
+        // 5) Cuando regrese el foco, refresca totales y badges
+        const refetchAll = async () => {
+          try {
+            const real = await w.PBViews.getTotal({ timeout: 2000 });
+            const el = document.querySelector(viewSelector);
+            if (el) el.textContent = `👁️ Total Views: ${Number(real||0).toLocaleString()}`;
+            const cards = document.querySelectorAll(`${masterGrid} .card`);
+            for (const card of cards) {
+              const id = card.dataset.id;
+              const span = card.querySelector(`.tool-views[data-id="${id}"]`);
+              if (id && span) {
+                const n = await w.PBViews.getTool(id, { timeout: 2000 });
+                span.textContent = `👁️ ${Number(n||0).toLocaleString()}`;
+              }
+            }
+          } catch(_) {}
+        };
+        window.addEventListener('focus', refetchAll);
+        document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refetchAll(); });
+      },
+
+      // Útil para clicks: suma herramienta y total de forma optimista + keepalive
+      bumpToolAndTotalFast(id){
+        // UI optimista inmediata (badge + total)
+        try {
+          const span = document.querySelector(`.tool-views[data-id="${id}"]`);
+          if (span) {
+            const cur = NUM(span.textContent.replace(/[^\d]/g,'')) || 0;
+            const next = cur + 1;
+            span.textContent = `👁️ ${next.toLocaleString()}`;
+            setLS(P_TOOL(id), String(next));
+          }
+          updateText('#viewInfo', (txt)=>{
+            const base = parseCountFromView(txt);
+            const next = base + 1;
+            return `👁️ Total Views: ${next.toLocaleString()}`;
+          });
+          setLS(KEY_TOTAL, String((NUM(getLS(KEY_TOTAL))||0)+1));
+        } catch(_) {}
+
+        // Dispara incrementos remotos con keepalive (no bloquea navegación)
+        w.PBViews.bumpTool(id, 1, { keepalive: true });
+        w.PBViews.bumpTotal(1, { keepalive: true });
       }
     };
-
-    // Arranca cuando el DOM esté listo
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', ()=> w.PBViews.init());
-    } else {
-      w.PBViews.init();
-    }
   })(window);
   </script>
 
-  <!-- Tu script principal -->
+  <!-- Tu script principal (deja tu lógica existente) -->
   <script src="script.js"></script>
 
-  <!-- Sincronía + tabs + contadores (async-safe para PBViews remoto) -->
+  <!-- Sincronía + tabs + contadores -->
   <script>
     (function(){
       function setActiveTab(id){
@@ -364,7 +454,7 @@
     })();
   </script>
 
-  <!-- Lógica MasterTools con badge de vistas por tool (👁️ N) -->
+  <!-- Lógica MasterTools (con UI optimista y conteo doble: tool + total) -->
   <script>
     const LS_FAVS = 'pb.master.favorites';
     const tools = [
@@ -391,8 +481,9 @@
       data.sort((a,b)=> (isFav(b.id)-isFav(a.id)) || a.name.localeCompare(b.name));
 
       for(const t of data){
-        // Placeholder para evitar [object Promise]; PBViews.init() (y el bloque abajo) lo actualizarán
-        const toolViews = '…';
+        // Muestra primero valor local (rápido); PBViews.init() lo reconciliará
+        const localTool = Number(localStorage.getItem(`pb.views.tool.${t.id}`) || '0');
+        const toolViews = localTool.toLocaleString();
 
         const card=document.createElement('div');
         card.className='card';
@@ -416,22 +507,13 @@
             await navigator.clipboard.writeText(url);
             const old = copyBtn.textContent; copyBtn.textContent='✔';
             setTimeout(()=>copyBtn.textContent=old, 900);
-          }catch(e){ /* ignore */ }
+          }catch(e){}
         });
 
-        // ✅ Actualiza badge por tool al crear la tarjeta
-        (async () => {
-          try {
-            const n = await window.PBViews?.getTool(t.id);
-            const span = card.querySelector(`.tool-views[data-id="${t.id}"]`);
-            if (span) span.textContent = `👁️ ${Number(n||0).toLocaleString()}`;
-          } catch (_) {}
-        })();
-
-        // ✅ Suma vista por tool al hacer click en "Open" (no bloquea navegación)
+        // Suma tool+total con UI inmediata y request con keepalive
         const openLink = card.querySelector('.tool-link');
-        openLink.addEventListener('click', () => {
-          window.PBViews?.bumpTool(t.id, 1);
+        openLink.addEventListener('mousedown', () => { // mousedown dispara antes de navegar
+          window.PBViews?.bumpToolAndTotalFast(t.id);
         }, { passive:true });
 
         wrap.appendChild(card);
@@ -449,8 +531,13 @@
       });
     }
 
-    // Render inicial
+    // Render inicial y arranque PBViews
     renderMasterTools();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', ()=> window.PBViews?.init());
+    } else {
+      window.PBViews?.init();
+    }
   </script>
 </body>
 </html>
