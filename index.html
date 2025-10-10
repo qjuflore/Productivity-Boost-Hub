@@ -49,129 +49,41 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .tabs {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-    }
+    .tabs { display:flex; gap:1rem; margin-bottom:1rem; flex-wrap:wrap; }
+    .tab { padding:.5rem 1rem; border-radius:10px; background:var(--card-bg); border:1px solid var(--border); cursor:pointer; transition:.3s; }
+    .tab.active { background:var(--accent); color:#000; box-shadow:var(--button-glow); }
 
-    .tab {
-      padding: 0.5rem 1rem;
-      border-radius: 10px;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
+    .controls { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem; align-items:center; }
+    .btn { background:var(--button-bg); color:var(--button-text); padding:.5rem 1rem; border:none; border-radius:8px; cursor:pointer; font-weight:700; box-shadow:var(--button-glow); transition:.2s; }
+    .btn:hover{ transform:scale(1.05); }
 
-    .tab.active {
-      background: var(--accent);
-      color: black;
-      box-shadow: var(--button-glow);
-    }
+    .section{ display:none; } .section.active{ display:block; }
 
-    .controls {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin-bottom: 1rem;
-      align-items: center;
-    }
+    .copy-btn { background:var(--button-bg); color:var(--button-text); padding:.4rem .8rem; border-radius:6px; cursor:pointer; font-size:.9rem; box-shadow:var(--button-glow); transition:.3s; margin-left:.5rem; }
+    .copy-btn.copied { background:#00c851; color:#fff; }
 
-    .btn {
-      background: var(--button-bg);
-      color: var(--button-text);
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      box-shadow: var(--button-glow);
-      transition: transform 0.2s ease;
-    }
-
-    .btn:hover { transform: scale(1.05); }
-
-    .section { display: none; }
-    .section.active { display: block; }
-
-    .copy-btn {
-      background: var(--button-bg);
-      color: var(--button-text);
-      padding: 0.4rem 0.8rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      box-shadow: var(--button-glow);
-      transition: all 0.3s ease;
-      margin-left: 0.5rem;
-    }
-    .copy-btn.copied { background-color: #00c851; color: white; }
-
-    .footer {
-      margin-top: auto;
-      text-align: center;
-      font-size: 0.9rem;
-      padding: 1rem;
-      color: #aaa;
-    }
+    .footer { margin-top:auto; text-align:center; font-size:.9rem; padding:1rem; color:#aaa; }
 
     /* MasterTools */
-    .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .8rem; }
-    .card { border:1px solid var(--border); background: var(--card-bg); border-radius: var(--radius); padding: .9rem; display:flex; flex-direction:column; gap:.7rem; }
-    .card h3 { margin:0; font-size:1rem; color: var(--accent-2); }
-    .card p { margin:0; color: var(--muted); font-size:.92rem; min-height: 2.2em; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:.8rem; }
+    .card { border:1px solid var(--border); background:var(--card-bg); border-radius:var(--radius); padding:.9rem; display:flex; flex-direction:column; gap:.7rem; }
+    .card h3 { margin:0; font-size:1rem; color:var(--accent-2); }
+    .card p { margin:0; color:var(--muted); font-size:.92rem; min-height:2.2em; }
     .card .row { display:flex; gap:.5rem; align-items:center; }
-    .icon-btn { background: transparent; border:1px solid var(--border); border-radius: 10px; padding:.45rem .6rem; color: var(--text); cursor: pointer; }
-    .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
-    .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
+    .icon-btn { background:transparent; border:1px solid var(--border); border-radius:10px; padding:.45rem .6rem; color:var(--text); cursor:pointer; }
+    .icon-btn:hover { border-color:var(--accent); box-shadow:var(--button-glow); }
+    .favorite[aria-pressed="true"] { border-color:var(--accent); box-shadow:var(--button-glow); }
 
-    .tool-link {
-      background: var(--accent);
-      color: #000 !important;
-      font-weight: 900;
-      border: none;
-      box-shadow: var(--button-glow);
-      transition: transform .2s ease;
-      padding: 0.5rem 1rem;
-      border-radius: 10px;
-    }
-    .tool-link:hover { transform: scale(1.05); }
+    .tool-link { background:var(--accent); color:#000!important; font-weight:900; border:none; box-shadow:var(--button-glow); transition:.2s; padding:.5rem 1rem; border-radius:10px; }
+    .tool-link:hover { transform:scale(1.05); }
 
     .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch {
-      margin-bottom: 1rem;
-      padding: 0.7rem 1rem;
-      width: 100%;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--card-bg);
-      color: var(--text);
-      font-size: 1rem;
+      margin-bottom:1rem; padding:.7rem 1rem; width:100%; border-radius:10px; border:1px solid var(--border); background:var(--card-bg); color:var(--text); font-size:1rem;
     }
 
-    /* Contador de vistas (header) */
-    #viewInfo {
-      font-size: 1.05rem;
-      user-select: none;
-      padding: .4rem .7rem;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--card-bg);
-    }
+    #viewInfo { font-size:1.05rem; user-select:none; padding:.4rem .7rem; border:1px solid var(--border); border-radius:10px; background:var(--card-bg); }
 
-    /* Badge de vistas por tool (compacto) */
-    .tool-views {
-      margin-left: auto;
-      font-size: .9rem;
-      color: var(--muted);
-      padding: .15rem .45rem;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: rgba(255,255,255,0.03);
-      white-space: nowrap;
-      line-height: 1.1;
-    }
+    .tool-views { margin-left:auto; font-size:.9rem; color:var(--muted); padding:.15rem .45rem; border:1px solid var(--border); border-radius:999px; background:rgba(255,255,255,.03); white-space:nowrap; line-height:1.1; }
   </style>
 </head>
 <body>
@@ -217,15 +129,13 @@
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
-  <!-- PBViews: servidor autoritativo (sin contadores locales), polling y focus refresh -->
+  <!-- PBViews: servidor autoritativo, +1 en CADA carga, polling de sincronía -->
   <script>
   (function (w) {
     const BASE  = 'https://script.google.com/macros/s/AKfycbzrMg3MWq5YT53rNweaxuFa--9CMwoz4k1PDio8y8fbl-3hSb_fk_WWYPhPaDPKe90P3g/exec';
     const TOKEN = '';
     const TIMEOUT_MS = 4000;
-    const POLL_MS = 20000; // refresca cada 20s para sincronizar entre equipos
-    const SESSION_HIT_TOTAL = 'pb.session.hit.total';
-    const SESSION_HIT_AREA_PREFIX = 'pb.session.hit.area.';
+    const POLL_MS = 15000; // refresco de sincronía entre equipos
 
     const KEY_TOTAL = 'pb.views.total';
     const P_TOOL = (id)=> `pb.views.tool.${String(id)}`;
@@ -272,45 +182,34 @@
         try { const n = await get(P_TOOL(id), { timeout: 2500 }); setToolUI(id, n); } catch(_){}
       }
     }
-
     async function refreshTotal() {
       try { const n = await get(KEY_TOTAL, { timeout: 2500 }); setTotalUI(n); } catch(_){}
     }
 
     w.PBViews = {
       async init({ area='hub' } = {}) {
-        // 1) Asegura +1 de total SOLO una vez por sesión (tab)
+        // +1 AL CARGAR SIEMPRE (cada refresh cuenta)
         try {
-          if (!sessionStorage.getItem(SESSION_HIT_TOTAL)) {
-            sessionStorage.setItem(SESSION_HIT_TOTAL, '1');
-            const n = await bump(KEY_TOTAL, 1); // el servidor devuelve el número final autoritativo
-            setTotalUI(n);
-          } else {
-            await refreshTotal();
-          }
-        } catch(_) { /* deja "syncing…" hasta próximo refresh */ }
+          const n = await bump(KEY_TOTAL, 1);   // servidor devuelve el número final
+          setTotalUI(n);
+        } catch(_) {
+          // si falla, dejamos "syncing…" y el próximo refresh/poll lo arregla
+        }
 
-        // 2) Suma área una vez por sesión (no se muestra en UI principal, solo tracking)
-        try {
-          const areaKey = SESSION_HIT_AREA_PREFIX + area;
-          if (!sessionStorage.getItem(areaKey)) {
-            sessionStorage.setItem(areaKey, '1');
-            await bump(P_AREA(area), 1);
-          }
-        } catch(_) {}
+        // tracking de área (no se muestra en UI principal)
+        try { await bump(P_AREA(area), 1); } catch(_){}
 
-        // 3) Inicializa badges leyendo SOLO del servidor
+        // badges de herramientas (solo servidor)
         try { await refreshAllTools(); } catch(_){}
 
-        // 4) Polling periódico + refresh al ganar foco/visibilidad
+        // sincronía con otros navegadores
         setInterval(()=>{ refreshTotal(); refreshAllTools(); }, POLL_MS);
         window.addEventListener('focus', ()=>{ refreshTotal(); refreshAllTools(); });
         document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ refreshTotal(); refreshAllTools(); }});
       },
 
-      // Click de herramienta: suma herramienta + total en el servidor (sin tocar UI si no alcanza la respuesta)
+      // Click en herramienta: +1 herramienta y +1 total (servidor), incluso si la página de destino no cuenta
       bumpToolAndTotalOnOpen(id){
-        // Dispara ambas operaciones; el polling/focus las reflejará poco después
         bump(P_TOOL(id), 1, { keepalive: true }).catch(()=>{});
         bump(KEY_TOTAL, 1, { keepalive: true }).catch(()=>{});
       }
@@ -321,7 +220,7 @@
   <!-- Tu script principal -->
   <script src="script.js"></script>
 
-  <!-- Tabs (sin cambios) -->
+  <!-- Tabs -->
   <script>
     (function(){
       function setActiveTab(id){
@@ -361,7 +260,7 @@
     })();
   </script>
 
-  <!-- MasterTools (solo servidor para vistas) -->
+  <!-- MasterTools (cuenta click: +1 tool y +1 total; badges solo servidor) -->
   <script>
     const LS_FAVS = 'pb.master.favorites';
     const tools = [
@@ -400,8 +299,7 @@
             <span class="tool-views" data-id="${t.id}">👁️ syncing…</span>
           </div>`;
 
-        const favBtn = card.querySelector('.favorite');
-        favBtn.addEventListener('click', ()=> toggleFav(t.id));
+        card.querySelector('.favorite').addEventListener('click', ()=> toggleFav(t.id));
 
         const copyBtn = card.querySelector('.copy-btn');
         copyBtn.addEventListener('click', async ()=>{
@@ -414,10 +312,10 @@
         });
 
         const openLink = card.querySelector('.tool-link');
-        // mousedown antes de navegar: suma tool + total en el servidor
-        openLink.addEventListener('mousedown', () => {
-          window.PBViews?.bumpToolAndTotalOnOpen(t.id);
-        }, { passive:true });
+        // mousedown / pointerdown antes de navegar → garantiza el ping
+        const ping = ()=> window.PBViews?.bumpToolAndTotalOnOpen(t.id);
+        openLink.addEventListener('pointerdown', ping, { passive:true });
+        openLink.addEventListener('mousedown', ping, { passive:true });
 
         wrap.appendChild(card);
       }
