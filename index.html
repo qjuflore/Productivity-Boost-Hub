@@ -22,21 +22,102 @@
       --focus: 0 0 0 3px rgba(0, 255, 247, 0.35);
       --radius: 14px;
     }
+
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 2rem; font-family: 'Orbitron', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
-    h1 { font-size: 2.2rem; margin-bottom: 2rem; color: var(--accent); text-shadow: var(--text-glow); animation: fadeInUp 1s ease-out; }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .tabs { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
-    .tab { padding: 0.5rem 1rem; border-radius: 10px; background: var(--card-bg); border: 1px solid var(--border); cursor: pointer; transition: all 0.3s ease; }
-    .tab.active { background: var(--accent); color: black; box-shadow: var(--button-glow); }
-    .controls { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
-    .btn { background: var(--button-bg); color: var(--button-text); padding: 0.5rem 1rem; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: var(--button-glow); transition: transform 0.2s ease; }
+
+    body {
+      margin: 0;
+      padding: 2rem;
+      font-family: 'Orbitron', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 2rem;
+      color: var(--accent);
+      text-shadow: var(--text-glow);
+      animation: fadeInUp 1s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: black;
+      box-shadow: var(--button-glow);
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+
+    .btn {
+      background: var(--button-bg);
+      color: var(--button-text);
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: var(--button-glow);
+      transition: transform 0.2s ease;
+    }
+
     .btn:hover { transform: scale(1.05); }
+
     .section { display: none; }
     .section.active { display: block; }
-    .copy-btn { background: var(--button-bg); color: var(--button-text); padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; box-shadow: var(--button-glow); transition: all 0.3s ease; margin-left: 0.5rem; }
+
+    .copy-btn {
+      background: var(--button-bg);
+      color: var(--button-text);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      box-shadow: var(--button-glow);
+      transition: all 0.3s ease;
+      margin-left: 0.5rem;
+    }
     .copy-btn.copied { background-color: #00c851; color: white; }
-    .footer { margin-top: auto; text-align: center; font-size: 0.9rem; padding: 1rem; color: #aaa; }
+
+    .footer {
+      margin-top: auto;
+      text-align: center;
+      font-size: 0.9rem;
+      padding: 1rem;
+      color: #aaa;
+    }
+
+    /* MasterTools */
     .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .8rem; }
     .card { border:1px solid var(--border); background: var(--card-bg); border-radius: var(--radius); padding: .9rem; display:flex; flex-direction:column; gap:.7rem; }
     .card h3 { margin:0; font-size:1rem; color: var(--accent-2); }
@@ -45,11 +126,52 @@
     .icon-btn { background: transparent; border:1px solid var(--border); border-radius: 10px; padding:.45rem .6rem; color: var(--text); cursor: pointer; }
     .icon-btn:hover { border-color: var(--accent); box-shadow: var(--button-glow); }
     .favorite[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--button-glow); }
-    .tool-link { background: var(--accent); color: #000 !important; font-weight: 900; border: none; box-shadow: var(--button-glow); transition: transform .2s ease; padding: 0.5rem 1rem; border-radius: 10px; }
+
+    .tool-link {
+      background: var(--accent);
+      color: #000 !important;
+      font-weight: 900;
+      border: none;
+      box-shadow: var(--button-glow);
+      transition: transform .2s ease;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+    }
     .tool-link:hover { transform: scale(1.05); }
-    .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch { margin-bottom: 1rem; padding: 0.7rem 1rem; width: 100%; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); font-size: 1rem; }
-    #viewInfo { font-size: 1.05rem; user-select: none; padding: .4rem .7rem; border: 1px solid var(--border); border-radius: 10px; background: var(--card-bg); }
-    .tool-views { margin-left: auto; font-size: .9rem; color: var(--muted); padding: .15rem .45rem; border: 1px solid var(--border); border-radius: 999px; background: rgba(255,255,255,0.03); white-space: nowrap; line-height: 1.1; }
+
+    .search, #reportSearch, #guideSearch, #scriptSearch, #masterSearch {
+      margin-bottom: 1rem;
+      padding: 0.7rem 1rem;
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    /* Contador de vistas (header) */
+    #viewInfo {
+      font-size: 1.05rem;
+      user-select: none;
+      padding: .4rem .7rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--card-bg);
+    }
+
+    /* Badge de vistas por tool (compacto) */
+    .tool-views {
+      margin-left: auto;
+      font-size: .9rem;
+      color: var(--muted);
+      padding: .15rem .45rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.03);
+      white-space: nowrap;
+      line-height: 1.1;
+    }
   </style>
 </head>
 <body>
@@ -95,20 +217,19 @@
 
   <div class="footer">Created by qjuflore | Juan Flores</div>
 
-  <!-- PBViews: servidor autoritativo, +1 en cada carga, anti-cache, polling corto -->
+  <!-- PBViews: servidor autoritativo (sin contadores locales), polling y focus refresh -->
   <script>
   (function (w) {
     const BASE  = 'https://script.google.com/macros/s/AKfycbzrMg3MWq5YT53rNweaxuFa--9CMwoz4k1PDio8y8fbl-3hSb_fk_WWYPhPaDPKe90P3g/exec';
     const TOKEN = '';
     const TIMEOUT_MS = 4000;
-    const POLL_MS = 10000; // 10s para sincronía rápida entre equipos
+    const POLL_MS = 20000; // refresca cada 20s para sincronizar entre equipos
+    const SESSION_HIT_TOTAL = 'pb.session.hit.total';
+    const SESSION_HIT_AREA_PREFIX = 'pb.session.hit.area.';
+
     const KEY_TOTAL = 'pb.views.total';
     const P_TOOL = (id)=> `pb.views.tool.${String(id)}`;
     const P_AREA = (id)=> `pb.views.area.${String(id)}`;
-
-    // Evita doble ejecución por carga si el bloque <script> se inserta dos veces
-    if (w.__PB_GLOBAL_INITED__) { return; }
-    w.__PB_GLOBAL_INITED__ = true;
 
     function withTimeout(p, ms=TIMEOUT_MS) {
       const ctrl = new AbortController();
@@ -116,19 +237,10 @@
       return p(ctrl.signal).finally(()=>clearTimeout(t));
     }
     async function api(op, params={}, opts={}) {
-      const q = new URLSearchParams({ op, ...(params||{}), t: String(Date.now()) }); // anti-cache
+      const q = new URLSearchParams({ op, ...(params||{}) });
       if (TOKEN) q.append('token', TOKEN);
       const url = `${BASE}?${q.toString()}`;
-      const req = (signal)=> fetch(url, {
-        method:'GET',
-        signal,
-        keepalive: !!opts.keepalive,
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-          'Pragma': 'no-cache'
-        }
-      });
+      const req = (signal)=> fetch(url, { method:'GET', signal, keepalive: !!opts.keepalive });
       const res = await withTimeout(req, opts.timeout || TIMEOUT_MS);
       if (!res.ok) throw new Error('fetch failed');
       return res.json();
@@ -160,35 +272,45 @@
         try { const n = await get(P_TOOL(id), { timeout: 2500 }); setToolUI(id, n); } catch(_){}
       }
     }
+
     async function refreshTotal() {
       try { const n = await get(KEY_TOTAL, { timeout: 2500 }); setTotalUI(n); } catch(_){}
     }
 
     w.PBViews = {
       async init({ area='hub' } = {}) {
-        // 1) Suma SIEMPRE en cada carga (una vez por load)
+        // 1) Asegura +1 de total SOLO una vez por sesión (tab)
         try {
-          const n = await bump(KEY_TOTAL, 1);
-          setTotalUI(n);
-        } catch(_) {
-          // si falla, intenta al menos leer el valor autoritativo
-          await refreshTotal();
-        }
+          if (!sessionStorage.getItem(SESSION_HIT_TOTAL)) {
+            sessionStorage.setItem(SESSION_HIT_TOTAL, '1');
+            const n = await bump(KEY_TOTAL, 1); // el servidor devuelve el número final autoritativo
+            setTotalUI(n);
+          } else {
+            await refreshTotal();
+          }
+        } catch(_) { /* deja "syncing…" hasta próximo refresh */ }
 
-        // 2) Suma área en cada carga (tracking)
-        try { await bump(P_AREA(area), 1); } catch(_) {}
+        // 2) Suma área una vez por sesión (no se muestra en UI principal, solo tracking)
+        try {
+          const areaKey = SESSION_HIT_AREA_PREFIX + area;
+          if (!sessionStorage.getItem(areaKey)) {
+            sessionStorage.setItem(areaKey, '1');
+            await bump(P_AREA(area), 1);
+          }
+        } catch(_) {}
 
-        // 3) Inicializa badges desde servidor
+        // 3) Inicializa badges leyendo SOLO del servidor
         try { await refreshAllTools(); } catch(_){}
 
-        // 4) Polling + foco/visibilidad para sincronía multi-navegador
+        // 4) Polling periódico + refresh al ganar foco/visibilidad
         setInterval(()=>{ refreshTotal(); refreshAllTools(); }, POLL_MS);
         window.addEventListener('focus', ()=>{ refreshTotal(); refreshAllTools(); });
         document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ refreshTotal(); refreshAllTools(); }});
       },
 
-      // Click de herramienta: suma herramienta + total en servidor (sin tocar UI local para que todos vean lo mismo)
+      // Click de herramienta: suma herramienta + total en el servidor (sin tocar UI si no alcanza la respuesta)
       bumpToolAndTotalOnOpen(id){
+        // Dispara ambas operaciones; el polling/focus las reflejará poco después
         bump(P_TOOL(id), 1, { keepalive: true }).catch(()=>{});
         bump(KEY_TOTAL, 1, { keepalive: true }).catch(()=>{});
       }
@@ -199,7 +321,7 @@
   <!-- Tu script principal -->
   <script src="script.js"></script>
 
-  <!-- Tabs -->
+  <!-- Tabs (sin cambios) -->
   <script>
     (function(){
       function setActiveTab(id){
@@ -239,7 +361,7 @@
     })();
   </script>
 
-  <!-- MasterTools (lee siempre del servidor; click suma tool+total con keepalive) -->
+  <!-- MasterTools (solo servidor para vistas) -->
   <script>
     const LS_FAVS = 'pb.master.favorites';
     const tools = [
