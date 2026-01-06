@@ -203,6 +203,7 @@
         <button id="csv" class="btn">Export CSV</button>
         <button id="slack" class="btn">Copy Slack</button>
         <button id="reset" class="btn">Reset</button>
+        <button id="resetAllStations" class="btn" title="Clears all station assignments">Reset ALL</button>
         <button id="themeToggle" class="btn" title="Toggle Day/Night">Theme: Night</button>
       </div>
     </div>
@@ -856,6 +857,28 @@
 
   document.getElementById('reset').addEventListener('click', () => {
     if(confirm('Reset all assignments?')){ assignments=[]; save(STORAGE.ASSIGNS, assignments); render(); refocusBadge(); }
+  });
+
+
+  // Extra safety reset: clears ALL station assignments (with confirmation)
+  document.getElementById('resetAllStations').addEventListener('click', () => {
+    const msg = 'Reset ALL stations?\n\nThis will clear every assignment on the board.';
+    if(!confirm(msg)) return;
+    // optional second confirm to prevent accidents
+    if(!confirm('Are you sure? This cannot be undone.')) return;
+
+    assignments = [];
+    save(STORAGE.ASSIGNS, assignments);
+
+    // Clear UI-related state (no functional change beyond reset)
+    selectedStation = null;
+    pendingScan = null;
+    lastAssignedStation = null;
+
+    render();
+    updateSel && updateSel();
+    refocusBadge();
+    toast('All stations cleared.');
   });
 
   document.getElementById('help').addEventListener('click', () => {
