@@ -111,7 +111,8 @@
     select.pill{background:var(--pill-bg);border:1px solid var(--pill-border);color:var(--pill-text);padding:6px 10px;border-radius:999px;outline:none}
 
     .station .avatar{
-      position:absolute;right:10px;top:8px;width:44px;height:44px;border-radius:9999px;border:1px solid var(--border);object-fit:cover;display:none;background:#0e1524
+      position:absolute;right:10px;top:8px;width:44px;height:44px;border-radius:9999px;border:1px solid var(--border);object-fit:cover;display:none;background:#0e1524;
+      pointer-events:none; /* allow drag/click starting on the photo */
     }
     .station.busy .avatar{display:block}
     .station.busy .name{padding-right:80px}
