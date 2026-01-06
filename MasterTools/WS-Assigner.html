@@ -517,6 +517,71 @@
   }
   window.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && (dragState.active || dragPrimed)) cancelDrag(); }, true);
 
+  // Robust global handlers: prevents "stuck" dragging if pointer leaves a station fast
+  let dragWatchdog = null;
+  function armDragWatchdog(){
+    if(dragWatchdog) clearTimeout(dragWatchdog);
+    dragWatchdog = setTimeout(()=>{ 
+      if(dragState.active || dragPrimed){ 
+        cancelDrag(); 
+        toast('Drag reset (failsafe).'); 
+      }
+    }, 8000);
+  }
+  function disarmDragWatchdog(){
+    if(!dragWatchdog) return;
+    clearTimeout(dragWatchdog);
+    dragWatchdog = null;
+  }
+
+  document.addEventListener('pointermove', (ev)=>{
+    if(dragState.active){
+      armDragWatchdog();
+      if(dragState.pointerId !== null && ev.pointerId !== dragState.pointerId) return;
+      updateDragOver(ev.clientX, ev.clientY);
+    } else if(dragPrimed){
+      armDragWatchdog();
+      if(ev.pointerId !== dragPrimed.pointerId) return;
+      const dx = ev.clientX - dragPrimed.x;
+      const dy = ev.clientY - dragPrimed.y;
+      const dist = Math.hypot(dx, dy);
+      if(dist >= 6){ // more responsive
+        dragPrimed.moved = true;
+        startDragFromStation(dragPrimed.station, dragPrimed.pointerId, ev.clientX, ev.clientY);
+      }
+    }
+  }, {passive:true});
+
+  document.addEventListener('pointerup', (ev)=>{
+    if(dragState.active){
+      if(dragState.pointerId !== null && ev.pointerId !== dragState.pointerId) return;
+      disarmDragWatchdog();
+      endDrag(ev.clientX, ev.clientY);
+      dragPrimed = null;
+    } else if(dragPrimed){
+      if(ev.pointerId !== dragPrimed.pointerId) return;
+      disarmDragWatchdog();
+      const st = dragPrimed.station;
+      const moved = !!dragPrimed.moved;
+      dragPrimed = null;
+      if(!moved) onStationClick(st);
+    }
+  }, true);
+
+  document.addEventListener('pointercancel', ()=>{
+    if(dragState.active || dragPrimed){
+      disarmDragWatchdog();
+      cancelDrag();
+    }
+  }, true);
+
+  window.addEventListener('blur', ()=>{
+    if(dragState.active || dragPrimed){
+      disarmDragWatchdog();
+      cancelDrag();
+    }
+  });
+
   function onStationClick(name){
     if(selectedStation===name){ selectedStation=null; toast('Target canceled'); updateSel(); refocusBadge(); return; }
     selectedStation=name; toast('Target: ' + name + (isBusy(name)?' (occupied — swap)':'')); updateSel();
@@ -589,39 +654,9 @@
       try{ el.setPointerCapture(ev.pointerId); }catch{}
     });
 
-    el.addEventListener('pointermove', (ev) => {
-      if(!dragPrimed && !dragState.active) return;
-      if(dragState.active){
-        if(dragState.pointerId !== null && ev.pointerId !== dragState.pointerId) return;
-        updateDragOver(ev.clientX, ev.clientY);
-        return;
-      }
-      if(dragPrimed && ev.pointerId === dragPrimed.pointerId){
-        const dx = ev.clientX - dragPrimed.x;
-        const dy = ev.clientY - dragPrimed.y;
-        const dist = Math.hypot(dx, dy);
-        if(dist >= 8){
-          dragPrimed.moved = true;
-          startDragFromStation(dragPrimed.station, dragPrimed.pointerId, ev.clientX, ev.clientY);
-        }
-      }
-    });
+    el.addEventListener('pointermove', ()=>{});
 
-    el.addEventListener('pointerup', (ev) => {
-      try{ el.releasePointerCapture(ev.pointerId); }catch{}
-      if(dragState.active){
-        if(dragState.pointerId !== null && ev.pointerId !== dragState.pointerId) return;
-        endDrag(ev.clientX, ev.clientY);
-        dragPrimed = null;
-        ev.preventDefault(); ev.stopPropagation();
-        return;
-      }
-      if(dragPrimed && ev.pointerId === dragPrimed.pointerId){
-        const moved = !!dragPrimed.moved;
-        dragPrimed = null;
-        if(!moved) onStationClick(name);
-      }
-    });
+    el.addEventListener('pointerup', ()=>{});
 
     el.addEventListener('pointercancel', ()=> cancelDrag());
     el.addEventListener('contextmenu', (ev) => { ev.preventDefault(); freeStation(name); });
