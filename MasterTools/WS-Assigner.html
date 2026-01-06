@@ -188,6 +188,35 @@
       background:var(--pill-bg); color:var(--pill-text);
       max-width: 360px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
+  
+    /* ===== Line collapse / expand ===== */
+    .line .line-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin:0 0 12px 0;
+    }
+    .line .line-title{
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.2;
+    }
+    .line .line-toggle{
+      padding:6px 10px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:var(--card);
+      color:var(--text);
+      cursor:pointer;
+      font-size:12px;
+      white-space:nowrap;
+      user-select:none;
+    }
+    .line .line-toggle:hover{filter:brightness(1.10);}
+    .line.is-collapsed .rows{ display:none; }
+
   </style>
 </head>
 
@@ -209,8 +238,7 @@
         <button id="help" class="btn">Bridge Help</button>
         <button id="csv" class="btn">Export CSV</button>
         <button id="slack" class="btn">Copy Slack</button>
-        <button id="reset" class="btn">Reset</button>
-        <button id="resetAllStations" class="btn" title="Clears all station assignments">Reset ALL</button>
+        <button id="reset" class="btn" title="Clears all station assignments">Reset</button>
         <button id="themeToggle" class="btn" title="Toggle Day/Night">Theme: Night</button>
       </div>
     </div>
@@ -861,14 +889,8 @@
     const lines = assignments.slice().reverse().map(a=>'• '+a.station+' — '+pretty(a));
     navigator.clipboard.writeText(lines.join('\n')).then(()=>toast('Copied to clipboard for Slack'));
   });
-
-  document.getElementById('reset').addEventListener('click', () => {
-    if(confirm('Reset all assignments?')){ assignments=[]; save(STORAGE.ASSIGNS, assignments); render(); refocusBadge(); }
-  });
-
-
   // Extra safety reset: clears ALL station assignments (with confirmation)
-  document.getElementById('resetAllStations').addEventListener('click', () => {
+  document.getElementById('reset').addEventListener('click', () => {
     const msg = 'Reset ALL stations?\n\nThis will clear every assignment on the board.';
     if(!confirm(msg)) return;
     // optional second confirm to prevent accidents
@@ -996,6 +1018,72 @@
 
   // ===== Boot =====
   buildGrid(); scrub(); render();
+
+  // ===== Line Collapse (per line, persisted) =====
+  const LINE_COLLAPSE_KEY = 'ws_line_collapsed_v1';
+  function loadLineCollapse(){
+    try{ return JSON.parse(localStorage.getItem(LINE_COLLAPSE_KEY)||'') || {}; }catch{ return {}; }
+  }
+  function saveLineCollapse(map){
+    try{ localStorage.setItem(LINE_COLLAPSE_KEY, JSON.stringify(map||{})); }catch{}
+  }
+  function initLineCollapseUI(){
+    const state = loadLineCollapse();
+    const lines = Array.from(document.querySelectorAll('.line[data-line]'));
+    for(const lineEl of lines){
+      const id = lineEl.getAttribute('data-line');
+      const h3 = lineEl.querySelector('h3');
+      if(!h3) continue;
+
+      // Build header wrapper (only once)
+      if(!h3.classList.contains('line-title')){
+        const head = document.createElement('div');
+        head.className = 'line-head';
+
+        const title = document.createElement('h3');
+        title.className = 'line-title';
+        title.textContent = h3.textContent;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'line-toggle';
+
+        // Replace existing h3 with head
+        h3.replaceWith(head);
+        head.appendChild(title);
+        head.appendChild(btn);
+
+        function apply(){
+          const collapsed = !!state[id];
+          lineEl.classList.toggle('is-collapsed', collapsed);
+          btn.textContent = collapsed ? 'Expand' : 'Minimize';
+          btn.setAttribute('aria-pressed', String(collapsed));
+        }
+
+        btn.addEventListener('click', (ev)=>{
+          ev.preventDefault(); ev.stopPropagation();
+          state[id] = !state[id];
+          saveLineCollapse(state);
+          apply();
+          refocusBadge();
+        });
+
+        // Double click title toggles too (quick)
+        title.addEventListener('dblclick', (ev)=>{
+          ev.preventDefault(); ev.stopPropagation();
+          state[id] = !state[id];
+          saveLineCollapse(state);
+          apply();
+          refocusBadge();
+        });
+
+        apply();
+      }
+    }
+  }
+  // Run after grid is built
+  setTimeout(initLineCollapseUI, 0);
+
   window.handleScanToken = handleScanToken;
 })();
 </script>
