@@ -57,20 +57,20 @@
       height:40px;min-width:320px;padding:0 12px;border-radius:12px;
       border:1px solid var(--border);background:var(--card);color:var(--text);outline:none;
     }
-    .scan-in::placeholder{color:var(--muted);} 
-    .scan-in:focus{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent);} 
+    .scan-in::placeholder{color:var(--muted);}
+    .scan-in:focus{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent);}
 
     .btn{
       padding:9px 14px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer
     }
-    .btn:hover{filter:brightness(1.12);} 
+    .btn:hover{filter:brightness(1.12);}
 
     .grid{display:grid;grid-template-columns:1fr;gap:16px;}
     .line{
       background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:12px 12px;
       background-color: color-mix(in oklab, var(--panel) 85%, transparent);
     }
-    .line h3{margin:0 0 12px 0;color:var(--muted);} 
+    .line h3{margin:0 0 12px 0;color:var(--muted);}
     .rows{display:grid;grid-template-rows:repeat(2, auto);gap:10px;}
     .stations-row{display:grid;gap:10px;}
 
@@ -80,6 +80,7 @@
       background-color: color-mix(in oklab, var(--card) 90%, transparent);
       backdrop-filter: saturate(110%) blur(0.5px);
       outline:none;
+      touch-action:none; /* helps pointer drag */
     }
     .station:hover{transform:translateY(-1px);}
     .station:focus{box-shadow:0 0 0 3px var(--shadow-ring), 0 8px 24px -6px var(--shadow-strong);}
@@ -147,6 +148,39 @@
     .grid{ gap:12px; overflow-x:visible; }
     .line{ padding:10px; overflow-x:visible; }
     :root{ --station-min: 260px; }
+
+    /* ===== Drag & Drop (Always ON) UI ===== */
+    body.dragging *{ cursor: grabbing !important; }
+    .station.drag-src{
+      outline:2px solid var(--accent2) !important;
+      box-shadow: 0 0 0 3px var(--shadow-strong), 0 10px 26px -10px var(--shadow-strong) !important;
+      transform: translateY(-2px);
+    }
+    .station.drag-over{
+      outline:2px dashed var(--accent) !important;
+      box-shadow: 0 0 0 3px var(--shadow-ring), 0 10px 26px -10px var(--shadow-ring) !important;
+    }
+    .drag-ghost{
+      position:fixed; left:0; top:0; transform: translate(-9999px, -9999px);
+      pointer-events:none; z-index:999999;
+      background: color-mix(in oklab, var(--card) 92%, transparent);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px 12px;
+      min-width:260px;
+      box-shadow: 0 10px 30px -10px rgba(0,0,0,.55);
+      opacity:.98;
+      backdrop-filter: blur(2px) saturate(115%);
+    }
+    .drag-ghost .g-title{ font-weight:700; color:var(--text); }
+    .drag-ghost .g-sub{ font-size:12px; color:var(--muted); margin-top:2px; }
+    .drag-ghost .g-pill{
+      display:inline-block; margin-top:8px;
+      font-size:12px; padding:2px 8px; border-radius:8px;
+      border:1px solid var(--pill-border);
+      background:var(--pill-bg); color:var(--pill-text);
+      max-width: 360px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
   </style>
 </head>
 
@@ -159,6 +193,7 @@
         <span class="pill">Next free: <b id="nextFree">—</b></span>
         <span class="pill" id="bridgeStatus">Bridge: <b>waiting…</b></span>
         <span class="pill" id="stealthStatus" title="The FCLM window is reused and kept off-screen.">Stealth: <b>on</b></span>
+        <span class="pill" id="wakeStatus" title="Attempts to keep the screen awake while this tab is open.">Awake: <b>starting…</b></span>
       </div>
       <div class="group">
         <input id="badge" class="scan-in" placeholder="Scan badge and press Enter" autofocus />
@@ -256,10 +291,6 @@
   let pendingScan = null;
   let lastAssignedStation = null;
 
-  const SIDE_PREF_KEY = 'ws_side_pref_v1';
-  let sidePref = (function(){ try { return JSON.parse(localStorage.getItem(SIDE_PREF_KEY)||'') || {1:'L',2:'L',3:'L'}; } catch { return {1:'L',2:'L',3:'L'}; } })();
-  function saveSidePref(){ try { localStorage.setItem(SIDE_PREF_KEY, JSON.stringify(sidePref)); } catch {} }
-
   // ======= STEALTH WINDOW =======
   let FCLM_WIN = null;
   function offscreenXY(){
@@ -323,11 +354,222 @@
   function focusAndScrollStation(st){
     const el = document.querySelector('.station[data-station="'+st+'"]');
     if(!el) return;
-    // No cambiamos el foco “real”: solo scroll al centro
     try{ el.scrollIntoView({ behavior:'smooth', block:'center', inline:'center' }); }catch{}
-    // Mantener flujo de escaneo
     refocusBadge(220);
   }
+
+  // ====== Keep Screen Awake (Wake Lock + fallback) ======
+  const WAKE_KEY = 'ws_wake_lock_pref_v1';
+  let wakeEnabled = true;
+  try{
+    const v = localStorage.getItem(WAKE_KEY);
+    if(v === 'off') wakeEnabled = false;
+  }catch{}
+
+  let wakeLock = null;
+  let wakeInterval = null;
+
+  function setWakeStatus(html){
+    const el = document.getElementById('wakeStatus');
+    if(el) el.innerHTML = html;
+  }
+
+  async function requestWakeLock(){
+    if(!wakeEnabled) return;
+    if(!('wakeLock' in navigator)) {
+      setWakeStatus('Awake: <b>fallback</b>');
+      startWakeFallback();
+      return;
+    }
+    try{
+      wakeLock = await navigator.wakeLock.request('screen');
+      setWakeStatus('Awake: <b>on</b>');
+      try{
+        wakeLock.addEventListener('release', () => {
+          if(document.visibilityState === 'visible' && wakeEnabled){
+            setWakeStatus('Awake: <b>restarting…</b>');
+            setTimeout(()=>requestWakeLock(), 800);
+          } else {
+            setWakeStatus('Awake: <b>off</b>');
+          }
+        });
+      }catch{}
+      stopWakeFallback();
+    }catch(e){
+      // Some browsers require user gesture or block it on HTTP/file; use fallback
+      setWakeStatus('Awake: <b>fallback</b>');
+      startWakeFallback();
+    }
+  }
+
+  function startWakeFallback(){
+    if(wakeInterval) return;
+    // "Activity" that is harmless: keep a tiny timer alive + ping focus to badge if possible.
+    wakeInterval = setInterval(()=>{
+      if(!wakeEnabled) return;
+      // minimal work; also keeps JS event loop active
+      const b = document.getElementById('badge');
+      if(document.visibilityState === 'visible' && b){
+        // don't steal focus if user is selecting/copying text
+        const ae = document.activeElement;
+        const safe = (!ae || ae === document.body || ae === document.documentElement || ae.id === 'badge');
+        if(safe){
+          try{ b.focus({preventScroll:true}); }catch{}
+        }
+      }
+    }, 25000);
+  }
+
+  function stopWakeFallback(){
+    if(!wakeInterval) return;
+    clearInterval(wakeInterval);
+    wakeInterval = null;
+  }
+
+  async function releaseWakeLock(){
+    try{
+      if(wakeLock){
+        await wakeLock.release();
+        wakeLock = null;
+      }
+    }catch{}
+    stopWakeFallback();
+    setWakeStatus('Awake: <b>off</b>');
+  }
+
+  function initWake(){
+    if(!wakeEnabled){
+      setWakeStatus('Awake: <b>off</b>');
+      return;
+    }
+    setWakeStatus('Awake: <b>starting…</b>');
+    requestWakeLock();
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if(!wakeEnabled) return;
+    if(document.visibilityState === 'visible'){
+      requestWakeLock();
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    if(!wakeEnabled) return;
+    requestWakeLock();
+  });
+
+  // ===== Drag/Swap (Always ON) =====
+  let dragState = { active:false, srcStation:null, overStation:null, pointerId:null, ghost:null };
+
+  function stationElByName(st){
+    try{
+      return document.querySelector('.station[data-station="'+CSS.escape(st)+'"]');
+    }catch{
+      return document.querySelector('.station[data-station="'+st.replace(/"/g,'\\"')+'"]');
+    }
+  }
+  function clearDragClasses(){ $all('.station').forEach(el=>el.classList.remove('drag-src','drag-over')); }
+  function escapeHtml(s){
+    return String(s||'')
+      .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
+      .replaceAll('"','&quot;').replaceAll("'",'&#39;');
+  }
+  function createGhost(srcStation){
+    const srcRec = whoAt(srcStation);
+    const g = document.createElement('div');
+    g.className = 'drag-ghost';
+    const title = srcStation;
+    const sub = srcRec ? (srcRec.name || srcRec.login || ('Badge ' + (srcRec.badge||''))) : 'Free';
+    const ptxt = srcRec ? 'Dragging assigned associate' : 'Dragging empty slot';
+    g.innerHTML = `
+      <div class="g-title">${escapeHtml(title)}</div>
+      <div class="g-sub">${escapeHtml(sub)}</div>
+      <span class="g-pill">${escapeHtml(ptxt)}</span>
+    `;
+    document.body.appendChild(g);
+    return g;
+  }
+  function moveGhost(x,y){
+    if(!dragState.ghost) return;
+    const ox=18, oy=18;
+    dragState.ghost.style.transform = `translate(${Math.round(x+ox)}px, ${Math.round(y+oy)}px)`;
+  }
+  function destroyGhost(){
+    if(dragState.ghost && dragState.ghost.parentNode) dragState.ghost.parentNode.removeChild(dragState.ghost);
+    dragState.ghost = null;
+  }
+  function stationFromPoint(x,y){
+    const el = document.elementFromPoint(x,y);
+    if(!el) return null;
+    const stEl = el.closest && el.closest('.station');
+    if(!stEl) return null;
+    return stEl.dataset.station || null;
+  }
+  function swapStations(stA, stB){
+    if(!stA || !stB || stA===stB) return false;
+    const aRec = whoAt(stA) ? {...whoAt(stA)} : null;
+    const bRec = whoAt(stB) ? {...whoAt(stB)} : null;
+    const now = new Date().toISOString();
+    if(!aRec && !bRec){ toast('Both stations are free.'); return false; }
+    assignments = assignments.filter(x => x.station !== stA && x.station !== stB);
+    if(aRec){ aRec.station=stB; aRec.ts=now; assignments.unshift(aRec); }
+    if(bRec){ bRec.station=stA; bRec.ts=now; assignments.unshift(bRec); }
+    save(STORAGE.ASSIGNS, assignments);
+    lastAssignedStation = stB;
+    render();
+    highlightStation(stA); highlightStation(stB);
+    focusAndScrollStation(stB); refocusBadge();
+    if(aRec && bRec) toast(`Swapped: ${stA} ⇄ ${stB}`);
+    else if(aRec && !bRec) toast(`Moved: ${stA} → ${stB}`);
+    else if(!aRec && bRec) toast(`Moved: ${stB} → ${stA}`);
+    return true;
+  }
+  function startDragFromStation(srcStation, pointerId, x, y){
+    dragState.active=true; dragState.srcStation=srcStation; dragState.overStation=null; dragState.pointerId=pointerId;
+    document.body.classList.add('dragging');
+    clearDragClasses();
+    const srcEl = stationElByName(srcStation);
+    if(srcEl) srcEl.classList.add('drag-src');
+    destroyGhost();
+    dragState.ghost = createGhost(srcStation);
+    moveGhost(x,y);
+  }
+  function updateDragOver(x,y){
+    if(!dragState.active) return;
+    moveGhost(x,y);
+    const over = stationFromPoint(x,y);
+    if(over !== dragState.overStation){
+      dragState.overStation = over;
+      $all('.station').forEach(el=>el.classList.remove('drag-over'));
+      if(over && over !== dragState.srcStation){
+        const overEl = stationElByName(over);
+        if(overEl) overEl.classList.add('drag-over');
+      }
+    }
+  }
+  function endDrag(x,y){
+    if(!dragState.active) return;
+    const src = dragState.srcStation;
+    const dst = stationFromPoint(x,y);
+
+    document.body.classList.remove('dragging');
+    clearDragClasses();
+    destroyGhost();
+
+    dragState.active=false; dragState.srcStation=null; dragState.overStation=null; dragState.pointerId=null;
+
+    if(!dst || !src || dst===src){ toast('Drag canceled.'); refocusBadge(); return; }
+    swapStations(src, dst);
+  }
+  function cancelDrag(){
+    if(!dragState.active) return;
+    document.body.classList.remove('dragging');
+    clearDragClasses();
+    destroyGhost();
+    dragState.active=false; dragState.srcStation=null; dragState.overStation=null; dragState.pointerId=null;
+    toast('Drag canceled.'); refocusBadge();
+  }
+  window.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && dragState.active) cancelDrag(); }, true);
 
   function buildGrid(){
     Object.keys(LAYOUT).sort((a,b)=>Number(a)-Number(b)).forEach(line => {
@@ -380,18 +622,30 @@
       });
     }
 
-    el.addEventListener('click', () => {
-      if(selectedStation===name){ selectedStation=null; toast('Target canceled'); updateSel(); refocusBadge(); return; }
-      selectedStation=name; toast('Target: ' + name + (isBusy(name)?' (occupied — swap)':'')); updateSel();
-      const a = whoAt(name); if(a) announce(name, pretty(a));
-      focusAndScrollStation(name); // centra vista
+    // ALWAYS-ON drag
+    el.addEventListener('pointerdown', (ev) => {
+      if(ev.button !== 0) return;
+      if(ev.target && ev.target.closest && ev.target.closest('.login-tag')) return;
+      ev.preventDefault(); ev.stopPropagation();
+      try{ el.setPointerCapture(ev.pointerId); }catch{}
+      startDragFromStation(name, ev.pointerId, ev.clientX, ev.clientY);
     });
+    el.addEventListener('pointermove', (ev) => {
+      if(!dragState.active) return;
+      if(dragState.pointerId !== null && ev.pointerId !== dragState.pointerId) return;
+      updateDragOver(ev.clientX, ev.clientY);
+    });
+    el.addEventListener('pointerup', (ev) => {
+      if(!dragState.active) return;
+      if(dragState.pointerId !== null && ev.pointerId !== dragState.pointerId) return;
+      try{ el.releasePointerCapture(ev.pointerId); }catch{}
+      endDrag(ev.clientX, ev.clientY);
+      ev.preventDefault(); ev.stopPropagation();
+    });
+    el.addEventListener('pointercancel', ()=>{ if(dragState.active) cancelDrag(); });
 
+    // keep right click free
     el.addEventListener('contextmenu', (ev) => { ev.preventDefault(); freeStation(name); });
-  }
-
-  function updateSel(){
-    $all('.station').forEach(el => { const st=el.dataset.station; if(selectedStation===st) el.classList.add('ws-target'); else el.classList.remove('ws-target'); });
   }
 
   function render(){
@@ -446,16 +700,6 @@
     }
   }
 
-  function announce(st, who){
-    try{ if(!('speechSynthesis' in window)) return; const u=new SpeechSynthesisUtterance(`${who} to ${st}`); speechSynthesis.speak(u); }catch{}
-  }
-
-  function selectTargetOrNext(){
-    const t = selectedStation || nextFree();
-    if(!t){ toast('No free stations.'); return null; }
-    return t;
-  }
-
   function freeStation(st){
     const idx = assignments.findIndex(a => a.station===st);
     if(idx>=0){
@@ -465,152 +709,10 @@
       render();
       highlightStation(st);
       focusAndScrollStation(st);
-      refocusBadge(); // <- seguir escaneando
-      const el2=document.querySelector('.station[data-station="'+st+'"]');
-      if(el2){ el2.click(); const b=document.getElementById('badge'); if(b){ b.value=''; b.focus(); } }
+      refocusBadge();
       toast('Freed ' + st);
     }
   }
-
-  function assignTo(st, badge, info=null){
-    const existing = assignments.find(a=>a.station===st);
-    const now = new Date().toISOString();
-    if(existing){
-      const nf = STATIONS.find(s => !isBusy(s) && s!==st);
-      if(!nf){ toast('No free station available to swap'); return; }
-      const idx = assignments.findIndex(a => a.station===st);
-      const moved = Object.assign({}, assignments[idx], { station: nf, ts: now });
-      const newcomer = { ts: now, badge, name: info?.name||'', login: info?.login||'', emplId: info?.emplId||'', photo: info?.photo||'', station: st };
-      assignments[idx] = newcomer;
-      assignments.unshift(moved);
-    } else {
-      const rec = { ts: now, badge, name: info?.name||'', login: info?.login||'', emplId: info?.emplId||'', photo: info?.photo||'', station: st };
-      assignments.unshift(rec);
-    }
-    save(STORAGE.ASSIGNS, assignments);
-    lastAssignedStation = st;
-    render();
-    highlightStation(st);
-    focusAndScrollStation(st);
-    refocusBadge(); // <- seguir escaneando
-    announce(st, info?.name||info?.login||('Badge '+badge));
-    selectedStation=null; updateSel();
-  }
-
-  // === OPEN FCLM (stealth) ===
-  function openFCLMFor(token){
-    try{
-      const url = 'https://fclm-portal.amazon.com/employee/timeDetails?warehouseId=BFL2&employeeId=' + encodeURIComponent(token);
-      stealthNavigate(url);
-    }catch(e){}
-  }
-
-  function handleScanToken(raw){
-    const token = String(raw||'').trim();
-    if(!token){ toast('Empty badge'); return; }
-    requirePopupGesture();
-    try{
-      const url = 'https://fclm-portal.amazon.com/employee/lookup?warehouseId=BFL2&employeeId='+encodeURIComponent(token);
-      stealthNavigate(url);
-    }catch{}
-    const target = selectTargetOrNext(); if(!target) return;
-    pendingScan = { tokenLower: token.toLowerCase(), timer: setTimeout(()=>{ if(pendingScan){ assignTo(target, token, null); pendingScan=null; } }, 2500) };
-  }
-
-  const $badge = document.getElementById('badge');
-  $badge.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key==='Tab'){ e.preventDefault(); document.getElementById('openLink')?.click(); } });
-
-  // ======= Captura global de escaneo (fallback) =======
-  let scanBuf = '';
-  let scanTimer = null;
-  window.addEventListener('keydown', (e) => {
-    const tgt = e.target;
-    const isBadge = tgt && (tgt.id === 'badge');
-    if(isBadge) return; // el input ya gestiona el escaneo
-
-    // Sólo caracteres "normales" sin modifiers
-    if(e.key === 'Enter'){
-      if(scanBuf.length >= 3){ // umbral mínimo
-        const b = document.getElementById('badge');
-        if(b){
-          b.value = scanBuf;
-          document.getElementById('openLink')?.click();
-          refocusBadge();
-        }
-        scanBuf = '';
-        e.preventDefault();
-      }
-    }else if(e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey){
-      scanBuf += e.key;
-      if(scanTimer) clearTimeout(scanTimer);
-      scanTimer = setTimeout(()=>{ scanBuf=''; }, 500);
-    }
-  });
-
-  window.addEventListener('message', (ev)=>{ try{
-    const data = ev.data || {};
-    if(data && data.type==='fclmEmployee'){
-      document.getElementById('bridgeStatus').innerHTML = 'Bridge: <b>active</b>';
-      if(data.badge) empCache[data.badge] = { name:data.name||'', login:data.login||'', emplId:data.emplId||'', photo:data.photo||'' };
-      if(data.login) empCache[data.login] = { name:data.name||'', login:data.login||'', emplId:data.emplId||'', photo:data.photo||'' };
-      save(STORAGE.CACHE, empCache);
-
-      const info = { name:data.name||'', login:data.login||'', emplId:data.emplId||'', photo:data.photo||'' };
-      let assigned=false;
-      if(pendingScan){
-        clearTimeout(pendingScan.timer);
-        const t = selectTargetOrNext(); if(t) assignTo(t, data.badge||data.login||'', info);
-        pendingScan=null; assigned=true;
-      }
-      if(!assigned){
-        const exists = assignments.some(a=>a.badge===data.badge) || (data.login && assignments.some(a=>a.login===data.login));
-        if(!exists){ const t = selectTargetOrNext(); if(t) assignTo(t, data.badge||data.login||'', info); }
-      }
-      refocusBadge(); // <- mantener flujo de escaneo tras recibir datos
-      toast(`Data received: ${data.name||'—'} (${data.login||'—'})`);
-    }
-  }catch(e){ console.warn(e); } });
-
-  document.getElementById('csv').addEventListener('click', () => {
-    const rows = [['timestamp','station','badge','name','login','emplId']].concat(assignments.map(a=>[a.ts,a.station,a.badge,a.name,a.login,a.emplId]));
-    const csv = rows.map(r=>r.map(x=>`"${String(x||'').replace(/"/g,'""')}"`).join(',')).join('\n');
-    const blob = new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href=url; a.download='ws-assignments.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(url), 2000);
-  });
-
-  document.getElementById('slack').addEventListener('click', () => {
-    const lines = assignments.slice().reverse().map(a=>`• ${a.station} — ${pretty(a)}`);
-    navigator.clipboard.writeText(lines.join('\n')).then(()=>toast('Copied to clipboard for Slack'));
-  });
-
-  document.getElementById('reset').addEventListener('click', () => {
-    if(confirm('Reset all assignments?')){ assignments=[]; save(STORAGE.ASSIGNS, assignments); render(); refocusBadge(); }
-  });
-
-  document.getElementById('help').addEventListener('click', () => {
-    alert('Install Tampermonkey and then the Bridge:\n1) Open the .user.js I gave you\n2) Accept the install\n3) Scan the badge here; FCLM opens in the background and the Bridge sends data back for auto-assign.');
-  });
-
-  document.getElementById('openLink').addEventListener('click', ()=>{
-    const v=document.getElementById('badge').value.trim();
-    if(!v){ toast('Enter login or badge'); return; }
-    requirePopupGesture();
-    openFCLMFor(v);
-    // limpiar y enfocar para el siguiente escaneo
-    setTimeout(()=>{ const b=document.getElementById('badge'); if(b){ b.value=''; b.focus(); } }, 0);
-  });
-
-  // Cuando cambia el “último asignado”, retomamos foco en badge
-  (function(){
-    const grid = document.getElementById('grid');
-    const b = document.getElementById('badge');
-    if(!grid || !b) return;
-    const obs = new MutationObserver(()=>{
-      const last = document.querySelector('.station.neon-last');
-      if(last){ b.value=''; b.focus(); }
-    });
-    obs.observe(grid, { attributes:true, subtree:true, attributeFilter:['class'] });
-  })();
 
   // ======= Estrategias =======
   const STRAT_KEY = 'ws_assign_strategy_v1';
@@ -624,33 +726,15 @@
   }
   function freeList(){ return STATIONS.filter(s => !isBusy(s)); }
   function freeByLine(line){ return freeList().filter(s => stationLine(s) === line); }
-  function pickFirst(list){ return list.length ? list[0] : null; }
   function pickRandom(list){ return list.length ? list[Math.floor(Math.random()*list.length)] : null; }
+  function pickFirst(list){ return list.length ? list[0] : null; }
 
-  function stationSide(st){
-    const ln = stationLine(st);
-    if(!ln) return null;
-    const lset = LEFT_BY_LINE[String(ln)], rset = RIGHT_BY_LINE[String(ln)];
-    if(lset && lset.has(st)) return 'L';
-    if(rset && rset.has(st)) return 'R';
-    return null;
+  function nextFreeSmartTwoLines(lineA, lineB){
+    const a = freeByLine(lineA);
+    const b = freeByLine(lineB);
+    return pickRandom(a) || pickRandom(b) || null;
   }
-  function freeByLineAndSide(line, side){
-    const list = freeByLine(line);
-    const lset = LEFT_BY_LINE[String(line)], rset = RIGHT_BY_LINE[String(line)];
-    if(side==='L' && lset) return list.filter(s => lset.has(s));
-    if(side==='R' && rset) return list.filter(s => rset.has(s));
-    return list;
-  }
-  function pickBalancedInLine(line){
-    const pref = sidePref[line] || 'L';
-    let pick = pickRandom(freeByLineAndSide(line, pref));
-    if(!pick){
-      const other = pref === 'L' ? 'R' : 'L';
-      pick = pickRandom(freeByLineAndSide(line, other));
-    }
-    return pick || null;
-  }
+
   function totalsByLine(){
     const lines = Array.from(new Set(STATIONS.map(stationLine).filter(Boolean)));
     const totals = {};
@@ -705,6 +789,8 @@
       ['randL1','Random only L1'],
       ['randAll','Random global'],
       ['smartL1Cascade','Smart random L1→L2→L3'],
+      ['smart12','Smart random L1 & L2'],
+      ['smart13','Smart random L1 & L3'],
     ].map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
     sel.value = getStrategy();
     sel.addEventListener('change', ()=> setStrategy(sel.value));
@@ -714,11 +800,13 @@
   const __orig_nextFree = nextFree;
   nextFree = function(){
     switch(getStrategy()){
-      case 'balance12':   return nextFreeBalance12()    || __orig_nextFree();
-      case 'rand12':      return nextFreeRand12()       || __orig_nextFree();
-      case 'randL1':      return nextFreeRandL1()       || __orig_nextFree();
-      case 'randAll':     return nextFreeRandAll()      || __orig_nextFree();
-      case 'smartL1Cascade': return nextFreeSmartCascade(1) || __orig_nextFree();
+      case 'balance12':   return nextFreeBalance12()            || __orig_nextFree();
+      case 'rand12':      return nextFreeRand12()               || __orig_nextFree();
+      case 'randL1':      return nextFreeRandL1()               || __orig_nextFree();
+      case 'randAll':     return nextFreeRandAll()              || __orig_nextFree();
+      case 'smartL1Cascade': return nextFreeSmartCascade(1)     || __orig_nextFree();
+      case 'smart12':     return nextFreeSmartTwoLines(1,2)     || __orig_nextFree();
+      case 'smart13':     return nextFreeSmartTwoLines(1,3)     || __orig_nextFree();
       case 'sequential':
       default:            return __orig_nextFree();
     }
@@ -726,7 +814,7 @@
 
   // ===== Boot =====
   buildGrid(); scrub(); render();
-  window.handleScanToken = handleScanToken;
+  initWake(); // <--- keep screen awake
 })();
 </script>
 </body>
