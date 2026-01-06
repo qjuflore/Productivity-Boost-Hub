@@ -86,11 +86,17 @@
     .station:focus{box-shadow:0 0 0 3px var(--shadow-ring), 0 8px 24px -6px var(--shadow-strong);}
 
     .station .name{
-      font-weight:600;opacity:.98;display:block;margin-bottom:8px;position:relative;z-index:2;color:var(--name-color);
-      border:1px solid var(--border);border-radius:8px;padding:2px 10px;background:transparent;
-      max-width: calc(100% - 64px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-      line-height:1.25;
+      font-weight:700;opacity:.98;display:block;margin-bottom:8px;position:relative;z-index:2;color:var(--name-color);
+      border:1px solid var(--border);border-radius:8px;padding:2px 8px;background:transparent;
+      width:100%;
+      max-width:100%;
+      min-width:0;
+      white-space:nowrap; overflow:hidden; text-overflow:clip; /* clip instead of ellipsis so station number shows */
+      line-height:1.2;
+      font-size:13px; /* slightly smaller so WS 3-16 fits even with zoom */
+      letter-spacing:0.1px;
     }
+
 
     .station .meta{
       position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--muted);z-index:1;
@@ -115,7 +121,7 @@
       pointer-events:none; /* allow drag/click starting on the photo */
     }
     .station.busy .avatar{display:block}
-    .station.busy .name{padding-right:80px}
+    .station.busy .name{padding-right:62px}
 
     /* Login bien en la esquina inferior derecha */
     .station .login-tag{
