@@ -1,0 +1,4396 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>IB / OB Metrics Report Builder (GalaxyBI + Process Path Rollup) • Column Separation Fix • qjuflore • v48</title>
+<style>
+    :root{
+      --bg:#070910;
+      --panel:#0c1020;
+      --panel2:#0a0d18;
+      --border:rgba(255,255,255,.10);
+      --muted:rgba(255,255,255,.65);
+      --text:rgba(255,255,255,.92);
+      --good:#3cffb1;
+      --warn:#ffd166;
+      --bad:#ff4d6d;
+      --cyan:#35d3ff;
+      --violet:#b07bff;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --radius:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; padding:20px;
+      font-family:var(--sans);
+      background: radial-gradient(1100px 700px at 15% 10%, rgba(53,211,255,.11), transparent 55%),
+                  radial-gradient(900px 600px at 85% 18%, rgba(176,123,255,.12), transparent 52%),
+                  radial-gradient(800px 600px at 50% 95%, rgba(60,255,177,.07), transparent 52%),
+                  var(--bg);
+      color:var(--text);
+    }
+    h1{margin:0 0 8px 0; font-weight:850; letter-spacing:.2px}
+    .sub{color:var(--muted); margin:0 0 18px 0; line-height:1.35}
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:14px;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .cardHead{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01));
+      border-bottom:1px solid var(--border);
+      gap:12px;
+    }
+    .cardHead h2{margin:0; font-size:15px; letter-spacing:.2px}
+    .cardBody{padding:14px 16px}
+    .row{display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end}
+    .field{
+      display:flex; flex-direction:column; gap:6px;
+      min-width: 200px;
+    }
+    label{font-size:12px; color:var(--muted)}
+    input[type="file"]{color:var(--muted)}
+    select,input[type="text"],input[type="number"]{
+      width:100%;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.25);
+      color:var(--text);
+      padding:10px 10px;
+      outline:none;
+    }
+    input[type="number"]{font-family:var(--mono)}
+    .btn{
+      border:none;
+      border-radius: 12px;
+      padding:10px 12px;
+      font-weight:700;
+      color:rgba(0,0,0,.92);
+      background: linear-gradient(135deg, var(--cyan), var(--violet));
+      cursor:pointer;
+      box-shadow: 0 10px 30px rgba(53,211,255,.08);
+    }
+    .btn.secondary{
+      background: rgba(255,255,255,.08);
+      color:var(--text);
+      border:1px solid var(--border);
+      box-shadow:none;
+    }
+    /* Button feedback (Excel-like apply confirmation) */
+    .btn:active{ transform: translateY(1px); }
+    @keyframes btnPop{
+      0%{ transform: scale(1); }
+      35%{ transform: scale(.96); }
+      70%{ transform: scale(1.02); }
+      100%{ transform: scale(1); }
+    }
+    .btn.feedback{ animation: btnPop 320ms ease; }
+    .btn.applied{
+      border-color: rgba(60,255,177,.55) !important;
+      box-shadow: 0 0 0 2px rgba(60,255,177,.14), 0 10px 30px rgba(60,255,177,.08) !important;
+    }
+    @media (prefers-reduced-motion: reduce){
+      .btn.feedback{ animation: none; }
+      .btn:active{ transform: none; }
+    }
+
+    .btn.danger{
+      background: rgba(255,77,109,.16);
+      color: var(--text);
+      border:1px solid rgba(255,77,109,.35);
+    }
+    
+    .btn.tiny{
+      padding:4px 6px;
+      border-radius:10px;
+      font-size:12px;
+      line-height:1;
+      font-weight:800;
+    }
+    .moveCell{
+      white-space:nowrap;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+    }
+    .dragHandle{
+      cursor:grab;
+      user-select:none;
+      padding:2px 6px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
+      font-size:14px;
+    }
+    .dragHandle:active{ cursor:grabbing; }
+    .cfgTable tr.dragOver{
+      outline:2px dashed rgba(53,211,255,.55);
+      outline-offset:-2px;
+    }
+    .cfgTable tr.dragging{ opacity:.55; }
+.btn:disabled{opacity:.5; cursor:not-allowed}
+    .chips{display:flex; gap:8px; flex-wrap:wrap}
+    .chip{
+      font-family:var(--mono);
+      font-size:12px;
+      padding:6px 10px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.25);
+      color: var(--muted);
+    }
+    .chip.good{border-color: rgba(60,255,177,.35); color: rgba(60,255,177,.9)}
+    .chip.warn{border-color: rgba(255,209,102,.35); color: rgba(255,209,102,.95)}
+    .chip.bad{border-color: rgba(255,77,109,.35); color: rgba(255,77,109,.95)}
+    .tabs{
+      display:flex; gap:8px; flex-wrap:wrap;
+      padding:12px 16px 0 16px;
+    }
+    .tab{
+      padding:8px 12px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.22);
+      cursor:pointer;
+      color: var(--muted);
+      font-weight:750;
+      font-size:12px;
+    }
+    .tab.active{
+      background: linear-gradient(135deg, rgba(53,211,255,.22), rgba(176,123,255,.18));
+      color: var(--text);
+      border-color: rgba(53,211,255,.30);
+    }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      border-radius: 14px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.20);
+      /* Prevent columns from visually "merging" on narrow screens */
+      min-width: 1100px;
+    }
+    /* Horizontal scroll container for any table */
+    .tableWrap{
+      width:100%;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 14px;
+    }
+
+    .cfgTable{ min-width: 1200px; }
+    .reportTable{ min-width: 1650px; }
+    /* Stronger vertical separation so columns never look fused */
+    th,td{
+      border-right:1px solid rgba(255,255,255,.07);
+      white-space: nowrap;
+    }
+    th:last-child, td:last-child{ border-right:none; }
+    /* Data cells stay single-line; headers can wrap for full column names */
+    td{ white-space: nowrap; }
+
+    /* Allow the first (Path/Label) column to wrap if needed */
+    td.pathCell{ white-space: normal; min-width: 160px; }
+
+    th,td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      vertical-align:middle;
+      font-size:13px;
+    }
+    th{
+      position:sticky;
+      top:0;
+      background: rgba(8,10,18,.88);
+      backdrop-filter: blur(6px);
+      text-align:left;
+      font-size:12px;
+      color: rgba(255,255,255,.78);
+      letter-spacing:.2px;
+      white-space: normal;
+      line-height: 1.15;
+      cursor: help;
+      z-index: 2;
+    }
+    td.small, th.small{font-size:12px}
+    td.mono{font-family:var(--mono)}
+    tr:hover td{background: rgba(255,255,255,.03)}
+    .right{text-align:right}
+    .center{text-align:center}
+    .muted{color:var(--muted)}
+    .ok{color:rgba(60,255,177,.92)}
+    .warnText{color:rgba(255,209,102,.95)}
+    .badText{color:rgba(255,77,109,.95)}
+    /* ===== Row-wide status coloring (LP/OP basis) ===== */
+    .reportTable tbody tr.rowGood td:not(:first-child){
+      background: linear-gradient(90deg, rgba(60,255,177,.10), rgba(0,0,0,0)) !important;
+    }
+    .reportTable tbody tr.rowBad td:not(:first-child){
+      background: linear-gradient(90deg, rgba(255,77,109,.10), rgba(0,0,0,0)) !important;
+    }
+    .reportTable tbody tr.rowWarn td:not(:first-child){
+      background: linear-gradient(90deg, rgba(255,209,102,.10), rgba(0,0,0,0)) !important;
+    }
+
+    /* Per-cell text coloring (kept consistent across all metric columns) */
+    .basisCellGood{ color: rgba(60,255,177,.92) !important; }
+    .basisCellBad{ color: rgba(255,77,109,.95) !important; }
+    .basisCellWarn{ color: rgba(255,209,102,.95) !important; }
+
+    /* Basis stripe: LP vs OP (left edge, stays visible even on hover) */
+    .reportTable tbody tr.basisLP td:first-child{ box-shadow: inset 5px 0 0 rgba(53,211,255,.70); }
+    .reportTable tbody tr.basisOP td:first-child{ box-shadow: inset 5px 0 0 rgba(176,123,255,.70); }
+    .reportTable tbody tr.basisNA td:first-child{ box-shadow: inset 5px 0 0 rgba(255,255,255,.22); }
+
+
+    /* Active target highlight (per-row): subtle border/glow on the target RATE cell only */
+    .reportTable tbody tr.basisLP td.col-lpRate{
+      box-shadow: inset 0 0 0 2px rgba(53,211,255,.78), 0 0 14px rgba(53,211,255,.18) !important;
+    }
+    .reportTable tbody tr.basisOP td.col-opRate{
+      box-shadow: inset 0 0 0 2px rgba(176,123,255,.78), 0 0 14px rgba(176,123,255,.18) !important;
+    }
+
+    .statusWrap{ display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .basisTag{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.18);
+      font-family: var(--mono);
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.3px;
+      line-height:1.2;
+    }
+    .basisTag.lp{ border-color: rgba(53,211,255,.45); color: rgba(53,211,255,.95); }
+    .basisTag.op{ border-color: rgba(176,123,255,.45); color: rgba(176,123,255,.95); }
+    .basisTag.na{ border-color: rgba(255,255,255,.18); color: rgba(255,255,255,.70); }
+
+    .note{font-size:12px; color: var(--muted); margin-top:8px; line-height:1.35}
+    .split{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 12px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .split{grid-template-columns:1fr}
+      body{padding:12px}
+    }
+    .kpiGrid{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap:10px;
+    }
+    @media (max-width: 980px){ .kpiGrid{grid-template-columns: repeat(2, minmax(0,1fr));}}
+    .kpi{
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.22);
+      border-radius: 14px;
+      padding:10px 12px;
+    }
+    .kpi .t{font-size:12px; color:var(--muted)}
+    .kpi .v{font-family:var(--mono); font-size:18px; font-weight:850; margin-top:6px}
+    .kpi .s{font-size:12px; margin-top:6px; color:var(--muted)}
+
+    .kpi.spanAll{ grid-column: 1 / -1; }
+    .kpi.spanHalf{ grid-column: span 3; }
+
+    .kpi .s .split{margin-top:6px}
+    .kpi .s .split + .split{margin-top:4px}
+    .flexBetween{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
+    .mini{
+      font-family:var(--mono);
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .mini.warn{ color: var(--warn); }
+    .kpiBreak{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap:10px;
+      margin-top:8px;
+    }
+    @media (max-width: 980px){ .kpiBreak{ grid-template-columns: 1fr; } }
+    .kpiPart{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background: rgba(255,255,255,.03);
+      padding:8px 10px;
+    }
+    .kpiPart .miniLabel{
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.3px;
+      color: rgba(255,255,255,.86);
+      margin-bottom:4px;
+    }
+    .kpiPart .miniLine{
+      font-size:12px;
+      color: var(--muted);
+      line-height:1.35;
+    }
+    .hr{height:1px; background: rgba(255,255,255,.10); margin:10px 0}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      border-radius: 999px;
+      padding:6px 10px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.22);
+      font-size:12px;
+      color: var(--muted);
+      user-select:none;
+    }
+    .pill input{margin:0}
+    textarea{
+      width:100%;
+      min-height: 120px;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.25);
+      color:var(--text);
+      padding:10px 10px;
+      font-family:var(--mono);
+      resize: vertical;
+    }
+    .warnBox{
+      border:1px solid rgba(255,209,102,.35);
+      background: rgba(255,209,102,.08);
+      border-radius: 14px;
+      padding:10px 12px;
+      font-size:12px;
+      color: rgba(255,235,186,.92);
+      line-height:1.35;
+    }
+  
+    .checkLine{display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); user-select:none;}
+    .checkLine input{accent-color: var(--cyan);}
+
+    /* ===== Compact / Focus modes (reduce empty space) ===== */
+    body.compact{ padding:10px; }
+    body.compact .grid{ gap:10px; }
+    body.compact .cardHead{ padding:10px 12px; gap:10px; }
+    body.compact .cardBody{ padding:10px 12px; }
+    body.compact h1{ font-size:20px; margin-bottom:4px; }
+    body.compact .sub{ display:none; }
+    body.compact .row{ gap:8px; }
+    body.compact .field{ min-width: 160px; gap:5px; }
+    body.compact input[type="file"], body.compact select, body.compact input[type="text"], body.compact input[type="number"]{
+      padding:8px 10px;
+      font-size:12px;
+    }
+    body.compact .btn{ padding:8px 10px; font-size:12px; }
+    body.compact .note{ padding:8px 10px; font-size:12px; }
+    body.compact .kpiGrid{ grid-template-columns: repeat(6, minmax(0,1fr)); gap:6px; }
+    @media (max-width: 980px){ body.compact .kpiGrid{ grid-template-columns: repeat(3, minmax(0,1fr)); } }
+    body.compact .kpi{ padding:7px 8px; border-radius: 12px; }
+    body.compact .kpi .v{ font-size:14px; margin-top:4px; }
+    body.compact .hr{ margin:10px 0; }
+
+    /* Essentials columns mode (Compact report columns) */
+    body.colsEssential .reportTable{ min-width: 0; table-layout: fixed; }
+    body.colsEssential .reportTable td{
+      padding:6px 8px; font-size:12px;
+      overflow:hidden; text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    body.colsEssential .reportTable th{
+      padding:6px 8px; font-size:12px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      line-height: 1.15;
+      cursor: help;
+    }
+    body.colsEssential .reportTable th.right{ width: 92px; }
+    body.colsEssential .reportTable th.small{ width: 120px; }
+    body.colsEssential td.pathCell{ white-space: normal; overflow: visible; }
+
+/* Compact table density + better fit */
+    body.compact th, body.compact td{ padding:6px 8px; font-size:12px; }
+    body.compact table{ min-width: 0; table-layout: fixed; }
+    body.compact .cfgTable{ min-width: 0; }
+    body.compact .reportTable{ min-width: 0; }
+    body.compact th, body.compact td{
+      overflow:hidden; text-overflow: ellipsis;
+    }
+    body.compact td.pathCell{ white-space: normal; overflow: visible; }
+    body.compact .reportTable th.right{ width: 86px; }
+    body.compact .reportTable th.small{ width: 110px; }
+    body.compact .reportTable th:first-child{ width: 220px; }
+    body.compact .cfgTable th:first-child{ width: 220px; }
+
+    /* Focus report: hide setup + mapping to avoid scrolling */
+    body.focus #uploadCard{ display:none; }
+    body.focus #configCard{ display:none; }
+    body.focus #reportCard{ display:block; }
+
+
+    /* ===========================
+       Readability Upgrade (v28)
+       - Zebra banding
+       - Stronger gridlines
+       - Sticky first column (Path)
+       - Excel-like row/column highlight
+       =========================== */
+    :root{
+      --rowOdd: rgba(255,255,255,.015);
+      --rowEven: rgba(255,255,255,.040);
+      --rowHover: rgba(53,211,255,.11);
+      --rowPinned: rgba(60,255,177,.10);
+      --gridV: rgba(255,255,255,.10);
+      --gridH: rgba(255,255,255,.12);
+      --colHover: rgba(176,123,255,.12);
+      --colHoverHead: rgba(176,123,255,.22);
+    }
+
+    /* Target report table only so config stays clean */
+    table.reportTable{
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow: hidden;
+    }
+
+    .reportTable th,
+    .reportTable td{
+      border-right: 1px solid var(--gridV);
+      border-bottom: 1px solid var(--gridH);
+      font-size: 13.5px;
+      line-height: 1.25;
+    }
+    .reportTable th{
+      box-shadow: 0 8px 18px rgba(0,0,0,.22);
+    }
+
+    /* Zebra banding */
+    .reportTable tbody tr:nth-child(odd) td{ background: var(--rowOdd); }
+    .reportTable tbody tr:nth-child(even) td{ background: var(--rowEven); }
+
+    /* Hover row highlight */
+    .reportTable tbody tr:hover td{
+      background: var(--rowHover) !important;
+      box-shadow: inset 0 0 0 1px rgba(53,211,255,.20);
+    }
+
+    /* Click to pin a row */
+    .reportTable tbody tr.rowPinned td{
+      background: var(--rowPinned) !important;
+      box-shadow: inset 0 0 0 1px rgba(60,255,177,.22);
+    }
+
+    /* Column highlight (Excel-like crosshair) */
+    .reportTable td.colHover{
+      background: var(--colHover) !important;
+    }
+    .reportTable th.colHover{
+      background: var(--colHoverHead) !important;
+      color: rgba(255,255,255,.92);
+    }
+
+    /* Sticky first column (Path) */
+    .reportTable th:first-child,
+    .reportTable td:first-child{
+      position: sticky;
+      left: 0;
+      z-index: 3;
+      font-weight: 700;
+      border-right: 1px solid rgba(53,211,255,.28);
+      background: linear-gradient(90deg, rgba(8,10,18,.96), rgba(8,10,18,.84));
+    }
+    .reportTable td:first-child{ z-index: 2; }
+    .reportTable tbody tr:hover td:first-child{
+      background: linear-gradient(90deg, rgba(53,211,255,.22), rgba(8,10,18,.86));
+    }
+    .reportTable tbody tr.rowPinned td:first-child{
+      background: linear-gradient(90deg, rgba(60,255,177,.22), rgba(8,10,18,.86)) !important;
+    }
+
+    /* Make numeric columns easier to scan */
+    .reportTable td.right{
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .1px;
+    }
+
+
+    /* ===== Quick Links (GalaxiBI / PPR) ===== */
+    .quickLinksRow{align-items:flex-end; gap:10px}
+    .quickLinksRow .field{flex:0 0 auto}
+    .quickLinksRow .note{margin-top:6px}
+    a.btn{ text-decoration:none; }
+    a.btn:focus{outline:2px solid rgba(53,211,255,.35); outline-offset:2px}
+    .pprPreviewLine{
+      font-family:var(--mono);
+      font-size:12px;
+      color:rgba(255,255,255,.72);
+      margin-top:8px;
+      line-height:1.35;
+    }
+    .pprPreviewLine b{color:rgba(255,255,255,.92)}
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size:12px;
+      user-select:none;
+    }
+
+
+    @keyframes pillPop{0%{transform:scale(1)}35%{transform:scale(1.06)}100%{transform:scale(1)}}
+    .pill.pulseOk{ animation: pillPop .55s ease; border-color: rgba(60,255,177,.35); box-shadow: 0 0 0 1px rgba(60,255,177,.18), 0 0 18px rgba(60,255,177,.12); }
+    .pill.pulseErr{ animation: pillPop .55s ease; border-color: rgba(255,77,109,.35); box-shadow: 0 0 0 1px rgba(255,77,109,.18), 0 0 18px rgba(255,77,109,.12); }
+
+    @keyframes reportFlashGlow{0%{box-shadow:0 0 0 rgba(0,0,0,0)}40%{box-shadow:0 0 0 1px rgba(60,255,177,.25), 0 0 26px rgba(60,255,177,.18)}100%{box-shadow:0 0 0 rgba(0,0,0,0)}}
+    #reportCard.reportFlash{ animation: reportFlashGlow .6s ease; }
+
+
+
+    /* ===== Real-time PPR Auto-Refresh + Chart ===== */
+
+    .rtStatus .pill{
+      max-width: 360px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rtCard{ margin-top:12px; }
+    .rtHeaderRow{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+    .rtTitle{ font-weight:850; letter-spacing:.2px; }
+    .rtStatus{
+      display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+      font-family: var(--mono); font-size:12px; color: rgba(255,255,255,.72);
+    }
+    .rtStatus .dot{ width:9px; height:9px; border-radius:50%; background:rgba(255,255,255,.22); box-shadow:0 0 0 1px rgba(255,255,255,.08); }
+    .rtStatus .dot.on{ background: var(--good); box-shadow: 0 0 0 1px rgba(60,255,177,.35), 0 0 12px rgba(60,255,177,.18); }
+    .rtControls{
+      display:grid;
+      grid-template-columns: 1.2fr 1fr 1fr 1fr 0.9fr;
+      gap:10px;
+      align-items:end;
+      margin-top:10px;
+    }
+    @media (max-width: 1100px){
+      .rtControls{ grid-template-columns: 1fr 1fr; }
+    }
+    .switch{
+      display:flex; gap:10px; align-items:center; user-select:none; cursor:pointer;
+      color: var(--muted); font-size:13px;
+    }
+    .switch input{ accent-color: var(--cyan); transform: translateY(1px); }
+    .rtMiniBtnRow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center; }
+    .rtMiniBtnRow .btn{ white-space:nowrap; }
+    .rtCanvasWrap{
+      margin-top:12px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background: rgba(255,255,255,.03);
+      padding:10px;
+      overflow:hidden;
+      position:relative;
+    }
+    .rtCanvasTop{
+      display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap;
+      margin-bottom:8px;
+    }
+    .rtLegend{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      font-size:12px; color: rgba(255,255,255,.72);
+    }
+    .rtLegendItem{
+      display:flex; align-items:center; gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      font-family: var(--mono);
+    }
+    .rtLegendSw{ width:14px; height:10px; border-radius:3px; background: var(--cyan); box-shadow:0 0 0 1px rgba(0,0,0,.25) inset; }
+    .rtLegendItem button{
+      border:none; background:transparent; color: rgba(255,255,255,.7);
+      cursor:pointer; font-weight:850; margin-left:6px;
+    }
+    .rtLegendItem input[type="color"]{
+      width:24px; height:18px; padding:0; border:1px solid var(--border); border-radius:6px; background:transparent;
+      cursor:pointer;
+    }
+    canvas#rtCanvas{ width:100%; height:240px; display:block; }
+    body.compact canvas#rtCanvas{ height:210px; }
+    .rtHint{ font-size:12px; color: rgba(255,255,255,.66); margin-top:8px; line-height:1.35; }
+
+    /* Real-time chart tooltip (hover points like the Stow Buffer example) */
+    .rtTooltip{
+      position:absolute;
+      z-index: 50;
+      pointer-events:none;
+      min-width: 220px;
+      max-width: 520px;
+      padding:10px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(53,211,255,.55);
+      background: rgba(0,0,0,.82);
+      color: rgba(255,255,255,.92);
+      box-shadow: 0 0 0 1px rgba(176,123,255,.18), 0 18px 50px rgba(0,0,0,.55), 0 0 22px rgba(53,211,255,.15);
+      backdrop-filter: blur(6px);
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .rtTooltip .tHead{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+      font-family: var(--sans);
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+    .rtTooltip .tRows{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin-bottom:8px;
+    }
+    .rtTooltip .tRow{
+      display:grid;
+      grid-template-columns: 12px 1fr auto;
+      align-items:center;
+      gap:8px;
+      padding:4px 6px;
+      border-radius:10px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .rtTooltip .tRow .sw{
+      width:10px; height:10px; border-radius:999px;
+      box-shadow: 0 0 10px rgba(255,255,255,.14);
+    }
+    .rtTooltip .tRow .k{
+      color: rgba(255,255,255,.86);
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .rtTooltip .tRow .v{
+      font-weight:900;
+      color: rgba(255,255,255,.95);
+      font-family: var(--mono);
+      padding-left: 6px;
+    }
+    .rtTooltip .sub{
+      color: rgba(255,255,255,.66);
+      font-family: var(--sans);
+      font-size: 11px;
+    }
+
+</style>
+</head>
+<body>
+<div class="grid">
+<div class="card" id="uploadCard">
+<div class="cardHead">
+<div>
+<h1>IB / OB Metrics Report Builder</h1><div class="mini" style="margin-top:-6px;color:rgba(255,255,255,.65)">Update: separated columns + horizontal table scroll (IB/OB mapping + report tables) + explicit PPR/Galaxy match columns + Super‑exact mapping (no forced ETI+STP merge for IB Total) + KPI breakdown for ETI and STP</div>
+<p class="sub">
+            Upload <span class="mono">GalaxyBI LP Rate Forecast</span> + <span class="mono">Process Path Rollup (PPR)</span> CSVs, then build an Excel-aligned report.
+            Includes editable mapping tables for <b>Inbound</b> and <b>Outbound</b> (saved in your browser).
+          </p>
+</div>
+<div class="chips" id="statusChips">
+<span class="chip warn">GalaxyBI: not loaded</span>
+<span class="chip warn">PPR: not loaded</span>
+<span class="chip">Config: ready</span>
+</div>
+</div>
+<div class="cardBody">
+<div class="row quickLinksRow" style="margin-bottom:10px">
+  <div class="field" style="min-width:320px">
+    <label>Quick Links</label>
+    <div class="row" style="gap:10px; margin-top:6px; align-items:center; flex-wrap:wrap">
+      <a class="btn secondary" id="quickGalaxyBI" href="https://galaxybi.aka.corp.amazon.com/reports/labor-planning/lR8NujgNmqXM-print-file/newFromScratch" target="_blank" rel="noopener">GalaxiBI</a>
+      <a class="btn secondary" id="quickGalaxyBIScript" href="https://axzile.corp.amazon.com/-/carthamus/script/galaxy-bi-pivot-plan-extractor-(qjuflore)" target="_blank" rel="noopener" title="Open the Carthamus script (galaxy pivot plan extractor)">GalaxyBI Scrip</a>
+      <a class="btn secondary" id="quickPPR" href="#" target="_blank" rel="noopener" title="Opens Process Path Rollup with auto-filled dates/times">PPR</a>
+      <span class="pill" id="pprNowChip">Now: —</span>
+    </div>
+    <div class="pprPreviewLine" id="pprPreview">PPR range: —</div>
+  </div>
+
+  <div class="field" style="min-width:250px">
+    <label>Shift (Pacific Time)</label>
+    <select id="quickShift">
+      <option value="NIGHT">Night: 06:00 PM → 04:30 AM</option>
+      <option value="DAY">Day: 07:00 AM → 05:30 PM</option>
+    </select>
+  </div>
+
+  <div class="field" style="min-width:260px">
+    <label>Flow / Timing</label>
+    <select id="quickFlow">
+      <option value="IB">Inbound (IB) — base times</option>
+      <option value="OB">Outbound (OB) — +30 min later</option>
+    </select>
+  </div>
+
+  
+  <div class="field" style="min-width:190px">
+    <label>Shift start date</label>
+    <input id="quickShiftDate" type="date"/>
+  </div>
+
+<button class="btn secondary" id="quickUpdatePPR" type="button" title="Recalculate dates/times, then auto-import PPR (Bridge mode)">Apply + Import PPR</button>
+</div>
+
+<div class="row">
+<div class="field" style="min-width:280px">
+<label>1) GalaxyBI LP Rate Forecast CSV</label>
+<input accept=".csv" id="galFile" type="file"/>
+<div class="row" style="gap:10px; margin-top:6px; align-items:center; flex-wrap:wrap">
+<label style="display:flex; gap:8px; align-items:center; cursor:pointer; user-select:none">
+<input checked="" id="cacheGalaxy" style="transform:translateY(1px)" type="checkbox"/>
+<span>Remember GalaxyBI weekly file (no daily re-upload)</span>
+</label>
+<button class="btn tiny secondary" id="clearGalaxyCacheBtn" title="Clear saved GalaxyBI file" type="button">Clear</button>
+</div>
+<div class="note" id="galCacheInfo">Cache: none</div>
+</div>
+<div class="field" style="min-width:280px">
+<label>2) Process Path Rollup (PPR Intraday) CSV</label>
+<input accept=".csv" id="pprFile" type="file"/>
+</div>
+<div class="field">
+<label>Forecast week column</label>
+<select disabled="" id="weekCol"></select>
+</div>
+<div class="field">
+<label>PPR report filter</label>
+<select disabled="" id="pprReport"></select>
+</div>
+<div class="field" style="min-width:280px">
+<label>Report options</label>
+<label class="checkLine"><input checked="" id="compactLayout" type="checkbox"/> Compact layout (reduce spacing)</label>
+<label class="checkLine"><input id="compactCols" type="checkbox"/> Compact report columns (essentials)</label>
+<label class="checkLine"><input id="focusReport" type="checkbox"/> Focus report (hide setup &amp; mapping)</label>
+<!-- Excel strict is always ON (fixed); option removed -->
+<label class="checkLine"><input id="showMatchCols" type="checkbox"/> Show match columns (PPR Match / Galaxy Match)</label>
+</div>
+<div class="field" style="min-width:260px">
+<label>Status rule (sync with colored % columns)</label>
+<div class="row" style="gap:8px; align-items:center">
+<select class="cp" id="statusBasis">
+<option value="higherTarget">Higher target (LP vs OP)</option>
+<option value="lp">%LP</option>
+<option value="op">%OP</option>
+<option value="worst">Worst of %LP/%OP (min %)</option>
+<option value="best">Best of %LP/%OP (max %)</option>
+</select>
+<div class="row" style="gap:6px; align-items:center">
+<span class="muted small">Threshold</span>
+<input class="cp" id="statusThreshold" max="200" min="0" step="1" style="width:88px" type="number" value="100"/>
+<span class="muted small">%</span>
+</div>
+</div>
+<div class="muted small" style="margin-top:6px">Status + row colors follow the rule above, and show whether each row is being judged vs LP or OP.</div>
+</div>
+<div class="field" style="min-width:180px">
+<label> </label>
+<button class="btn" disabled="" id="buildBtn">Build report</button>
+</div>
+<div class="field" style="min-width:220px">
+<label> </label>
+<button class="btn secondary" id="resetBtn">Reset (keep files)</button>
+</div>
+</div>
+<div class="note">
+          Tip: If a row shows “NOT FOUND”, double-check the Line Item spelling in the mapping table (it must match exactly).
+          You can also type LP Rate overrides directly (useful for Support/PA rows that don't exist in GalaxyBI).
+        </div>
+</div>
+</div>
+<div class="card" id="reportCard" style="display:none">
+<div class="cardHead">
+<h2>Report</h2>
+<div class="row" style="gap:8px">
+<button class="btn secondary" id="dlIbBtn">Download IB table (CSV)</button>
+<button class="btn secondary" id="dlObBtn">Download OB table (CSV)</button>
+<button class="btn secondary" id="dlAllBtn">Download ALL (CSV)</button>
+<button class="btn secondary" id="toggleFocusBtn" title="Hide/show setup &amp; mapping">Focus report</button>
+</div>
+</div>
+<div class="cardBody">
+<div class="kpiGrid" id="kpis"></div>
+<div class="hr"></div>
+<div class="tabs" style="padding:0; margin-bottom:10px">
+<div class="tab active" data-rpt="both">IB + OB</div>
+<div class="tab" data-rpt="ib">Inbound only</div>
+<div class="tab" data-rpt="ob">Outbound only</div>
+</div>
+<div id="reportOut"></div>
+<div class="note" id="unmatchedNote"></div>
+
+<div class="card rtCard" id="rtCard">
+  <div class="cardHead">
+    <div class="rtHeaderRow">
+      <div>
+        <div class="rtTitle">Real‑time PPR Auto‑Refresh + Trend Chart</div>
+        <div class="mini" style="margin-top:4px;color:rgba(255,255,255,.65)">Refreshes PPR as CSV on a schedule (no double‑open), rebuilds the table, and logs snapshots for charting.</div>
+      </div>
+      <div class="rtStatus">
+        <span class="dot" id="rtDot"></span>
+        <span id="rtStatusText">Idle</span>
+        <span class="pill" id="rtImported">Imported: —</span>
+        <span class="pill" id="rtBuilt">Built: —</span>
+        <span class="pill" id="rtWindow">Window: —</span>
+        <span class="pill" id="rtNext">Next: —</span>
+      </div>
+    </div>
+  </div>
+  <div class="cardBody">
+    <div class="rtControls">
+      <div class="field">
+        <label>Auto refresh</label>
+        <label class="switch" title="When enabled, the report will refresh PPR automatically at the selected interval.">
+          <input id="rtEnable" type="checkbox"/>
+          <span>Enable schedule</span>
+        </label>
+        <label class="switch" title="After each successful import, rebuild the table + KPIs and record a chart point automatically.">
+          <input id="rtAutoBuild" type="checkbox"/>
+          <span>Auto build report + chart</span>
+        </label>
+        <div class="note" style="margin-top:8px" id="rtModeNote">Mode: Auto‑fetch CSV (best). If blocked, it will fall back to opening the CSV download and you can upload it.</div>
+      </div>
+
+      <div class="field">
+        <label>Interval</label>
+        <select id="rtInterval" class="cp">
+          <option value="1">Every 1 minute</option>
+          <option value="2">Every 2 minutes</option>
+          <option value="5" selected>Every 5 minutes</option>
+          <option value="10">Every 10 minutes</option>
+          <option value="15">Every 15 minutes</option>
+          <option value="30">Every 30 minutes</option>
+          <option value="60">Every 60 minutes</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Refresh method</label>
+        <select id="rtMethod" class="cp" title="Bridge is recommended: it opens PPR once in a small popup, grabs the CSV, and sends it back here for auto‑import. Auto‑fetch tries to pull CSV directly. Open‑download only downloads (cannot auto‑import from Downloads).">
+          <option value="bridge" selected>Bridge (popup → download + auto-import) ✅</option>
+          <option value="fetch">Auto‑fetch CSV (no tab)</option>
+          <option value="open">Open CSV download (new tab)</option>
+</select>
+      </div>
+
+      <div class="field">
+        <label>Chart metric</label>
+        <select id="rtMetric" class="cp">
+          <option value="actRate" selected>Actual Rate</option>
+          <option value="vol">Volume</option>
+          <option value="hrs">Hours</option>
+          <option value="pctToLp">% to LP</option>
+          <option value="hrsToLp">Hours to LP</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>View</label>
+        <select id="rtView" class="cp">
+          <option value="both" selected>Table + Chart</option>
+          <option value="chart">Chart only</option>
+          <option value="table">Table only</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="rtMiniBtnRow">
+      <button class="btn secondary" id="rtRunNow" type="button">Refresh now</button>
+      <button class="btn secondary" id="rtClearHistory" type="button" title="Clear chart history points">Clear history</button>
+
+      <div class="field" style="min-width:340px; margin-left:auto">
+        <label>Track line item(s) (type to search, press Add)</label>
+        <div class="row" style="gap:8px; align-items:center">
+          <input id="rtSeriesInput" class="cp" list="rtSeriesList" placeholder="e.g., IB • IB Total (Unified)  /  OB • OB Total  /  ETI Total  /  Stow - Total"/>
+          <button class="btn tiny secondary" id="rtAddSeries" type="button">Add</button>
+        </div>
+        <datalist id="rtSeriesList"></datalist>
+      </div>
+    </div>
+
+    <div class="rtCanvasWrap" id="rtCanvasWrap">
+      <div class="rtCanvasTop">
+        <div class="rtLegend" id="rtLegend"></div>
+        <div class="pill" id="rtPoints">Points: 0</div>
+      </div>
+      <canvas id="rtCanvas" width="1200" height="240"></canvas>
+      <div id="rtTooltip" class="rtTooltip" style="display:none"></div>
+      <div class="rtHint">Tip: turn on <b>Show match columns</b> if you want to confirm exactly which PPR/Galaxy line each row is mapping to. Auto‑refresh only updates PPR; Galaxy stays cached weekly.</div>
+    </div>
+  </div>
+</div>
+
+</div>
+</div><div class="card" id="configCard">
+<div class="cardHead">
+<h2>Mapping tables (edit + save)</h2>
+<div class="row" style="gap:8px">
+<button class="btn secondary" id="exportCfgBtn">Export config (JSON)</button>
+<button class="btn secondary" id="importCfgBtn">Import config (JSON)</button>
+<button class="btn danger" id="factoryCfgBtn" title="Restore default IB/OB mapping">Restore defaults</button>
+</div>
+</div>
+<div class="tabs">
+<div class="tab active" data-tab="ib">Inbound (IB)</div>
+<div class="tab" data-tab="ob">Outbound (OB)</div>
+</div>
+<div class="cardBody">
+<div class="split">
+<div>
+<div id="cfgTables"></div>
+<div class="note">
+              Columns:
+              <span class="mono">PPR Line Item</span> = pulls Volume/Hours/Plan Productivity from PPR.
+              <span class="mono">Galaxy Line Item</span> = pulls LP Rate from GalaxyBI (selected week).
+              Use <span class="mono">LP Override</span> if Galaxy doesn’t have that line item.
+              <span class="mono">OP Rate Source</span> is optional; if blank, OP rate uses the same PPR Line Item.
+            </div>
+</div>
+<div>
+<div class="warnBox">
+<b>Why numbers were “wrong” before</b><br/>
+              Most mismatches come from (1) selecting the wrong PPR report filter, (2) line item names not matching exactly,
+              or (3) OP rate coming back as 0 when a “Total” line has no plan productivity.
+              <br/><br/>
+              This version fixes that by:
+              <ul style="margin:6px 0 0 18px; padding:0">
+<li>Exact matching (no smart/fuzzy) + clear NOT FOUND flags</li>
+<li>Safe fallbacks for OP rate (if 0 or missing)</li>
+<li>Separate editable IB and OB mapping tables</li>
+</ul>
+</div>
+<div class="hr"></div>
+<div class="field">
+<label>Paste config JSON here (for import)</label>
+<textarea id="cfgJsonBox" placeholder='{"ib":[...], "ob":[...]}'></textarea>
+<div class="row" style="margin-top:8px">
+<button class="btn secondary" id="applyImportBtn">Apply import</button>
+<button class="btn secondary" id="copyExportBtn">Copy current config JSON</button>
+</div>
+<div class="note">Config is saved automatically to <span class="mono">localStorage</span> after edits.</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<datalist id="galItems"></datalist>
+<datalist id="pprItems"></datalist>
+</div>
+<script>
+/* ===========================
+   Tiny CSV parser (handles quotes)
+   =========================== */
+function parseCSV(text){
+  const rows = [];
+  let i=0, field="", row=[], inQuotes=false;
+  const pushField = ()=>{ row.push(field); field=""; };
+  const pushRow = ()=>{ rows.push(row); row=[]; };
+  while(i < text.length){
+    const c = text[i];
+    if(inQuotes){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field += '"'; i++; }
+        else { inQuotes = false; }
+      }else{
+        field += c;
+      }
+    }else{
+      if(c === '"'){ inQuotes = true; }
+      else if(c === ','){ pushField(); }
+      else if(c === '\r'){
+        // ignore
+      }
+      else if(c === '\n'){
+        pushField(); pushRow();
+      }else{
+        field += c;
+      }
+    }
+    i++;
+  }
+  // last
+  pushField();
+  if(row.length>1 || (row.length===1 && row[0]!=="" )) pushRow();
+
+  // normalize row lengths
+  const maxLen = Math.max(0, ...rows.map(r=>r.length));
+  for(const r of rows){
+    while(r.length < maxLen) r.push("");
+  }
+  return rows;
+}
+
+function toNumber(v){
+  if(v===null || v===undefined) return null;
+  if(typeof v === 'number' && isFinite(v)) return v;
+  const s = String(v).trim();
+  if(!s || s === '-' || s.toLowerCase()==='nan') return null;
+  const t = s.replace(/,/g,'');
+  const n = Number(t);
+  return isFinite(n) ? n : null;
+}
+function fmt(n, d=1){
+  if(n===null || n===undefined || !isFinite(n)) return "—";
+  const abs=Math.abs(n);
+  if(abs>=1000000) return (n/1000000).toFixed(2)+"M";
+  if(abs>=1000 && d>0) return n.toLocaleString(undefined,{maximumFractionDigits:d, minimumFractionDigits:0});
+  return n.toLocaleString(undefined,{maximumFractionDigits:d, minimumFractionDigits:0});
+}
+function fmtFixed(n, d=1){
+  if(n===null || n===undefined || !isFinite(n)) return "—";
+  return n.toLocaleString(undefined,{minimumFractionDigits:d, maximumFractionDigits:d});
+}
+function fmtSigned(n, d=1){
+  if(n===null || n===undefined || !isFinite(n)) return "—";
+  const s = (n>0) ? "+" : "";
+  return s + n.toLocaleString(undefined,{minimumFractionDigits:d, maximumFractionDigits:d});
+}
+function pct(n, d=1){
+  if(n===null || n===undefined || !isFinite(n)) return "—";
+  return (n*100).toFixed(d)+"%";
+}
+function norm(s){
+  return String(s??"").trim().toLowerCase()
+    .replace(/&/g,'and')
+    .replace(/[\u2010-\u2015]/g,'-')
+    .replace(/[^a-z0-9]+/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+function keyRaw(s){
+  return String(s??"")
+    .replace(/[\u2010-\u2015]/g,"-")
+    .replace(/\s+/g," ")
+    .trim();
+}
+function keyCI(s){ return keyRaw(s).toLowerCase(); }
+
+const LS_KEY = "qjuflore_ib_ob_report_builder_cfg_v6"; // bumped to apply bundled config
+const LS_SHOW_MATCH = "qjuflore_ib_ob_report_builder_showMatchCols_v1";
+function loadShowMatchCols(){ try{ return localStorage.getItem(LS_SHOW_MATCH)==="1"; }catch(e){ return false; } }
+function saveShowMatchCols(v){ try{ localStorage.setItem(LS_SHOW_MATCH, v?"1":"0"); }catch(e){} }
+
+const LS_COMPACT_LAYOUT = "qjuflore_ib_ob_report_builder_compactLayout_v2";
+const LS_COMPACT_COLS   = "qjuflore_ib_ob_report_builder_compactCols_v1";
+const LS_FOCUS_REPORT   = "qjuflore_ib_ob_report_builder_focusReport_v1";
+function loadCompactLayout(){ try{ const v = localStorage.getItem(LS_COMPACT_LAYOUT); return v===null ? true : v==="1"; }catch(e){ return true; } }
+function saveCompactLayout(v){ try{ localStorage.setItem(LS_COMPACT_LAYOUT, v?"1":"0"); }catch(e){} }
+function loadCompactCols(){ try{ const v = localStorage.getItem(LS_COMPACT_COLS); return v===null ? true : v==="1"; }catch(e){ return true; } }
+function saveCompactCols(v){ try{ localStorage.setItem(LS_COMPACT_COLS, v?"1":"0"); }catch(e){} }
+function loadFocusReport(){ try{ return localStorage.getItem(LS_FOCUS_REPORT)==="1"; }catch(e){ return false; } }
+function saveFocusReport(v){ try{ localStorage.setItem(LS_FOCUS_REPORT, v?"1":"0"); }catch(e){} }
+
+// Excel strict is always ON (fixed)
+const LS_STATUS_BASIS = "qjuflore_ib_ob_report_builder_statusBasis_v2";
+const LS_STATUS_THRESHOLD = "qjuflore_ib_ob_report_builder_statusThresholdPct_v1";
+function loadStatusBasis(){ try{ return (localStorage.getItem(LS_STATUS_BASIS) || "higherTarget"); }catch(e){ return "higherTarget"; } }
+function saveStatusBasis(v){ try{ localStorage.setItem(LS_STATUS_BASIS, String(v||"lp")); }catch(e){} }
+function loadStatusThresholdPct(){ 
+  try{ 
+    const v = localStorage.getItem(LS_STATUS_THRESHOLD);
+    const n = v===null ? 100 : parseFloat(v);
+    return Number.isFinite(n) ? n : 100;
+  }catch(e){ return 100; } 
+}
+function saveStatusThresholdPct(v){ 
+  try{ 
+    const n = Number(v);
+    localStorage.setItem(LS_STATUS_THRESHOLD, String(Number.isFinite(n)? n : 100)); 
+  }catch(e){} 
+}
+
+
+// --- GalaxyBI weekly cache (so you don’t have to re-upload daily)
+const LS_GAL_CACHE_ENABLED = "qjuflore_ib_ob_report_builder_galCacheEnabled_v1";
+const LS_GAL_CACHE_TEXT    = "qjuflore_ib_ob_report_builder_galaxyCsvText_v1";
+const LS_GAL_CACHE_META    = "qjuflore_ib_ob_report_builder_galaxyCsvMeta_v1";
+
+function loadGalCacheEnabled(){
+  try{
+    const v = localStorage.getItem(LS_GAL_CACHE_ENABLED);
+    return v===null ? true : v==="1";
+  }catch(e){ return true; }
+}
+function saveGalCacheEnabled(v){
+  try{ localStorage.setItem(LS_GAL_CACHE_ENABLED, v?"1":"0"); }catch(e){}
+}
+function loadGalaxyCacheMeta(){
+  try{
+    const raw = localStorage.getItem(LS_GAL_CACHE_META);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function saveGalaxyCache(text, meta){
+  try{
+    // Guardrail: avoid blowing up localStorage on unusually huge files
+    const maxBytes = 3_500_000; // ~3.5MB
+    if((text||"").length > maxBytes) throw new Error("GalaxyBI file too large to cache in localStorage.");
+    localStorage.setItem(LS_GAL_CACHE_TEXT, text || "");
+    localStorage.setItem(LS_GAL_CACHE_META, JSON.stringify(meta || {}));
+  }catch(e){
+    // If cache fails, don’t break the tool.
+  }
+}
+function clearGalaxyCache(){
+  try{
+    localStorage.removeItem(LS_GAL_CACHE_TEXT);
+    localStorage.removeItem(LS_GAL_CACHE_META);
+  }catch(e){}
+}
+function formatTs(ts){
+  try{
+    if(!ts) return "";
+    const d = new Date(ts);
+    if(!isFinite(d.getTime())) return "";
+    return d.toLocaleString();
+  }catch(e){ return ""; }
+}
+function updateGalaxyCacheUI(){
+  const info = document.getElementById("galCacheInfo");
+  const btn = document.getElementById("clearGalaxyCacheBtn");
+  if(!info) return;
+  const meta = loadGalaxyCacheMeta();
+  const hasText = !!(localStorage.getItem(LS_GAL_CACHE_TEXT)||"");
+  if(hasText){
+    const name = meta?.name ? meta.name : "GalaxyBI CSV";
+    const when = formatTs(meta?.savedAt);
+    info.textContent = `Cache: ${name}${when?(" • saved "+when):""}`;
+    if(btn) btn.disabled = false;
+  }else{
+    info.textContent = "Cache: none";
+    if(btn) btn.disabled = true;
+  }
+}
+function tryLoadGalaxyFromCache(){
+  try{
+    const enabled = loadGalCacheEnabled();
+    if(!enabled) return false;
+    const text = localStorage.getItem(LS_GAL_CACHE_TEXT);
+    if(!text) return false;
+    const rows = parseCSV(text);
+    state.gal = buildGalaxyIndex(rows);
+    state.galCols = state.gal.forecastCols;
+    state.galSource = "cache";
+    setWeekSelect();
+    buildDatalists();
+    return true;
+  }catch(e){
+    // If cache is corrupted, clear it.
+    clearGalaxyCache();
+    return false;
+  }finally{
+    updateGalaxyCacheUI();
+  }
+}
+
+function applyLayoutClasses(){
+  document.body.classList.toggle("compact", !!state.compactLayout);
+  document.body.classList.toggle("focus", !!state.focusReport);
+  document.body.classList.toggle("colsEssential", !!state.compactCols);
+  const btn = document.getElementById("toggleFocusBtn");
+  if(btn){
+    btn.textContent = state.focusReport ? "Show setup" : "Focus report";
+  }
+}
+
+
+const DEFAULT_CFG = {
+  "ib": [
+    {
+      "enabled": true,
+      "path": "Receive Support",
+      "ppr": "Receive Support",
+      "gal": "Receive Support",
+      "lpOverride": "",
+      "indirect": true,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "Transfer In Decant",
+      "ppr": "Transfer In Decant",
+      "gal": "Transfer In Decant",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": false,
+      "path": "ETI Small",
+      "ppr": "Each Transfer In - Small",
+      "gal": "Each Transfer In - Small",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": false,
+      "path": "ETI Medium",
+      "ppr": "Each Transfer In - Medium",
+      "gal": "Each Transfer In - Medium",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": false,
+      "path": "ETI Large",
+      "ppr": "Each Transfer In - Large",
+      "gal": "Each Transfer In - Large",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "ETI Total",
+      "ppr": "Each Transfer In - Total",
+      "gal": "Each Transfer In - Total",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "TI Support",
+      "ppr": "Transfer In Support",
+      "gal": "Transfer In Support",
+      "lpOverride": "",
+      "indirect": true,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "TI Total",
+      "ppr": "Transfer In - Total",
+      "gal": "Transfer In - Total",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "Cubiscan",
+      "ppr": "Cubiscan",
+      "gal": "Cubiscan",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": false,
+      "path": "ESTP Small",
+      "ppr": "Each Stow To Prime - Small",
+      "gal": "Each Stow To Prime - Small",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": false,
+      "path": "ESTP Medium",
+      "ppr": "Each Stow To Prime - Medium",
+      "gal": "Each Stow To Prime - Medium",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": false,
+      "path": "ESTP Large",
+      "ppr": "Each Stow To Prime - Large",
+      "gal": "Each Stow To Prime - Large",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "ESTP Total",
+      "ppr": "Each Stow to Prime - Total",
+      "gal": "Each Stow to Prime - Total",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "STP Support",
+      "ppr": "Stow to Prime Support",
+      "gal": "Stow to Prime Support",
+      "lpOverride": "",
+      "indirect": true,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "STP Total",
+      "ppr": "Stow to Prime - Total",
+      "gal": "Stow to Prime - Total",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "RSR Support",
+      "ppr": "RSR Support",
+      "gal": "RSR Support",
+      "lpOverride": "",
+      "indirect": true,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "RSR Total",
+      "ppr": "RSR - Total",
+      "gal": "RSR - Total",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "IB Lead/PA",
+      "ppr": "IB Lead/PA",
+      "gal": "IB Lead/PA",
+      "lpOverride": "",
+      "indirect": true,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "IB Problem Solve",
+      "ppr": "IB Problem Solve",
+      "gal": "IB Problem Solve",
+      "lpOverride": "",
+      "indirect": true,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "IB Total",
+      "ppr": "IB Total",
+      "gal": "IB Total",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    }
+  ],
+  "ob": [
+    {
+      "enabled": true,
+      "path": "OB TOTAL",
+      "ppr": "OB TOTAL",
+      "gal": "OB TOTAL",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "DA Bldg to Bldg Transfer TOTAL",
+      "ppr": "DA Bldg to Bldg Transfer TOTAL",
+      "gal": "DA Bldg to Bldg Transfer TOTAL",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "Pick - Total",
+      "ppr": "Pick - Total",
+      "gal": "Pick - Total",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "Pick Support",
+      "ppr": "Pick Support",
+      "gal": "Pick Support",
+      "lpOverride": "",
+      "indirect": true,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "Flow Sort - Total",
+      "ppr": "Flow Sort - Total",
+      "gal": "Flow Sort - Total",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "Pack Chuting - Total",
+      "ppr": "Pack Chuting - Total",
+      "gal": "Pack Chuting - Total",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "Pack Singles - Total",
+      "ppr": "Pack Singles - Total",
+      "gal": "Pack Singles - Total",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "Pack Support",
+      "ppr": "Pack Support",
+      "gal": "Pack Support",
+      "lpOverride": "",
+      "indirect": true,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "OB Lead/PA",
+      "ppr": "OB Lead/PA",
+      "gal": "OB Lead/PA",
+      "lpOverride": "",
+      "indirect": true,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "OB Problem Solve",
+      "ppr": "OB Problem Solve",
+      "gal": "OB Problem Solve",
+      "lpOverride": "",
+      "indirect": true,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "Ship Dock",
+      "ppr": "Ship Dock",
+      "gal": "Ship Dock",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "Transfer Out Pick - Total",
+      "ppr": "Transfer Out Pick - Total",
+      "gal": "Transfer Out Pick - Total",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "Transfer Out",
+      "ppr": "Transfer Out",
+      "gal": "Transfer Out",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "Transfer Out Dock",
+      "ppr": "Transfer Out Dock",
+      "gal": "Transfer Out Dock",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "V-Return Pick - Total",
+      "ppr": "V-Return Pick - Total",
+      "gal": "V-Return Pick - Total",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    },
+    {
+      "enabled": true,
+      "path": "Vendor Returns - Total",
+      "ppr": "Vendor Returns - Total",
+      "gal": "Vendor Returns - Total",
+      "lpOverride": "",
+      "indirect": false,
+      "opSource": ""
+    }
+  ]
+};
+
+
+let state = {
+  gal: null,
+  galSource: null,
+  ppr: null,
+  galCols: [],
+  pprReports: [],
+  cfg: loadCfg(),
+  activeTab: "ib",
+  activeRpt: "both",
+  showMatchCols: loadShowMatchCols(),
+  compactLayout: loadCompactLayout(),
+  compactCols: loadCompactCols(),
+  focusReport: loadFocusReport(),
+  statusBasis: loadStatusBasis(),
+  statusThresholdPct: loadStatusThresholdPct(),
+  excelStrict: true,
+  lastBuild: null
+};
+
+function normalizeKey(s){ return (s||"").toLowerCase().replace(/\s+/g," ").trim(); }
+
+function migrateCfg(cfg){
+  try{
+    if(!cfg || !cfg.ib || !cfg.ob) return cfg;
+
+    // --- Fix: remove the "Incl. Support" combined Pick row (it double-counts when Support is separated)
+    cfg.ob = (cfg.ob||[]).map(r=>{
+      const rr = Object.assign({}, r);
+      const joined = `${rr.path||""}|||${rr.ppr||""}|||${rr.gal||""}`;
+      if(joined.includes("Pick Total (Incl. Support)")){
+        rr.path = "Pick - Total";
+        rr.ppr  = "Pick - Total";
+        rr.gal  = "Pick - Total";
+        rr.indirect = false;
+      }
+      return rr;
+    });
+
+    const hasPickSupport = (cfg.ob||[]).some(r=> normalizeKey(r.path)==="pick support" || normalizeKey(r.ppr)==="pick support");
+    const hasPickTotal   = (cfg.ob||[]).some(r=>{
+      const p = normalizeKey(r.path), q = normalizeKey(r.ppr);
+      return (p==="pick - total" || q==="pick - total" || p==="pick total" || q==="pick total");
+    });
+
+    // If an older config had only the combined row, add Pick Support so it can stay separated
+    if(hasPickTotal && !hasPickSupport){
+      const idx = (cfg.ob||[]).findIndex(r=> normalizeKey(r.ppr).includes("pick") && normalizeKey(r.ppr).includes("total"));
+      const row = {enabled:true, path:"Pick Support", ppr:"Pick Support", gal:"Pick Support", lpOverride:"", indirect:true, opSource:""};
+      if(idx >= 0) cfg.ob.splice(idx+1, 0, row);
+      else cfg.ob.unshift(row);
+    }
+  }catch(e){}
+  return cfg;
+}
+
+function mergeWithDefault(saved){
+  // Rebase to DEFAULT_CFG order using Path label as a stable key.
+  // This prevents "row shifting" across versions (e.g., IB PA values landing on IB Problem Solve).
+  const def = structuredClone(DEFAULT_CFG);
+  const out = {ib:[], ob:[]};
+
+  for(const tab of ["ib","ob"]){
+    const savedList = (saved && Array.isArray(saved[tab])) ? saved[tab] : [];
+    const map = new Map();
+    const dupRows = [];
+
+    for(const r of savedList){
+      const k = normalizeKey(r.path);
+      if(!k) continue;
+      // Keep FIRST occurrence to avoid random swaps when duplicates exist.
+      if(!map.has(k)) map.set(k, r);
+      else dupRows.push(r);
+    }
+
+    const used = new Set();
+    for(const d of def[tab]){
+      const k = normalizeKey(d.path);
+      const s = map.get(k);
+      if(s){
+        used.add(k);
+        // Merge user values but keep default label + default ordering.
+        out[tab].push(Object.assign({}, d, s, {path: d.path}));
+      }else{
+        out[tab].push(d);
+      }
+    }
+
+    // Append any custom rows not present in defaults (preserve user's extras)
+    for(const [k, r] of map.entries()){
+      if(!used.has(k)) out[tab].push(r);
+    }
+
+    // Preserve duplicated path rows (rare) by appending them at the end with a safe suffix
+    // so they don't silently disappear.
+    let n = 1;
+    for(const r of dupRows){
+      const rr = Object.assign({}, r);
+      rr.path = `${rr.path} (DUP ${n++})`;
+      out[tab].push(rr);
+    }
+  }
+
+  return out;
+}
+
+function loadCfg(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return structuredClone(DEFAULT_CFG);
+    const obj = JSON.parse(raw);
+    if(!obj || !obj.ib || !obj.ob) throw new Error("bad cfg");
+    const migrated = migrateCfg(obj);
+    return mergeWithDefault(migrated);
+  }catch(e){
+    return structuredClone(DEFAULT_CFG);
+  }
+}
+
+function saveCfg(){
+  localStorage.setItem(LS_KEY, JSON.stringify(state.cfg));
+}
+function setChips(){
+  const el = document.getElementById("statusChips");
+  const gLoaded = !!state.gal;
+  const pLoaded = !!state.ppr;
+  const gTag = !gLoaded ? "not loaded" : (state.galSource==="cache" ? "cached" : "loaded");
+  el.innerHTML = `
+    <span class="chip ${gLoaded?'good':'warn'}">GalaxyBI: ${gTag}</span>
+    <span class="chip ${pLoaded?'good':'warn'}">PPR: ${pLoaded?'loaded':'not loaded'}</span>
+    <span class="chip good">Config: saved</span>
+  `;
+  document.getElementById("buildBtn").disabled = !(gLoaded && pLoaded);
+  document.getElementById("weekCol").disabled = !gLoaded;
+  document.getElementById("pprReport").disabled = !pLoaded;
+}
+
+
+function buildDatalists(){
+  const galList = document.getElementById("galItems");
+  const pprList = document.getElementById("pprItems");
+  galList.innerHTML = "";
+  pprList.innerHTML = "";
+  if(state.gal){
+    const items = Array.from(state.gal.itemsExact.keys()).sort((a,b)=>a.localeCompare(b));
+    for(const it of items){
+      const o=document.createElement("option"); o.value=it; galList.appendChild(o);
+    }
+  }
+  if(state.ppr){
+    const items = Array.from(state.ppr.itemsExact.keys()).sort((a,b)=>a.localeCompare(b));
+    for(const it of items){
+      const o=document.createElement("option"); o.value=it; pprList.appendChild(o);
+    }
+  }
+}
+
+function setWeekSelect(){
+  const sel = document.getElementById("weekCol");
+  sel.innerHTML = "";
+  for(const c of state.galCols){
+    const o=document.createElement("option");
+    o.value=c; o.textContent=c;
+    sel.appendChild(o);
+  }
+  // prefer earliest week by default (matches many Excel samples)
+  if(state.galCols.length) sel.value = state.galCols[0];
+}
+function setReportSelect(){
+  const sel = document.getElementById("pprReport");
+  sel.innerHTML="";
+  for(const r of state.pprReports){
+    const o=document.createElement("option");
+    o.value=r; o.textContent=r;
+    sel.appendChild(o);
+  }
+  // default to DETAIL_PPR if present
+  if(state.pprReports.includes("DETAIL_PPR")) sel.value="DETAIL_PPR";
+}
+
+function renderTabs(){
+  document.querySelectorAll(".tab[data-tab]").forEach(t=>{
+    t.classList.toggle("active", t.dataset.tab===state.activeTab);
+  });
+}
+
+function renderConfig(){
+  const mount = document.getElementById("cfgTables");
+  mount.innerHTML = "";
+
+  const list = state.cfg[state.activeTab];
+
+  const wrap = document.createElement("div");
+  const head = document.createElement("div");
+  head.className="flexBetween";
+  head.innerHTML = `
+    <div class="mini"><b>${state.activeTab.toUpperCase()}</b> mapping rows: ${list.length}</div>
+    <div class="row" style="gap:8px">
+      <label class="pill"><input type="checkbox" id="toggleAllEnabled"/> Enable all</label>
+      <button class="btn secondary" id="addRowBtn">+ Add row</button>
+    </div>
+  `;
+  wrap.appendChild(head);
+
+  const tableWrap = document.createElement("div");
+  tableWrap.className = "tableWrap";
+  const table = document.createElement("table");
+  table.className = "cfgTable";
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th class="small center">Move</th>
+        <th class="small center">On</th>
+        <th>Path (label)</th>
+        <th>PPR Line Item</th>
+        <th>Galaxy Line Item</th>
+        <th class="small right">LP Override</th>
+        <th class="small center">Indirect</th>
+        <th>OP Rate Source (optional)</th>
+        <th class="small center">Del</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  `;
+  const tbody = table.querySelector("tbody");
+
+  list.forEach((row, idx)=>{
+    const tr = document.createElement("tr");
+    tr.dataset.row = String(idx);
+    tr.innerHTML = `
+      <td class="center moveCell">
+        <button class="btn secondary tiny" data-move="up" data-i="${idx}" title="Move up">▲</button>
+        <button class="btn secondary tiny" data-move="down" data-i="${idx}" title="Move down">▼</button>
+        <span class="dragHandle" draggable="true" data-drag="${idx}" title="Drag to reorder">⠿</span>
+      </td>
+      <td class="center"><input type="checkbox" ${row.enabled?'checked':''} data-k="enabled" data-i="${idx}"/></td>
+      <td><input type="text" value="${escapeHtml(row.path)}" data-k="path" data-i="${idx}" placeholder="Label"/></td>
+      <td><input list="pprItems" type="text" value="${escapeHtml(row.ppr)}" data-k="ppr" data-i="${idx}" placeholder="Exact name from PPR"/></td>
+      <td><input list="galItems" type="text" value="${escapeHtml(row.gal)}" data-k="gal" data-i="${idx}" placeholder="Exact name from GalaxyBI"/></td>
+      <td class="right"><input type="number" step="0.1" value="${escapeAttr(row.lpOverride)}" data-k="lpOverride" data-i="${idx}" placeholder=""/></td>
+      <td class="center"><input type="checkbox" ${row.indirect?'checked':''} data-k="indirect" data-i="${idx}"/></td>
+      <td><input list="pprItems" type="text" value="${escapeHtml(row.opSource)}" data-k="opSource" data-i="${idx}" placeholder="(blank = same as PPR)"/></td>
+      <td class="center"><button class="btn danger" data-del="${idx}" title="Delete row">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tableWrap.appendChild(table);
+  wrap.appendChild(tableWrap);
+  mount.appendChild(wrap);
+
+  // bind events
+  document.getElementById("toggleAllEnabled").addEventListener("change",(e)=>{
+    const v = e.target.checked;
+    for(const r of state.cfg[state.activeTab]) r.enabled = v;
+    saveCfg(); renderConfig();
+  });
+  document.getElementById("addRowBtn").addEventListener("click",()=>{
+    state.cfg[state.activeTab].push({enabled:true, path:"New Row", ppr:"", gal:"", lpOverride:"", indirect:false, opSource:""});
+    saveCfg(); renderConfig();
+  });
+  tbody.querySelectorAll("input").forEach(inp=>{
+    inp.addEventListener("input", onCfgEdit);
+    inp.addEventListener("change", onCfgEdit);
+  });
+  tbody.querySelectorAll("button[data-del]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const i = Number(btn.dataset.del);
+      state.cfg[state.activeTab].splice(i,1);
+      saveCfg(); renderConfig();
+    });
+  });
+
+  // move up/down buttons
+  tbody.querySelectorAll('button[data-move]').forEach(btn=>{
+    btn.addEventListener('click', (ev)=>{
+      ev.preventDefault();
+      const dir = btn.dataset.move;
+      const i = Number(btn.dataset.i);
+      const list = state.cfg[state.activeTab];
+      if(!Number.isFinite(i) || !list[i]) return;
+      const j = dir === 'up' ? i-1 : i+1;
+      if(j < 0 || j >= list.length) return;
+      const [it] = list.splice(i, 1);
+      list.splice(j, 0, it);
+      saveCfg(); renderConfig();
+    });
+  });
+
+  // drag-to-reorder (handle)
+  let dragFrom = null;
+  tbody.querySelectorAll('.dragHandle').forEach(h=>{
+    h.addEventListener('dragstart', (ev)=>{
+      dragFrom = Number(h.dataset.drag);
+      try{
+        ev.dataTransfer.effectAllowed = 'move';
+        ev.dataTransfer.setData('text/plain', String(dragFrom));
+      }catch(e){}
+      const tr = h.closest('tr');
+      if(tr) tr.classList.add('dragging');
+    });
+    h.addEventListener('dragend', ()=>{
+      dragFrom = null;
+      tbody.querySelectorAll('tr').forEach(r=>r.classList.remove('dragOver','dragging'));
+    });
+  });
+
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    tr.addEventListener('dragover', (ev)=>{
+      ev.preventDefault();
+      tr.classList.add('dragOver');
+    });
+    tr.addEventListener('dragleave', ()=> tr.classList.remove('dragOver'));
+    tr.addEventListener('drop', (ev)=>{
+      ev.preventDefault();
+      const from = (dragFrom!==null) ? dragFrom : Number((ev.dataTransfer && ev.dataTransfer.getData('text/plain')) || NaN);
+      const to = Number(tr.dataset.row);
+      const list = state.cfg[state.activeTab];
+      tbody.querySelectorAll('tr').forEach(r=>r.classList.remove('dragOver','dragging'));
+      dragFrom = null;
+      if(!Number.isFinite(from) || !Number.isFinite(to)) return;
+      if(from === to) return;
+      if(from < 0 || from >= list.length) return;
+      if(to < 0 || to >= list.length) return;
+
+      const [it] = list.splice(from, 1);
+      let insertAt = to;
+      if(from < to) insertAt = Math.max(0, to - 1);
+      list.splice(insertAt, 0, it);
+      saveCfg(); renderConfig();
+    });
+  });
+
+  // update JSON box
+  document.getElementById("cfgJsonBox").value = JSON.stringify(state.cfg, null, 2);
+}
+
+function onCfgEdit(e){
+  const i = Number(e.target.dataset.i);
+  const k = e.target.dataset.k;
+  const list = state.cfg[state.activeTab];
+  if(!list[i]) return;
+  if(e.target.type==="checkbox") list[i][k] = !!e.target.checked;
+  else list[i][k] = e.target.value;
+  saveCfg();
+  // live update JSON but don't rerender everything (less janky)
+  document.getElementById("cfgJsonBox").value = JSON.stringify(state.cfg, null, 2);
+}
+
+function escapeHtml(s){ return String(s??"").replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
+function escapeAttr(s){ return String(s??"").replace(/"/g,'&quot;'); }
+
+/* ===========================
+   Data loaders
+   =========================== */
+async function readFileAsText(file){
+  return new Promise((res, rej)=>{
+    const fr=new FileReader();
+    fr.onload=()=>res(String(fr.result||""));
+    fr.onerror=()=>rej(fr.error);
+    fr.readAsText(file);
+  });
+}
+
+function buildGalaxyIndex(rows){
+  const header = rows[0].map(h=>String(h).trim());
+  const idxLine = header.findIndex(h=>norm(h)==="line item");
+  if(idxLine<0) throw new Error("GalaxyBI: missing 'Line Item' column");
+  const forecastCols = header.filter(h=>/^Forecast\s*\|/i.test(h));
+  const mapExact = new Map();
+  const itemsKey = new Map();
+  function addKey(name){
+    const k = normalizeKey(name);
+    if(!k) return;
+    const prev = itemsKey.get(k);
+    if(!prev){ itemsKey.set(k, name); return; }
+    if(prev === name) return;
+    if(Array.isArray(prev)){
+      if(!prev.includes(name)) prev.push(name);
+    }else{
+      itemsKey.set(k, [prev, name]);
+    }
+  }
+
+for(let r=1;r<rows.length;r++){
+    const obj = {};
+    for(let c=0;c<header.length;c++) obj[header[c]] = rows[r][c];
+    const name = String(rows[r][idxLine]||"").trim();
+    if(!name) continue;
+    mapExact.set(name, obj);
+    addKey(name);
+  }
+  return { header, forecastCols, itemsExact: mapExact, itemsKey };
+}
+
+function buildPprIndex(rows){
+  const header = rows[0].map(h=>String(h).trim());
+  const need = ["Report","LineItem Name","Actual Volume","Actual Hours","Plan Productivity","Hours @ Plan Rate"];
+  const hNorm = header.map(h=>norm(h));
+  const col = {};
+  for(const n of need){
+    const i = hNorm.indexOf(norm(n));
+    if(i<0) throw new Error("PPR: missing column: "+n);
+    col[n]=i;
+  }
+  const mapByReportExact = new Map(); // report -> exact name -> agg
+  const mapByReportKey = new Map();   // report -> normalizeKey(name) -> string|array (for exact, case-insensitive)
+  const mapByReportNorm = new Map();
+const itemsExact = new Map();
+  const itemsNorm = new Map();
+  const reports = new Set();
+
+  function ensure(report, m){
+    if(!m.has(report)) m.set(report, new Map());
+    return m.get(report);
+  }
+
+  for(let r=1;r<rows.length;r++){
+    const report = String(rows[r][col["Report"]]||"").trim();
+    const name = String(rows[r][col["LineItem Name"]]||"").trim();
+    if(!report || !name) continue;
+    reports.add(report);
+
+    const vol = toNumber(rows[r][col["Actual Volume"]]) ?? 0;
+    const hrs = toNumber(rows[r][col["Actual Hours"]]) ?? 0;
+    const plan = toNumber(rows[r][col["Plan Productivity"]]);
+    const hapr = toNumber(rows[r][col["Hours @ Plan Rate"]]) ?? 0;
+
+    const mE = ensure(report, mapByReportExact);
+    const mK = ensure(report, mapByReportKey);
+    const mN = ensure(report, mapByReportNorm);
+// store all unique items for datalist
+    if(!itemsExact.has(name)) itemsExact.set(name,true);
+    if(!itemsNorm.has(norm(name))) itemsNorm.set(norm(name), name);
+
+    // build case-insensitive key map (exact, no fuzzy). Ambiguous keys are flagged.
+    const k = normalizeKey(name);
+    if(k){
+      const prev = mK.get(k);
+      if(!prev){ mK.set(k, name); }
+      else if(prev === name){ /* ok */ }
+      else if(Array.isArray(prev)){
+        if(!prev.includes(name)) prev.push(name);
+      }else{
+        mK.set(k, [prev, name]);
+      }
+    }
+// aggregate exact
+    const keyE = name;
+    if(!mE.has(keyE)) mE.set(keyE, {vol:0, hrs:0, hapr:0, planSum:0, planW:0});
+    const aE = mE.get(keyE);
+    aE.vol += vol; aE.hrs += hrs; aE.hapr += hapr;
+    if(plan!==null){
+      const w = vol>0?vol:(hrs>0?hrs:1);
+      aE.planSum += plan*w;
+      aE.planW += w;
+    }
+
+    // aggregate normalized
+    const keyN = norm(name);
+    if(!mN.has(keyN)) mN.set(keyN, {vol:0, hrs:0, hapr:0, planSum:0, planW:0, sample:name});
+    const aN = mN.get(keyN);
+    aN.vol += vol; aN.hrs += hrs; aN.hapr += hapr;
+    if(plan!==null){
+      const w = vol>0?vol:(hrs>0?hrs:1);
+      aN.planSum += plan*w;
+      aN.planW += w;
+    }
+  }
+
+  return {
+    header,
+    reports: Array.from(reports).sort(),
+    byReportExact: mapByReportExact,
+    byReportKey: mapByReportKey,
+    byReportNorm: mapByReportNorm,
+    itemsExact,
+    itemsNorm
+  };
+}
+
+function lookupGalaxy(name){
+  if(!state.gal) return {obj:null, matched:"", ok:false, reason:"not_loaded"};
+  const raw = keyRaw(name);
+  if(!raw) return {obj:null, matched:"", ok:false, reason:"blank"};
+
+  // 1) Exact (case-sensitive) match
+  const ex = state.gal.itemsExact.get(raw) || null;
+  if(ex) return {obj:ex, matched:raw, ok:true, via:"exact"};
+
+  // 2) Case-insensitive exact match (whitespace-collapsed), with ambiguity guard
+  const k = normalizeKey(raw);
+  const cand = state.gal.itemsKey.get(k);
+  if(typeof cand === "string"){
+    const obj = state.gal.itemsExact.get(cand) || null;
+    if(obj) return {obj, matched:cand, ok:true, via:"key"};
+  }
+  if(Array.isArray(cand)){
+    return {obj:null, matched:"", ok:false, reason:"ambiguous", options:cand};
+  }
+  return {obj:null, matched:"", ok:false, reason:"notfound"};
+}
+
+function lookupPprAgg(name, report){
+  if(!state.ppr) return {agg:null, matched:"", ok:false, reason:"not_loaded"};
+  const raw = keyRaw(name);
+  if(!raw) return {agg:null, matched:"", ok:false, reason:"blank"};
+  const rep = String(report||"").trim();
+  if(!rep) return {agg:null, matched:"", ok:false, reason:"no_report"};
+
+  const mE = state.ppr.byReportExact.get(rep) || new Map();
+  const mK = state.ppr.byReportKey.get(rep) || new Map();
+
+  // 1) Exact (case-sensitive) match
+  if(mE.has(raw)) return {agg:mE.get(raw), matched:raw, ok:true, via:"exact"};
+
+  // 2) Case-insensitive exact match (whitespace-collapsed), with ambiguity guard
+  const k = normalizeKey(raw);
+  const cand = mK.get(k);
+  if(typeof cand === "string" && mE.has(cand)){
+    return {agg:mE.get(cand), matched:cand, ok:true, via:"key"};
+  }
+  if(Array.isArray(cand)){
+    return {agg:null, matched:"", ok:false, reason:"ambiguous", options:cand};
+  }
+  return {agg:null, matched:"", ok:false, reason:"notfound"};
+}
+
+function aggToMetrics(agg){
+  if(!agg) return {vol:null, hrs:null, plan:null};
+  // Preserve nulls when data is missing so the UI shows "—" instead of misleading zeros.
+  const vol = toNumber(agg.vol);
+  const hrs = toNumber(agg.hrs);
+  let plan = null;
+  // Excel-aligned: prefer PPR Plan Productivity (col "Plan Productivity"). Fallback to vol/hours@plan when needed.
+  if(agg.planW && agg.planW>0){
+    plan = agg.planSum / agg.planW;
+  }else if(agg.hapr && agg.hapr>0 && vol!==null && vol>0){
+    plan = vol / agg.hapr;
+  }
+  return {vol, hrs, plan};
+}
+
+/* ===========================/* ===========================
+   Report builder
+   =========================== */
+function buildTable(cfgKey){
+  const report = document.getElementById("pprReport").value;
+  const week = document.getElementById("weekCol").value;
+
+  const rows = [];
+  const missing = {gal:[], ppr:[], op:[]};
+
+  for(const r of state.cfg[cfgKey]){
+    if(!r.enabled) continue;
+
+    const pprRes = lookupPprAgg(r.ppr, report);
+    const pprAgg = pprRes.agg;
+    const m = aggToMetrics(pprAgg);
+
+    const gRes = lookupGalaxy(r.gal);
+    const gObj = gRes.obj;
+    const lpOverride = toNumber(r.lpOverride);
+
+    let lpRate = lpOverride;
+    if(lpRate===null){
+      const raw = gObj ? gObj[week] : null;
+      lpRate = toNumber(raw);
+    }
+
+    // OP rate
+    let opSourceName = (r.opSource||"").trim() ? r.opSource : r.ppr;
+    let opRes = lookupPprAgg(opSourceName, report);
+    let opAgg = opRes.agg;
+    let opM = aggToMetrics(opAgg);
+    let opRate = opM.plan;
+
+    // Excel strict: if OP rate is missing/0, keep it missing (so you can spot it).
+    // Optional fallback: when strict is OFF, try the row's own plan productivity.
+    if(!state.excelStrict){
+      if(!opRate || opRate<=0){
+        const same = aggToMetrics(pprAgg).plan;
+        if(same && same>0) opRate = same;
+      }
+    }
+
+    if(!pprRes.ok) missing.ppr.push(`${r.path} → ${r.ppr}`);
+    if(!gRes.ok && lpOverride===null && r.gal) missing.gal.push(`${r.path} → ${r.gal}`);
+    if((!opRate || opRate<=0) && (m.vol!==null && m.vol>0)) missing.op.push(`${r.path} → ${opSourceName}`);
+
+    // Preserve nulls when PPR line is missing: show "—" instead of 0, and prevent totals/rates from being overwritten.
+    const vol = (pprRes.ok ? m.vol : null);
+    const hrs = (pprRes.ok ? m.hrs : null);
+    const hasVol = (vol!==null && vol>0);
+// If volume is 0, treat rate/variance as N/A (avoid misleading 0.0% + BELOW)
+    const actRate = (hrs>0 && hasVol) ? (vol/hrs) : null;
+
+    const lpHours = (lpRate && lpRate>0 && hasVol) ? (vol/lpRate) : null;
+    const opHours = (opRate && opRate>0 && hasVol) ? (vol/opRate) : null;
+
+    const hrsToLp = (lpHours!==null && hrs!==null && hasVol) ? (lpHours - hrs) : null;
+    const hrsToOp = (opHours!==null && hrs!==null && hasVol) ? (opHours - hrs) : null;
+
+    const pctToLp = (actRate!==null && lpRate && lpRate>0) ? (actRate/lpRate) : null;
+    const pctToOp = (actRate!==null && opRate && opRate>0) ? (actRate/opRate) : null;
+
+    rows.push({
+      path: r.path,
+      indirect: !!r.indirect,
+      // configured names (what's in the mapping)
+      ppr: r.ppr,
+      gal: r.gal,
+      opSource: opSourceName,
+
+      // matched names (what we actually found in files)
+      pprMatch: pprRes.ok ? pprRes.matched : "",
+      galMatch: (r.gal && gRes.ok) ? gRes.matched : "",
+      opMatch: opRes.ok ? opRes.matched : "",
+
+      foundPpr: !!pprRes.ok,
+      foundGal: (!r.gal) || (lpOverride!==null) || !!gRes.ok,
+
+      vol, hrs, actRate,
+      lpRate, lpHours, hrsToLp, pctToLp,
+      opRate, opHours, hrsToOp, pctToOp
+    });  }
+  // Duplicate mapping guardrails: if two different rows map to the same underlying line item,
+  // it's very easy to accidentally "swap" numbers. We flag duplicates explicitly.
+  const dup = { ppr: [], gal: [] };
+  const pprMap = new Map(); // matchedName -> [path...]
+  const galMap = new Map();
+
+  for(const rr of rows){
+    if(rr.foundPpr && rr.pprMatch){
+      if(!pprMap.has(rr.pprMatch)) pprMap.set(rr.pprMatch, []);
+      pprMap.get(rr.pprMatch).push(rr.path);
+    }
+    if(rr.foundGal && rr.galMatch){
+      if(!galMap.has(rr.galMatch)) galMap.set(rr.galMatch, []);
+      galMap.get(rr.galMatch).push(rr.path);
+    }
+  }
+
+  for(const [k, arr] of pprMap.entries()){
+    if(arr.length>1) dup.ppr.push(`${k} ← ${arr.join(", ")}`);
+  }
+  for(const [k, arr] of galMap.entries()){
+    if(arr.length>1) dup.gal.push(`${k} ← ${arr.join(", ")}`);
+  }
+
+  // annotate row flags (so the table can highlight)
+  for(const rr of rows){
+    rr.dupPpr = rr.foundPpr && rr.pprMatch && (pprMap.get(rr.pprMatch)?.length>1);
+    rr.dupGal = rr.foundGal && rr.galMatch && (galMap.get(rr.galMatch)?.length>1);
+  }
+
+  // compute indirect % (hours based) using total row if present, else sum hrs
+  // Use the real total row (IB Total / OB Total). Avoid grabbing the first "*Total" row like "ETI Total".
+  const wantedTotal = (cfgKey==="ib") ? "IB Total" : "OB Total";
+  let totalRow = rows.find(x=> keyCI(x.path)===keyCI(wantedTotal) && x.vol!==null && x.hrs!==null);
+  if(!totalRow){
+    const cands = rows.filter(x=> /total$/i.test(keyRaw(x.path)) && x.vol!==null && x.hrs!==null);
+    totalRow = cands.length ? cands[cands.length-1] : null;
+  }
+  const directHrs = (totalRow && totalRow.hrs>0) ? totalRow.hrs : rows.reduce((a,b)=>a+(b.hrs||0),0);
+  const indirectHrs = rows.reduce((a,b)=> a + (b.indirect ? (b.hrs||0) : 0), 0);
+  const totalHrs = directHrs + indirectHrs;
+  const indirectPct = totalHrs>0 ? (indirectHrs/totalHrs) : null;         // Indirect as % of (direct+indirect)
+  const indirectPctVsDirect = directHrs>0 ? (indirectHrs/directHrs) : null; // Indirect vs direct hours baseline
+
+  return {rows, missing, dup, indirectPct, indirectPctVsDirect, totalHrs, directHrs, indirectHrs};
+}
+
+function renderReport(){
+  const out = document.getElementById("reportOut");
+  const kpis = document.getElementById("kpis");
+  const note = document.getElementById("unmatchedNote");
+  out.innerHTML=""; kpis.innerHTML=""; note.textContent="";
+
+  const ib = buildTable("ib");
+  const ob = buildTable("ob");
+  state.lastBuild = {ib, ob};
+
+  const show = state.activeRpt;
+  if(show==="ib") renderOne(out, "Inbound (IB)", ib, "ib");
+  else if(show==="ob") renderOne(out, "Outbound (OB)", ob, "ob");
+  else{
+    renderOne(out, "Inbound (IB)", ib, "ib");
+    out.appendChild(document.createElement("div")).className="hr";
+    renderOne(out, "Outbound (OB)", ob, "ob");
+  }
+
+  // KPIs (totals from "Total" row if present)
+  const ibTotal = pickTotalRow(ib.rows);
+  const obTotal = pickTotalRow(ob.rows);
+
+  // IB Volume: use the mapped IB Total (PPR) when available; otherwise fall back to summing IB rows.
+  // (No forced ETI+STP merge.)
+  const etiTotal = ib.rows.find(r=> keyCI(r.path) === keyCI("ETI Total"));
+  const stpTotal = ib.rows.find(r=> keyCI(r.path) === keyCI("ESTP Total")) || ib.rows.find(r=> keyCI(r.path) === keyCI("STP Total"));
+
+  const ibVol = (ibTotal?.vol ?? sum(ib.rows,"vol"));
+  const ibHrs = (ibTotal?.hrs ?? sum(ib.rows,"hrs"));
+
+  const etiVol = (etiTotal?.vol ?? null);
+  const etiHrs = (etiTotal?.hrs ?? null);
+  const stpVol = (stpTotal?.vol ?? null);
+  const stpHrs = (stpTotal?.hrs ?? null);
+
+  const etiRate = (etiHrs!==null && etiHrs>0 && etiVol!==null && etiVol>0) ? (etiVol/etiHrs) : null;
+  const stpRate = (stpHrs!==null && stpHrs>0 && stpVol!==null && stpVol>0) ? (stpVol/stpHrs) : null;
+
+  // IB Total (Unified) KPI = ETI + STP when both are present; falls back to mapped IB Total.
+  const ibUnifiedVol = (etiVol!==null && stpVol!==null) ? (etiVol + stpVol) : ibVol;
+  const ibUnifiedHrs = (etiHrs!==null && stpHrs!==null) ? (etiHrs + stpHrs) : ibHrs;
+  const ibUnifiedRate = (ibUnifiedHrs!==null && ibUnifiedHrs>0 && ibUnifiedVol!==null) ? (ibUnifiedVol/ibUnifiedHrs) : null;
+  const obVol = obTotal?.vol ?? sum(ob.rows,"vol");
+  const obHrs = obTotal?.hrs ?? sum(ob.rows,"hrs");
+
+  const allVol = ibUnifiedVol + obVol;
+  const allHrs = ibUnifiedHrs + obHrs;
+  const allRate = (allHrs>0) ? (allVol/allHrs) : null;
+
+  const items = [
+    {t:"IB Volume", v:fmt(ibUnifiedVol,0), s: `
+      IB Hours: ${fmt(ibUnifiedHrs,1)} • IB Rate: ${fmtFixed(ibUnifiedRate,1)}
+      <div class="mini">Unified: ETI + STP</div>
+      <div class="kpiBreak">
+        <div class="kpiPart">
+          <div class="miniLabel">ETI</div>
+          <div class="miniLine">Vol: ${fmt(etiVol,0)}</div>
+          <div class="miniLine">Hours: ${fmt(etiHrs,1)} • Rate: ${fmtFixed(etiRate,1)}</div>
+          ${etiTotal ? "" : '<div class="mini warn">Not found in PPR mapping</div>'}
+        </div>
+        <div class="kpiPart">
+          <div class="miniLabel">STP</div>
+          <div class="miniLine">Vol: ${fmt(stpVol,0)}</div>
+          <div class="miniLine">Hours: ${fmt(stpHrs,1)} • Rate: ${fmtFixed(stpRate,1)}</div>
+          ${stpTotal ? "" : '<div class="mini warn">Not found in PPR mapping</div>'}
+        </div>
+      </div>
+    `.trim()
+    , cls:"spanAll"},
+    {t:"OB Volume", v:fmt(obVol,0), s:`OB Hours: ${fmt(obHrs,1)} • OB Rate: ${fmtFixed(obHrs>0?obVol/obHrs:null,1)}`},
+    {t:"Total Volume", v:fmt(allVol,0), s:`Total Hours: ${fmt(allHrs,1)} • Total Rate: ${fmtFixed(allRate,1)}`},
+    {t:"Indirect %", v: (show==="ob") ? pct(ob.indirectPct,1) : (show==="ib") ? pct(ib.indirectPct,1) : pct(((ib.indirectHrs+ob.indirectHrs)/( (ib.totalHrs||0)+(ob.totalHrs||0) || 1 )),1),
+     s: (show==="ob") ? `Indirect hrs: ${fmt(ob.indirectHrs,1)} / Total: ${fmt(ob.totalHrs,1)} • vs Direct: ${pct(ob.indirectPctVsDirect,1)}` :
+        (show==="ib") ? `Indirect hrs: ${fmt(ib.indirectHrs,1)} / Total: ${fmt(ib.totalHrs,1)} • vs Direct: ${pct(ib.indirectPctVsDirect,1)}` :
+        `IB ${pct(ib.indirectPct,1)} • OB ${pct(ob.indirectPct,1)}`
+    }
+  ];
+  for(const it of items){
+    const d=document.createElement("div");
+    d.className="kpi"+(it.cls?(" "+it.cls):"");
+    d.innerHTML = `<div class="t">${it.t}</div><div class="v">${it.v}</div><div class="s">${it.s}</div>`;
+    kpis.appendChild(d);
+  }
+
+  // unmatched note
+  const miss = [];
+  if(ib.missing.ppr.length || ob.missing.ppr.length) miss.push(`PPR missing: ${dedupe([...ib.missing.ppr, ...ob.missing.ppr]).slice(0,12).join(", ")}${(dedupe([...ib.missing.ppr, ...ob.missing.ppr]).length>12)?" …":""}`);
+  if(ib.missing.gal.length || ob.missing.gal.length) miss.push(`GalaxyBI missing: ${dedupe([...ib.missing.gal, ...ob.missing.gal]).slice(0,12).join(", ")}${(dedupe([...ib.missing.gal, ...ob.missing.gal]).length>12)?" …":""}`);
+  if(ib.missing.op.length || ob.missing.op.length) miss.push(`OP rate missing/0: ${dedupe([...ib.missing.op, ...ob.missing.op]).slice(0,12).join(", ")}${(dedupe([...ib.missing.op, ...ob.missing.op]).length>12)?" …":""}`);
+  
+  if(ib.dup?.ppr?.length || ob.dup?.ppr?.length) miss.push(`Duplicate PPR mapping: ${dedupe([...(ib.dup?.ppr||[]), ...(ob.dup?.ppr||[])]).slice(0,8).join(" | ")}${(dedupe([...(ib.dup?.ppr||[]), ...(ob.dup?.ppr||[])]).length>8)?" …":""}`);
+  if(ib.dup?.gal?.length || ob.dup?.gal?.length) miss.push(`Duplicate Galaxy mapping: ${dedupe([...(ib.dup?.gal||[]), ...(ob.dup?.gal||[])]).slice(0,8).join(" | ")}${(dedupe([...(ib.dup?.gal||[]), ...(ob.dup?.gal||[])]).length>8)?" …":""}`);
+if(miss.length){
+    note.textContent = "Checks: " + miss.join(" | ");
+  }
+
+  document.getElementById("reportCard").style.display = "block";
+  applyLayoutClasses();
+}
+
+function pickTotalRow(rows){
+  // prefer explicit Total rows
+  const candidates = rows.filter(r=>/total/i.test(r.path));
+  if(!candidates.length) return null;
+  // prefer row with largest hours
+  return candidates.sort((a,b)=>(b.hrs||0)-(a.hrs||0))[0];
+}
+function sum(rows, k){
+  return rows.reduce((a,b)=>a+(b[k]||0),0);
+}
+function dedupe(arr){
+  const s=new Set();
+  const out=[];
+  for(const x of arr){
+    const v=String(x||"").trim();
+    if(!v) continue;
+    const key=norm(v);
+    if(s.has(key)) continue;
+    s.add(key);
+    out.push(v);
+  }
+  return out;
+}
+
+function renderOne(mount, title, tableObj, key){
+  const box = document.createElement("div");
+  box.innerHTML = `
+    <div class="flexBetween" style="margin-bottom:10px">
+      <div style="font-weight:900; letter-spacing:.2px">${title}</div>
+      <div class="mini">Indirect % (hours): <b>${pct(tableObj.indirectPct,1)}</b></div>
+    </div>
+  `;
+
+  const showMatches = !!state.showMatchCols;
+  const compactCols = !!state.compactCols;
+
+
+  const ORDER_COMPACT = ["Actual Rate","LP Rate","Hours to LP","% to LP","OP Rate","Hours to OP","% to OP","Volume","Status"];
+  const ORDER_FULL = ["Actual Rate","LP Rate","Hours to LP","% to LP","OP Rate","Hours to OP","% to OP","Volume","Hours","LP Hours","OP Hours","Status"];
+  const order = compactCols ? ORDER_COMPACT : ORDER_FULL;
+  const tblWrap = document.createElement("div");
+  tblWrap.className = "tableWrap";
+
+  const tbl = document.createElement("table");
+  tbl.className = "reportTable";
+
+  const TH = (label, cls="") => {
+    const c = cls ? ` class="${cls}"` : "";
+    return `<th${c} title="${escapeAttr(label)}">${escapeHtml(label)}</th>`;
+  };
+
+  const headCells = [];
+  headCells.push(TH("Path"));
+  if(showMatches){
+    headCells.push(TH("PPR Match"));
+    headCells.push(TH("Galaxy Match"));
+  }
+  for(const col of order){
+    const cls = (col==="Status") ? "small" : "right";
+    headCells.push(TH(col, cls));
+  }
+
+tbl.innerHTML = `<thead><tr>${headCells.join("")}</tr></thead><tbody></tbody>`;
+  const tb = tbl.querySelector("tbody");
+for(const r of tableObj.rows){
+    const thr = (Number(state.statusThresholdPct)||100)/100;
+    const basis = String(state.statusBasis || "higherTarget");
+
+    // Determine which target drives status/coloring for THIS row
+    // basisOn = "LP" or "OP" (shown as a colored tag)
+    let basisPct = null;
+    let basisOn = null;
+
+    const cand = [];
+    if(r.pctToLp!==null && r.pctToLp!==undefined && !Number.isNaN(r.pctToLp)) cand.push({k:"LP", v:r.pctToLp});
+    if(r.pctToOp!==null && r.pctToOp!==undefined && !Number.isNaN(r.pctToOp)) cand.push({k:"OP", v:r.pctToOp});
+
+    if(basis==="lp"){
+      basisPct = r.pctToLp; basisOn = "LP";
+    }else if(basis==="op"){
+      basisPct = r.pctToOp; basisOn = "OP";
+    }else if(basis==="higherTarget"){
+      // Pick the HIGHER rate target (harder target): max(lpRate, opRate)
+      const lpOk = (r.lpRate && r.lpRate>0 && r.pctToLp!==null && !Number.isNaN(r.pctToLp));
+      const opOk = (r.opRate && r.opRate>0 && r.pctToOp!==null && !Number.isNaN(r.pctToOp));
+      if(lpOk && opOk){
+        if(r.lpRate >= r.opRate){ basisPct = r.pctToLp; basisOn = "LP"; }
+        else { basisPct = r.pctToOp; basisOn = "OP"; }
+      }else if(opOk){
+        basisPct = r.pctToOp; basisOn = "OP";
+      }else if(lpOk){
+        basisPct = r.pctToLp; basisOn = "LP";
+      }else{
+        basisPct = null; basisOn = null;
+      }
+    }else if(basis==="worst"){
+      if(cand.length){
+        const pick = cand.reduce((a,b)=> (b.v<a.v ? b : a));
+        basisPct = pick.v; basisOn = pick.k;
+      }
+    }else if(basis==="best"){
+      if(cand.length){
+        const pick = cand.reduce((a,b)=> (b.v>a.v ? b : a));
+        basisPct = pick.v; basisOn = pick.k;
+      }
+    }
+
+    const opMissing = (!r.opRate || r.opRate<=0) && (r.vol!==null && r.vol>0);
+
+    let statusLabel = "";
+    let rowClass = "rowWarn";
+    if(!r.foundPpr){
+      statusLabel = `<span class="badText">PPR NOT FOUND</span>`;
+      rowClass = "rowBad";
+    }else if(!r.foundGal){
+      statusLabel = `<span class="warnText">LP NOT FOUND</span>`;
+      rowClass = "rowWarn";
+    }else if((basisOn==="OP") && opMissing){
+      statusLabel = `<span class="warnText">OP RATE 0</span>`;
+      rowClass = "rowWarn";
+    }else if(basisPct===null){
+      statusLabel = `<span class="muted">N/A</span>`;
+      rowClass = "rowWarn";
+    }else if(basisPct>=thr){
+      statusLabel = `<span class="ok">ON TRACK</span>`;
+      rowClass = "rowGood";
+    }else{
+      statusLabel = `<span class="badText">BELOW</span>`;
+      rowClass = "rowBad";
+    }
+
+    const basisTag = (basisOn==="LP") ? `<span class="basisTag lp">LP</span>` :
+                     (basisOn==="OP") ? `<span class="basisTag op">OP</span>` :
+                     `<span class="basisTag na">N/A</span>`;
+    const status = `<span class="statusWrap">${statusLabel}${basisTag}</span>`;
+const basisCellClass = (rowClass==="rowGood") ? "basisCellGood" : (rowClass==="rowBad") ? "basisCellBad" : "basisCellWarn";
+    const tr = document.createElement("tr");
+
+    tr.className = `${rowClass} ${basisOn==="LP" ? "basisLP" : basisOn==="OP" ? "basisOP" : "basisNA"}`;
+
+    const cells = [];
+    cells.push(`<td class="pathCell"><b>${escapeHtml(r.path)}</b></td>`);
+    if(showMatches){
+      const pprTxt = r.foundPpr ? escapeHtml(r.pprMatch || r.ppr || "") : `<span class="badText">NOT FOUND: ${escapeHtml(r.ppr||"")}</span>`;
+      const galOk = r.foundGal && (r.gal ? !!r.galMatch : true);
+      const galTxt = galOk ? escapeHtml(r.galMatch || r.gal || "") : `<span class="warnText">NOT FOUND: ${escapeHtml(r.gal||"")}</span>`;
+      const pprCls = r.dupPpr ? "warnText" : "";
+      const galCls = r.dupGal ? "warnText" : "";
+      cells.push(`<td class="pathCell ${pprCls}">${pprTxt}</td>`);
+      cells.push(`<td class="pathCell ${galCls}">${galTxt}</td>`);
+    }
+
+
+    const cellByCol = (col) => {
+      switch(col){
+        case "Actual Rate": return `<td class="right mono ${basisCellClass}">${fmtFixed(r.actRate,1)}</td>`;
+        case "LP Rate": return `<td class="right mono ${basisCellClass} col-lpRate">${fmtFixed(r.lpRate,1)}</td>`;
+        case "Hours to LP": return `<td class="right mono ${basisCellClass}">${fmtSigned(r.hrsToLp,1)}</td>`;
+        case "% to LP": return `<td class="right mono ${basisCellClass}">${pct(r.pctToLp,1)}</td>`;
+        case "OP Rate": return `<td class="right mono ${basisCellClass} col-opRate">${fmtFixed(r.opRate,1)}</td>`;
+        case "Hours to OP": return `<td class="right mono ${basisCellClass}">${fmtSigned(r.hrsToOp,1)}</td>`;
+        case "% to OP": return `<td class="right mono ${basisCellClass}">${pct(r.pctToOp,1)}</td>`;
+        case "Volume": return `<td class="right mono ${basisCellClass}">${fmt(r.vol,0)}</td>`;
+        case "Hours": return `<td class="right mono ${basisCellClass}">${fmtFixed(r.hrs,1)}</td>`;
+        case "LP Hours": return `<td class="right mono ${basisCellClass}">${fmtFixed(r.lpHours,1)}</td>`;
+        case "OP Hours": return `<td class="right mono ${basisCellClass}">${fmtFixed(r.opHours,1)}</td>`;
+        case "Status": return `<td class="small ${basisCellClass}">${status}</td>`;
+        default: return `<td class="right mono ${basisCellClass}"></td>`;
+      }
+    };
+
+    for(const col of order){
+      cells.push(cellByCol(col));
+    }
+
+    tr.innerHTML = cells.join("");
+    tb.appendChild(tr);
+}
+
+  enhanceReportTableUX(tbl);
+  tblWrap.appendChild(tbl);
+  box.appendChild(tblWrap);
+  mount.appendChild(box);
+}
+
+
+/* ===========================
+   Report Table UX (v28)
+   - Column hover highlight
+   - Click to pin row
+   =========================== */
+function enhanceReportTableUX(tbl){
+  try{
+    if(!tbl || tbl.__qjEnhanced) return;
+    tbl.__qjEnhanced = true;
+
+    let lastIdx = -1;
+
+    function clearCol(){
+      if(lastIdx < 0) return;
+      const headRow = tbl.tHead && tbl.tHead.rows && tbl.tHead.rows[0];
+      if(headRow && headRow.cells[lastIdx]) headRow.cells[lastIdx].classList.remove("colHover");
+      const bodyRows = tbl.tBodies && tbl.tBodies[0] ? Array.from(tbl.tBodies[0].rows) : [];
+      for(const r of bodyRows){
+        if(r.cells[lastIdx]) r.cells[lastIdx].classList.remove("colHover");
+      }
+      lastIdx = -1;
+    }
+
+    tbl.addEventListener("mouseover", (e)=>{
+      const cell = e.target && e.target.closest ? e.target.closest("td,th") : null;
+      if(!cell || !tbl.contains(cell)) return;
+      const idx = cell.cellIndex;
+      if(idx === lastIdx) return;
+      clearCol();
+      lastIdx = idx;
+
+      const headRow = tbl.tHead && tbl.tHead.rows && tbl.tHead.rows[0];
+      if(headRow && headRow.cells[idx]) headRow.cells[idx].classList.add("colHover");
+
+      const bodyRows = tbl.tBodies && tbl.tBodies[0] ? Array.from(tbl.tBodies[0].rows) : [];
+      for(const r of bodyRows){
+        if(r.cells[idx]) r.cells[idx].classList.add("colHover");
+      }
+    });
+
+    tbl.addEventListener("mouseleave", ()=>{
+      clearCol();
+    });
+
+    tbl.addEventListener("click", (e)=>{
+      const tr = e.target && e.target.closest ? e.target.closest("tbody tr") : null;
+      if(!tr || !tbl.contains(tr)) return;
+      const tb = tbl.tBodies && tbl.tBodies[0] ? tbl.tBodies[0] : null;
+      if(!tb) return;
+
+      const already = tr.classList.contains("rowPinned");
+      // single-pin behavior: clear other pins
+      for(const r of Array.from(tb.rows)){
+        r.classList.remove("rowPinned");
+      }
+      if(!already) tr.classList.add("rowPinned");
+    });
+  }catch(err){
+    // Non-fatal: ignore
+  }
+}
+
+
+/* ===========================
+   Downloads
+
+   =========================== */
+function tableToCSV(rows){
+  const header = ["Path","PPR Line Item","Galaxy Line Item","Indirect","Volume","Hours","Actual Rate","LP Rate","LP Hours","Hours to LP","% to LP","OP Rate","OP Hours","Hours to OP","% to OP"];
+  const out = [header.join(",")];
+  for(const r of rows){
+    const line = [
+      r.path, r.ppr, r.gal, r.indirect? "Y":"N",
+      r.vol ?? "", r.hrs ?? "", r.actRate ?? "",
+      r.lpRate ?? "", r.lpHours ?? "", r.hrsToLp ?? "", r.pctToLp ?? "",
+      r.opRate ?? "", r.opHours ?? "", r.hrsToOp ?? "", r.pctToOp ?? ""
+    ].map(v=>{
+      const s = String(v??"");
+      if(/[",\n]/.test(s)) return '"'+s.replace(/"/g,'""')+'"';
+      return s;
+    }).join(",");
+    out.push(line);
+  }
+  return out.join("\n");
+}
+function downloadText(filename, text){
+  const blob = new Blob([text], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* ===========================
+   Events
+   =========================== */
+document.getElementById("galFile").addEventListener("change", async (e)=>{
+  const f = e.target.files?.[0];
+  if(!f) return;
+  const text = await readFileAsText(f);
+  const rows = parseCSV(text);
+  state.gal = buildGalaxyIndex(rows);
+  state.galCols = state.gal.forecastCols;
+  state.galSource = "file";
+  setWeekSelect();
+  buildDatalists();
+  setChips();
+
+  // Cache weekly GalaxyBI so you don’t need to re-upload daily
+  const cacheOn = document.getElementById("cacheGalaxy")?.checked;
+  saveGalCacheEnabled(!!cacheOn);
+  if(cacheOn){
+    saveGalaxyCache(text, {name: f.name, savedAt: Date.now()});
+  }
+  updateGalaxyCacheUI();
+});
+document.getElementById("pprFile").addEventListener("change", async (e)=>{
+  const f = e.target.files?.[0];
+  if(!f) return;
+  const text = await readFileAsText(f);
+  const rows = parseCSV(text);
+  state.ppr = buildPprIndex(rows);
+  state.pprReports = state.ppr.reports;
+
+  // Update "last imported" badge for visibility (manual upload)
+  try{
+    const w = tryParseWindowFromFilename(f.name);
+    if(w && w.start && w.end){
+      markPprImported({start:w.start, end:w.end, shiftLabel:"(from filename)", flowLabel:""}, "manual upload");
+    }else{
+      markPprImported(null, "manual upload");
+    }
+  }catch(e){}
+
+  setReportSelect();
+  buildDatalists();
+  setChips();
+});
+document.getElementById("buildBtn").addEventListener("click", ()=>{
+  renderReport();
+});
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  // Reset config to defaults (keeps loaded files/indexes)
+  try{ localStorage.removeItem(LS_KEY); }catch(e){}
+  state.cfg = structuredClone(DEFAULT_CFG);
+  saveCfg();
+  renderConfig();
+  document.getElementById("reportCard").style.display="none";
+});document.getElementById("showMatchCols").checked = !!state.showMatchCols;
+document.getElementById("showMatchCols").addEventListener("change", (e)=>{
+  state.showMatchCols = !!e.target.checked;
+  saveShowMatchCols(state.showMatchCols);
+  if(state.lastBuild) renderReport();
+});
+
+document.getElementById("compactLayout").checked = !!state.compactLayout;
+document.getElementById("compactCols").checked = !!state.compactCols;
+document.getElementById("focusReport").checked = !!state.focusReport;
+
+const statusBasisEl = document.getElementById("statusBasis");
+const statusThrEl   = document.getElementById("statusThreshold");
+if(statusBasisEl){ statusBasisEl.value = state.statusBasis || "higherTarget"; }
+if(statusThrEl){ statusThrEl.value = String(state.statusThresholdPct ?? 100); }
+
+applyLayoutClasses();
+
+document.getElementById("compactLayout").addEventListener("change", (e)=>{
+  state.compactLayout = !!e.target.checked;
+  saveCompactLayout(state.compactLayout);
+  applyLayoutClasses();
+});
+document.getElementById("compactCols").addEventListener("change", (e)=>{
+  state.compactCols = !!e.target.checked;
+  saveCompactCols(state.compactCols);
+  applyLayoutClasses();
+  if(state.lastBuild) renderReport();
+});
+document.getElementById("focusReport").addEventListener("change", (e)=>{
+  state.focusReport = !!e.target.checked;
+  saveFocusReport(state.focusReport);
+  applyLayoutClasses();
+});
+
+// Status rule controls
+if(statusBasisEl){
+  statusBasisEl.addEventListener("change", (e)=>{
+    state.statusBasis = String(e.target.value || "higherTarget");
+    saveStatusBasis(state.statusBasis);
+    if(state.lastBuild) renderReport();
+  });
+}
+if(statusThrEl){
+  statusThrEl.addEventListener("change", (e)=>{
+    const n = parseFloat(e.target.value);
+    state.statusThresholdPct = Number.isFinite(n) ? n : 100;
+    saveStatusThresholdPct(state.statusThresholdPct);
+    if(state.lastBuild) renderReport();
+  });
+}
+
+
+const focusBtn = document.getElementById("toggleFocusBtn");
+if(focusBtn){
+  focusBtn.addEventListener("click", ()=>{
+    state.focusReport = !state.focusReport;
+    saveFocusReport(state.focusReport);
+    const cb = document.getElementById("focusReport");
+    if(cb) cb.checked = !!state.focusReport;
+    applyLayoutClasses();
+  });
+}
+
+document.querySelectorAll(".tab[data-tab]").forEach(t=>{
+  t.addEventListener("click", ()=>{
+    state.activeTab = t.dataset.tab;
+    renderTabs();
+    renderConfig();
+  });
+});
+document.querySelectorAll(".tab[data-rpt]").forEach(t=>{
+  t.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab[data-rpt]").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    state.activeRpt = t.dataset.rpt;
+    if(state.lastBuild) renderReport();
+  });
+});
+
+document.getElementById("exportCfgBtn").addEventListener("click", ()=>{
+  const txt = JSON.stringify(state.cfg, null, 2);
+  downloadText("IB_OB_ReportBuilder_Config.json", txt);
+});
+document.getElementById("copyExportBtn").addEventListener("click", async ()=>{
+  const txt = JSON.stringify(state.cfg, null, 2);
+  try{ await navigator.clipboard.writeText(txt); }catch(e){}
+});
+document.getElementById("importCfgBtn").addEventListener("click", ()=>{
+  document.getElementById("cfgJsonBox").focus();
+});
+document.getElementById("applyImportBtn").addEventListener("click", ()=>{
+  try{
+    const raw = document.getElementById("cfgJsonBox").value.trim();
+    const obj = JSON.parse(raw);
+    if(!obj.ib || !obj.ob) throw new Error("Config must contain ib + ob arrays");
+    state.cfg = mergeWithDefault(migrateCfg(obj));
+    saveCfg();
+    renderConfig();
+    }catch(e){
+    alert("Import failed: " + e.message);
+  }
+});
+document.getElementById("factoryCfgBtn").addEventListener("click", ()=>{
+  state.cfg = structuredClone(DEFAULT_CFG);
+  saveCfg();
+  renderConfig();
+});
+
+document.getElementById("dlIbBtn").addEventListener("click", ()=>{
+  if(!state.lastBuild) return;
+  downloadText("IB_Table.csv", tableToCSV(state.lastBuild.ib.rows));
+});
+document.getElementById("dlObBtn").addEventListener("click", ()=>{
+  if(!state.lastBuild) return;
+  downloadText("OB_Table.csv", tableToCSV(state.lastBuild.ob.rows));
+});
+document.getElementById("dlAllBtn").addEventListener("click", ()=>{
+  if(!state.lastBuild) return;
+  const all = [
+    ...state.lastBuild.ib.rows.map(r=>({...r, path:"IB: "+r.path})),
+    ...state.lastBuild.ob.rows.map(r=>({...r, path:"OB: "+r.path}))
+  ];
+  downloadText("IB_OB_Table_ALL.csv", tableToCSV(all));
+});
+
+
+// Galaxy cache controls
+const cacheCb = document.getElementById("cacheGalaxy");
+if(cacheCb){
+  cacheCb.checked = !!loadGalCacheEnabled();
+  cacheCb.addEventListener("change", (e)=>{
+    const v = !!e.target.checked;
+    saveGalCacheEnabled(v);
+    // If disabling, keep cache until user clears (so it can be re-enabled later)
+    updateGalaxyCacheUI();
+  });
+}
+const clearBtn = document.getElementById("clearGalaxyCacheBtn");
+if(clearBtn){
+  clearBtn.addEventListener("click", ()=>{
+    clearGalaxyCache();
+    // if we were using cached galaxy and no file is loaded, unload it
+    if(state.galSource==="cache"){
+      state.gal = null;
+      state.galCols = [];
+      state.galSource = null;
+      document.getElementById("weekCol").innerHTML="";
+      buildDatalists();
+    }
+    updateGalaxyCacheUI();
+    setChips();
+  });
+}
+updateGalaxyCacheUI();
+
+// Attempt to load cached GalaxyBI automatically (weekly rates)
+
+/* ==========================================================
+   Quick Links: GalaxiBI + dynamic PPR (Shift-aware, IB/OB)
+   - Uses Pacific Time assumption (your local machine should be PT).
+   - IB times:
+       Night 18:00 → 04:30 (crosses midnight)
+       Day   07:00 → 17:30
+     OB is +30 min later for both start/end.
+   - Base day rule: startDateIntraday = day the selected shift started
+     (i.e., last shift start <= now).
+   ========================================================== */
+/* ==========================================================
+   Quick Links builder
+   - GalaxiBI: static link
+   - PPR: Process Path Rollup link builder for IB/OB + shifts
+   - Uses Pacific Time (America/Los_Angeles) regardless of device TZ
+   - Allows picking the *shift start date* (the day the shift begins)
+   ========================================================== */
+(function initQuickLinks(){
+  const elShift = document.getElementById("quickShift");
+  const elFlow  = document.getElementById("quickFlow");
+  const elDate  = document.getElementById("quickShiftDate");
+  const elPpr   = document.getElementById("quickPPR");
+  const elPrev  = document.getElementById("pprPreview");
+  const elNow   = document.getElementById("pprNowChip");
+  const btnUpd  = document.getElementById("quickUpdatePPR");
+  if(!elShift || !elFlow || !elPpr || !elPrev) return;
+
+  const LS_SHIFT = "qjuflore.report.quickLinks.shift";
+  const LS_FLOW  = "qjuflore.report.quickLinks.flow";
+  const LS_DATE  = "qjuflore.report.quickLinks.shiftStartDate";
+  const LS_RT_IMPORT = "qjuflore.report.rt.lastPprImport";
+  const LS_RT_AUTOBUILD = "qjuflore.report.rt.autoBuild";
+  const LS_RT_LASTBUILD = "qjuflore.report.rt.lastBuild";
+
+  // Pacific time "now" as Date with PT wall-clock components
+  const PT_TZ = "America/Los_Angeles";
+  const ptFmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: PT_TZ,
+    year:"numeric", month:"2-digit", day:"2-digit",
+    hour:"2-digit", minute:"2-digit", second:"2-digit",
+    hour12:false
+  });
+  function nowPacific(){
+    const parts = Object.fromEntries(
+      ptFmt.formatToParts(new Date())
+        .filter(p => p.type !== "literal")
+        .map(p => [p.type, p.value])
+    );
+    return new Date(
+      Number(parts.year),
+      Number(parts.month) - 1,
+      Number(parts.day),
+      Number(parts.hour),
+      Number(parts.minute),
+      Number(parts.second)
+    );
+  }
+
+  // Restore saved picks
+  try{
+    const s = localStorage.getItem(LS_SHIFT);
+    const f = localStorage.getItem(LS_FLOW);
+    const d = localStorage.getItem(LS_DATE);
+    if(s) elShift.value = s;
+    if(f) elFlow.value  = f;
+    if(elDate && d) elDate.value = d;
+  }catch(e){}
+
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function fmtYMDslash(d){
+    return d.getFullYear()+"/"+pad2(d.getMonth()+1)+"/"+pad2(d.getDate());
+  }
+  function fmtYMDdash(d){
+    return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());
+  }
+  function fmtNice(d){
+    let h = d.getHours(), m = d.getMinutes();
+    const ampm = h>=12 ? "PM" : "AM";
+    h = h%12; if(h===0) h=12;
+    return `${fmtYMDslash(d)} ${pad2(h)}:${pad2(m)} ${ampm}`;
+  }
+
+  function fmtHM12(h,m){
+    const ampm = (h>=12) ? "PM" : "AM";
+    let hh = h % 12; if(hh===0) hh = 12;
+    return `${pad2(hh)}:${pad2(m)} ${ampm}`;
+  }
+
+  function getShiftTimeLabel(shiftKey, flowKey){
+    const t = getShiftBaseTimes(shiftKey);
+    const offset = (flowKey==="OB") ? 30 : 0;
+    const s = addMinutesToHM(t.startH, t.startM, offset);
+    const e = addMinutesToHM(t.endH, t.endM, offset);
+    return `${t.shiftLabel}: ${fmtHM12(s.h,s.m)} → ${fmtHM12(e.h,e.m)}`;
+  }
+
+  function refreshShiftOptionLabels(flowKey){
+    const off = (flowKey==="OB") ? 30 : 0;
+    const optN = elShift.querySelector('option[value="NIGHT"]');
+    const optD = elShift.querySelector('option[value="DAY"]');
+    if(optN){
+      const t = getShiftBaseTimes("NIGHT");
+      const s = addMinutesToHM(t.startH, t.startM, off);
+      const e = addMinutesToHM(t.endH, t.endM, off);
+      optN.textContent = `Night: ${fmtHM12(s.h,s.m)} → ${fmtHM12(e.h,e.m)}`;
+    }
+    if(optD){
+      const t = getShiftBaseTimes("DAY");
+      const s = addMinutesToHM(t.startH, t.startM, off);
+      const e = addMinutesToHM(t.endH, t.endM, off);
+      optD.textContent = `Day: ${fmtHM12(s.h,s.m)} → ${fmtHM12(e.h,e.m)}`;
+    }
+  }
+
+  function addMinutesToHM(h,m,delta){
+    let total = h*60 + m + delta;
+    let dayDelta = 0;
+    while(total < 0){ total += 1440; dayDelta -= 1; }
+    while(total >= 1440){ total -= 1440; dayDelta += 1; }
+    return {h: Math.floor(total/60), m: total%60, dayDelta};
+  }
+
+  function getShiftBaseTimes(shiftKey){
+    // Base IB times (shiftKey in {"NIGHT","DAY"})
+    if(shiftKey==="DAY"){
+      return {startH:7, startM:0, endH:17, endM:30, shiftLabel:"Day"};
+    }
+    return {startH:18, startM:0, endH:4, endM:30, shiftLabel:"Night"};
+  }
+
+  function autoShiftStartDate(nowPT, shiftKey, flowKey){
+    const t = getShiftBaseTimes(shiftKey);
+    const offset = (flowKey==="OB") ? 30 : 0;
+    const startAdj = addMinutesToHM(t.startH, t.startM, offset);
+
+    const startToday = new Date(
+      nowPT.getFullYear(), nowPT.getMonth(), nowPT.getDate(),
+      startAdj.h, startAdj.m, 0, 0
+    );
+    const startYesterday = new Date(startToday);
+    startYesterday.setDate(startYesterday.getDate()-1);
+
+    // For Day shift, default to *today* even if before 07:00 (planning the upcoming shift).
+    if(shiftKey==="DAY") return startToday;
+
+    // For Night shift, default to last shift that started (today if after 18:00, otherwise yesterday).
+    return (nowPT >= startToday) ? startToday : startYesterday;
+  }
+
+  function buildRangeFromShiftStart(shiftStartDate, shiftKey, flowKey){
+    const t = getShiftBaseTimes(shiftKey);
+    const offset = (flowKey==="OB") ? 30 : 0;
+
+    const startAdj = addMinutesToHM(t.startH, t.startM, offset);
+    const endAdj   = addMinutesToHM(t.endH, t.endM, offset);
+
+    const start = new Date(
+      shiftStartDate.getFullYear(), shiftStartDate.getMonth(), shiftStartDate.getDate(),
+      startAdj.h, startAdj.m, 0, 0
+    );
+    if(startAdj.dayDelta) start.setDate(start.getDate() + startAdj.dayDelta);
+
+    const end = new Date(
+      shiftStartDate.getFullYear(), shiftStartDate.getMonth(), shiftStartDate.getDate(),
+      endAdj.h, endAdj.m, 0, 0
+    );
+    if(endAdj.dayDelta) end.setDate(end.getDate() + endAdj.dayDelta);
+
+    if(end <= start) end.setDate(end.getDate()+1); // overnight safety
+    const flowLabel = (flowKey==="OB") ? "Outbound (OB, +30m)" : "Inbound (IB)";
+    return {start, end, shiftLabel: t.shiftLabel, flowLabel};
+  }
+
+  function buildPprUrl(range){
+    const base = "https://fclm-portal.amazon.com/reports/processPathRollup";
+    const params = new URLSearchParams();
+    params.set("reportFormat","HTML");
+    params.set("warehouseId","BFL2");
+    params.set("maxIntradayDays","1");
+    params.set("spanType","Intraday");
+
+    params.set("startDateIntraday", fmtYMDslash(range.start));
+    params.set("startHourIntraday", String(range.start.getHours()));
+    params.set("startMinuteIntraday", String(range.start.getMinutes()));
+
+    params.set("endDateIntraday", fmtYMDslash(range.end));
+    params.set("endHourIntraday", String(range.end.getHours()));
+    params.set("endMinuteIntraday", String(range.end.getMinutes()));
+
+    params.set("_adjustPlanHours","on");
+    params.set("_hideEmptyLineItems","on");
+    params.set("_rememberViewForWarehouse","on");
+    params.set("employmentType","AllEmployees");
+    return base + "?" + params.toString();
+  }
+
+  function parseDateInput(val){
+    // val: "YYYY-MM-DD"
+    if(!val) return null;
+    const [y,m,d] = val.split("-").map(n => parseInt(n,10));
+    if(!y || !m || !d) return null;
+    return new Date(y, m-1, d, 0, 0, 0, 0);
+  }
+
+  function update(preserveDate){
+    const nowPT = nowPacific();
+    const shiftKey = elShift.value;
+    const flowKey  = elFlow.value;
+
+    // Update visible shift times to reflect Flow/Timing (OB adds +30m)
+    refreshShiftOptionLabels(flowKey);
+
+    // Persist shift/flow selections
+    try{
+      localStorage.setItem(LS_SHIFT, shiftKey);
+      localStorage.setItem(LS_FLOW, flowKey);
+    }catch(e){}
+
+    // "Now" chip in PT
+    if(elNow){
+      const nice = fmtNice(nowPT).replace(/^\d{4}\/\d{2}\/\d{2}\s/,"");
+      elNow.textContent = "Now (PT): " + nice;
+      elNow.title = "Pacific Time (America/Los_Angeles)";
+    }
+
+    // Default date if empty (or if explicitly not preserving)
+    let baseDate = (elDate && elDate.value) ? parseDateInput(elDate.value) : null;
+    if(!baseDate || preserveDate===false){
+      baseDate = autoShiftStartDate(nowPT, shiftKey, flowKey);
+      if(elDate){
+        elDate.value = fmtYMDdash(baseDate);
+        try{ localStorage.setItem(LS_DATE, elDate.value); }catch(e){}
+      }
+    }else{
+      try{ localStorage.setItem(LS_DATE, elDate.value); }catch(e){}
+    }
+
+    const range = buildRangeFromShiftStart(baseDate, shiftKey, flowKey);
+    const url = buildPprUrl(range);
+    elPpr.href = url;
+
+    const startStr = fmtNice(range.start);
+    const endStr   = fmtNice(range.end);
+
+    const unified = `${range.shiftLabel} • ${range.flowLabel} • Shift start: ${fmtYMDslash(baseDate)}`;
+    elPrev.innerHTML =
+      `<b>PPR window</b>: <span class="mono">${startStr}</span> → <span class="mono">${endStr}</span>` +
+      `<div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap">` +
+        `<span class="pill">Shift (PT): ${getShiftTimeLabel(shiftKey, flowKey)}</span>` +
+        `<span class="pill">Flow/Timing: ${range.flowLabel}</span>` +
+        `<span class="pill">Start date: ${fmtYMDslash(baseDate)}</span>` +
+      `</div>`;
+  }
+
+  // Auto-update on changes
+  elShift.addEventListener("change", () => update(true));
+  elFlow.addEventListener("change",  () => update(true));
+  if(elDate) elDate.addEventListener("change", () => update(true));
+  if(btnUpd) btnUpd.addEventListener("click", () => {
+    // Apply selections and trigger a SINGLE auto-import cycle (no double-open).
+    if(btnUpd.dataset.busy === "1") return;
+    btnUpd.dataset.busy = "1";
+
+    // Recalculate dates/times
+    update(true);
+
+    // Visual confirmation that Apply was clicked
+    try{
+      btnUpd.classList.remove("feedback","applied");
+      void btnUpd.offsetWidth; // restart animation
+      btnUpd.classList.add("feedback","applied");
+    }catch(e){}
+
+    const KEY_LAST_IMPORT = "qjuflore.report.rt.lastPprImport";
+    const impPill = document.getElementById("rtImported");
+    const builtPill = document.getElementById("rtBuilt");
+    let beforeAt = Number(impPill && impPill.dataset.at || 0) || 0;
+    let beforeBuilt = Number(builtPill && builtPill.dataset.at || 0) || 0;
+    if(!beforeAt){
+      try{
+        const j = JSON.parse(localStorage.getItem(KEY_LAST_IMPORT) || "{}");
+        beforeAt = Number(j.at || 0) || 0;
+      }catch(e){}
+    }
+
+    // Force Bridge mode for reliable auto-import
+    const methodSel = document.getElementById("rtMethod");
+    if(methodSel){
+      methodSel.value = "bridge";
+      try{ methodSel.dispatchEvent(new Event("change", {bubbles:true})); }catch(e){}
+    }
+
+    // Trigger the same Refresh-now path (opens ONE popup, imports CSV, then closes)
+    const runBtn = document.getElementById("rtRunNow");
+    btnUpd.textContent = "Importing PPR…";
+
+    try{
+      if(runBtn){
+        runBtn.click();
+      }else{
+        // Fallback: open the PPR link once (manual)
+        const url = elPpr && elPpr.href ? elPpr.href : null;
+        if(url) window.open(url, "_blank", "noopener,noreferrer");
+      }
+    }catch(e){}
+
+    // Wait for the import badge timestamp to change (proof it imported)
+    const t0 = Date.now();
+    const poll = setInterval(() => {
+      // Prefer the live badge (works even if localStorage is blocked)
+      let at = Number(impPill && impPill.dataset.at || 0) || 0;
+      let builtAt = Number(builtPill && builtPill.dataset.at || 0) || 0;
+
+      // Fallback: localStorage
+      if(!at){
+        try{
+          const j = JSON.parse(localStorage.getItem(KEY_LAST_IMPORT) || "{}");
+          at = Number(j.at || 0) || 0;
+        }catch(e){}
+      }
+
+      const importedChanged = !!at && at !== beforeAt;
+      const builtChanged = !!builtAt && builtAt !== beforeBuilt;
+
+      if(importedChanged || builtChanged){
+        clearInterval(poll);
+        btnUpd.textContent = "Imported ✓";
+        try{ btnUpd.classList.add("applied"); }catch(e){}
+        setTimeout(() => {
+          btnUpd.textContent = "Apply + Import PPR";
+          try{ btnUpd.classList.remove("applied"); }catch(e){}
+          btnUpd.dataset.busy = "0";
+        }, 1200);
+        return;
+      }
+
+      if(Date.now() - t0 > 45_000){
+        clearInterval(poll);
+
+        // One last re-check before showing error
+        let finalAt = Number(impPill && impPill.dataset.at || 0) || at;
+        let finalBuilt = Number(builtPill && builtPill.dataset.at || 0) || builtAt;
+        if(!finalAt){
+          try{
+            const j = JSON.parse(localStorage.getItem(KEY_LAST_IMPORT) || "{}");
+            finalAt = Number(j.at || 0) || 0;
+          }catch(e){}
+        }
+
+        if((finalAt && finalAt !== beforeAt) || (finalBuilt && finalBuilt !== beforeBuilt)){
+          btnUpd.textContent = "Imported ✓";
+          try{ btnUpd.classList.add("applied"); }catch(e){}
+          setTimeout(() => {
+            btnUpd.textContent = "Apply + Import PPR";
+            try{ btnUpd.classList.remove("applied"); }catch(e){}
+            btnUpd.dataset.busy = "0";
+          }, 1200);
+        }else{
+          btnUpd.textContent = "No import detected (check pop‑ups / login)";
+          setTimeout(() => {
+            btnUpd.textContent = "Apply + Import PPR";
+            btnUpd.dataset.busy = "0";
+          }, 2200);
+        }
+      }
+    }, 250);
+  });
+
+
+  // First paint: if date was saved, keep it; otherwise compute auto.
+  update(true);
+  setInterval(() => update(true), 60_000);
+})();
+
+
+/* ===========================
+   Real-time PPR Auto-Refresh + Chart
+   =========================== */
+(function(){
+  const PT_TZ = "America/Los_Angeles";
+  const ptFmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: PT_TZ,
+    year:"numeric", month:"2-digit", day:"2-digit",
+    hour:"2-digit", minute:"2-digit", second:"2-digit",
+    hour12:false
+  });
+
+  function nowPacific(){
+    const parts = Object.fromEntries(
+      ptFmt.formatToParts(new Date())
+        .filter(p => p.type !== "literal")
+        .map(p => [p.type, p.value])
+    );
+    return new Date(
+      Number(parts.year),
+      Number(parts.month) - 1,
+      Number(parts.day),
+      Number(parts.hour),
+      Number(parts.minute),
+      Number(parts.second)
+    );
+  }
+
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function fmtNiceClock(d){
+    let h = d.getHours(), m = d.getMinutes();
+    const ampm = h>=12 ? "PM" : "AM";
+    h = h%12; if(h===0) h=12;
+    return `${pad2(h)}:${pad2(m)} ${ampm}`;
+  }
+  function fmtYMDslash(d){ return d.getFullYear()+"/"+pad2(d.getMonth()+1)+"/"+pad2(d.getDate()); }
+  function fmtYMDdash(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
+
+  function addMinutesToHM(h,m,delta){
+    let total = h*60 + m + delta;
+    let dayDelta = 0;
+    while(total < 0){ total += 1440; dayDelta -= 1; }
+    while(total >= 1440){ total -= 1440; dayDelta += 1; }
+    return {h: Math.floor(total/60), m: total%60, dayDelta};
+  }
+
+  function getShiftBaseTimes(shiftKey){
+    // Base IB times
+    if(shiftKey==="DAY") return {startH:7, startM:0, endH:17, endM:30, shiftLabel:"Day"};
+    return {startH:18, startM:0, endH:4, endM:30, shiftLabel:"Night"};
+  }
+
+  function parseDateInput(val){
+    if(!val) return null;
+    const [y,m,d] = val.split("-").map(n => parseInt(n,10));
+    if(!y || !m || !d) return null;
+    return new Date(y, m-1, d, 0, 0, 0, 0);
+  }
+
+  function buildRangeFromShiftStart(shiftStartDate, shiftKey, flowKey){
+    const t = getShiftBaseTimes(shiftKey);
+    const offset = (flowKey==="OB") ? 30 : 0;
+    const startAdj = addMinutesToHM(t.startH, t.startM, offset);
+    const endAdj   = addMinutesToHM(t.endH, t.endM, offset);
+
+    const start = new Date(
+      shiftStartDate.getFullYear(), shiftStartDate.getMonth(), shiftStartDate.getDate(),
+      startAdj.h, startAdj.m, 0, 0
+    );
+    if(startAdj.dayDelta) start.setDate(start.getDate() + startAdj.dayDelta);
+
+    const end = new Date(
+      shiftStartDate.getFullYear(), shiftStartDate.getMonth(), shiftStartDate.getDate(),
+      endAdj.h, endAdj.m, 0, 0
+    );
+    if(endAdj.dayDelta) end.setDate(end.getDate() + endAdj.dayDelta);
+
+    if(end <= start) end.setDate(end.getDate()+1);
+    const flowLabel = (flowKey==="OB") ? "Outbound (OB, +30m)" : "Inbound (IB)";
+    return {start, end, shiftLabel: t.shiftLabel, flowLabel};
+  }
+
+  function buildPprUrl(range, format){
+    const base = "https://fclm-portal.amazon.com/reports/processPathRollup";
+    const params = new URLSearchParams();
+    params.set("reportFormat", format || "HTML");
+    params.set("warehouseId","BFL2");
+    params.set("maxIntradayDays","1");
+    params.set("spanType","Intraday");
+
+    params.set("startDateIntraday", fmtYMDslash(range.start));
+    params.set("startHourIntraday", String(range.start.getHours()));
+    params.set("startMinuteIntraday", String(range.start.getMinutes()));
+
+    params.set("endDateIntraday", fmtYMDslash(range.end));
+    params.set("endHourIntraday", String(range.end.getHours()));
+    params.set("endMinuteIntraday", String(range.end.getMinutes()));
+
+    params.set("_adjustPlanHours","on");
+    params.set("_hideEmptyLineItems","on");
+    params.set("_rememberViewForWarehouse","on");
+    params.set("employmentType","AllEmployees");
+    return base + "?" + params.toString();
+  }
+
+  function getPprCsvUrlFromQuickUI(){
+    const elShift = document.getElementById("quickShift");
+    const elFlow  = document.getElementById("quickFlow");
+    const elDate  = document.getElementById("quickShiftDate");
+    if(!elShift || !elFlow || !elDate) return null;
+
+    const shiftKey = elShift.value;
+    const flowKey  = elFlow.value;
+
+    // If date is empty, reuse the same auto-logic from Quick Links (night uses last started shift)
+    let baseDate = (elDate.value) ? parseDateInput(elDate.value) : null;
+    if(!baseDate){
+      const nowPT = nowPacific();
+      const t = getShiftBaseTimes(shiftKey);
+      const offset = (flowKey==="OB") ? 30 : 0;
+      const startAdj = addMinutesToHM(t.startH, t.startM, offset);
+      const startToday = new Date(nowPT.getFullYear(), nowPT.getMonth(), nowPT.getDate(), startAdj.h, startAdj.m, 0, 0);
+      const startYesterday = new Date(startToday); startYesterday.setDate(startYesterday.getDate()-1);
+      baseDate = (shiftKey==="DAY") ? startToday : ((nowPT >= startToday) ? startToday : startYesterday);
+      try{ elDate.value = fmtYMDdash(baseDate); }catch(e){}
+    }
+
+    const range = buildRangeFromShiftStart(baseDate, shiftKey, flowKey);
+    return {range, urlCsv: buildPprUrl(range,"CSV"), urlHtml: buildPprUrl(range,"HTML")};
+  }
+
+  // ---------- History + chart ----------
+  const rt = state.rt = state.rt || {};
+  rt.enabled = false;
+  rt.intervalMin = 5;
+  rt.method = "bridge";
+  rt.metric = "actRate";
+  rt.view = "both";
+  rt.timer = null;
+  rt.history = { t: [], series: new Map() };
+  rt.colors = rt.colors || {};
+  rt.selected = rt.selected || []; // array of series keys
+
+  // User preference: auto build report + record chart after every import
+  try{
+    const ab = localStorage.getItem(LS_RT_AUTOBUILD);
+    rt.autoBuild = (ab === null) ? true : (ab !== "0");
+  }catch(e){ rt.autoBuild = true; }
+
+  // Restore last successful PPR import (for trust/visibility)
+  try{
+    const saved = localStorage.getItem(LS_RT_IMPORT);
+    if(saved){
+      const o = JSON.parse(saved);
+      if(o && o.at) rt.lastImportAt = Number(o.at);
+      if(o && o.range) rt.lastImportRange = o.range;
+    }
+  }catch(e){}
+
+  // Restore last successful report build (visibility)
+  try{
+    const savedB = localStorage.getItem(LS_RT_LASTBUILD);
+    if(savedB){
+      const o = JSON.parse(savedB);
+      if(o && o.at) rt.lastBuildAt = Number(o.at);
+    }
+  }catch(e){}
+
+  function seriesKey(flow, path){ return `${flow} • ${path}`; }
+
+  function ensureSeries(key){
+    if(!rt.history.series.has(key)) rt.history.series.set(key, []);
+    return rt.history.series.get(key);
+  }
+
+  function limitHistory(maxPts){
+    const n = rt.history.t.length;
+    if(n <= maxPts) return;
+    const drop = n - maxPts;
+    rt.history.t.splice(0, drop);
+    for(const arr of rt.history.series.values()){
+      arr.splice(0, drop);
+    }
+  }
+
+  function pickMetric(row, metric){
+    if(!row) return null;
+    const v = row[metric];
+    return (typeof v === "number" && isFinite(v)) ? v : null;
+  }
+
+  function getCurrentRowsIndex(){
+    if(!state.lastBuild) return new Map();
+    const map = new Map();
+
+    // Special unified series (IB Total Unified) used only in KPI/chart (ETI+STP)
+    try{
+      const ib = state.lastBuild.ib;
+      const eti = ib.rows.find(r => keyCI(r.path) === keyCI("ETI Total"));
+      const stp = ib.rows.find(r => keyCI(r.path) === keyCI("ESTP Total"));
+      const unified = {flow:"IB", path:"IB Total (Unified: ETI + STP)"};
+      unified.vol = ((eti?.vol ?? 0) + (stp?.vol ?? 0));
+      unified.hrs = ((eti?.hrs ?? 0) + (stp?.hrs ?? 0));
+      unified.actRate = (unified.hrs>0) ? (unified.vol / unified.hrs) : null;
+      // derived metrics already computed for normal rows; for unified we keep basic
+      unified.pctToLp = null;
+      unified.hrsToLp = null;
+      map.set(seriesKey("IB", unified.path), unified);
+    }catch(e){}
+
+    for(const r of state.lastBuild.ib.rows){
+      map.set(seriesKey("IB", r.path), r);
+    }
+    for(const r of state.lastBuild.ob.rows){
+      map.set(seriesKey("OB", r.path), r);
+    }
+    return map;
+  }
+
+  function recordSnapshot(){
+    const nowPT = nowPacific();
+    const idx = getCurrentRowsIndex();
+    rt.history.t.push(nowPT.getTime());
+
+    // Keep all series aligned; for any known series (selected or already in history), append.
+    const keys = new Set([...rt.selected, ...rt.history.series.keys()]);
+    for(const k of keys){
+      const row = idx.get(k) || null;
+      const val = pickMetric(row, rt.metric);
+      ensureSeries(k).push(val);
+    }
+
+    limitHistory(720); // ~12h @ 1min (safe cap)
+    updateLegendAndChart();
+    updateRtBadges();
+  }
+
+  function hexFromSeed(seed){
+    // deterministic neon-ish palette
+    let h = 0;
+    for(let i=0;i<seed.length;i++) h = (h*31 + seed.charCodeAt(i)) >>> 0;
+    const r = 80 + (h & 0x7F);
+    const g = 80 + ((h>>8) & 0x7F);
+    const b = 80 + ((h>>16) & 0x7F);
+    return "#" + [r,g,b].map(x=>x.toString(16).padStart(2,"0")).join("");
+  }
+
+  function getColor(key){
+    if(rt.colors[key]) return rt.colors[key];
+    rt.colors[key] = hexFromSeed(key);
+    try{ localStorage.setItem("qjuflore.report.rt.colors", JSON.stringify(rt.colors)); }catch(e){}
+    return rt.colors[key];
+  }
+
+  function loadColors(){
+    try{
+      const raw = localStorage.getItem("qjuflore.report.rt.colors");
+      if(raw) rt.colors = JSON.parse(raw) || {};
+    }catch(e){}
+  }
+
+  function updateLegendAndChart(){
+    const legend = document.getElementById("rtLegend");
+    const points = document.getElementById("rtPoints");
+    if(points) points.textContent = `Points: ${rt.history.t.length}`;
+
+    if(legend){
+      legend.innerHTML = "";
+      for(const key of rt.selected){
+        const item = document.createElement("div");
+        item.className = "rtLegendItem";
+        const sw = document.createElement("span");
+        sw.className = "rtLegendSw";
+        sw.style.background = getColor(key);
+
+        const name = document.createElement("span");
+        name.textContent = key;
+
+        const color = document.createElement("input");
+        color.type = "color";
+        color.value = getColor(key);
+        color.title = "Pick series color";
+        color.addEventListener("input", () => {
+          rt.colors[key] = color.value;
+          try{ localStorage.setItem("qjuflore.report.rt.colors", JSON.stringify(rt.colors)); }catch(e){}
+          updateLegendAndChart();
+        });
+
+        const rm = document.createElement("button");
+        rm.type = "button";
+        rm.textContent = "×";
+        rm.title = "Remove series";
+        rm.addEventListener("click", () => {
+          rt.selected = rt.selected.filter(k => k !== key);
+          try{ localStorage.setItem("qjuflore.report.rt.selected", JSON.stringify(rt.selected)); }catch(e){}
+          updateLegendAndChart();
+        });
+
+        item.appendChild(sw);
+        item.appendChild(name);
+        item.appendChild(color);
+        item.appendChild(rm);
+        legend.appendChild(item);
+      }
+    }
+    drawChart();
+  }
+
+  
+  function drawChart(){
+    const wrap = document.getElementById("rtCanvasWrap");
+    const canvas = document.getElementById("rtCanvas");
+    const tip = document.getElementById("rtTooltip");
+    if(!canvas || !wrap) return;
+
+    const show = (rt.view !== "table");
+    wrap.style.display = show ? "" : "none";
+    if(!show) return;
+
+    // Bind hover events once
+    if(!rt._canvasBound){
+      rt._canvasBound = true;
+      rt._hoverIndex = null;
+      rt._hoverPinned = false;
+      rt._hoverClient = {x:0,y:0};
+
+      const toCanvasXY = (e)=>{
+        const r = canvas.getBoundingClientRect();
+        // Map CSS pixels -> canvas pixels
+        const x = (e.clientX - r.left) * (canvas.width / Math.max(1,r.width));
+        const y = (e.clientY - r.top)  * (canvas.height/ Math.max(1,r.height));
+        return {x, y, rect:r};
+      };
+
+      const hideTip = ()=>{
+        if(tip) tip.style.display = "none";
+      };
+
+      const clamp = (v,a,b)=> Math.max(a, Math.min(b, v));
+
+      const showTip = (html, clientX, clientY)=>{
+        if(!tip) return;
+        tip.innerHTML = html;
+        tip.style.display = "block";
+        // position relative to wrap
+        const wr = wrap.getBoundingClientRect();
+        const tr = tip.getBoundingClientRect();
+        let left = (clientX - wr.left) + 14;
+        let top  = (clientY - wr.top)  + 14;
+
+        // clamp inside wrap
+        left = clamp(left, 8, Math.max(8, wr.width  - tr.width  - 8));
+        top  = clamp(top,  8, Math.max(8, wr.height - tr.height - 8));
+
+        tip.style.left = left + "px";
+        tip.style.top  = top  + "px";
+      };
+
+      const schedule = ()=>{
+        if(rt._hoverRAF) return;
+        rt._hoverRAF = requestAnimationFrame(()=>{
+          rt._hoverRAF = 0;
+          drawChart();
+        });
+      };
+
+      canvas.addEventListener("mousemove",(e)=>{
+        const {x,y} = toCanvasXY(e);
+        rt._hoverClient = {x:e.clientX, y:e.clientY};
+        rt._hoverMouse = {x, y};
+        if(rt._plot && rt.history.t.length){
+          const n = rt.history.t.length;
+          const {left, plotW} = rt._plot;
+          const rel = (x - left) / Math.max(1, plotW);
+          const idx = Math.round(rel * (n-1));
+          rt._hoverIndex = clamp(idx, 0, n-1);
+          rt._hoverPinned = false;
+          schedule();
+        }
+      });
+
+      canvas.addEventListener("mouseleave",()=>{
+        if(rt._hoverPinned) return; // keep tooltip if pinned
+        rt._hoverIndex = null;
+        rt._hoverMouse = null;
+        hideTip();
+        schedule();
+      });
+
+      canvas.addEventListener("click",(e)=>{
+        // click to pin/unpin tooltip at current hover index
+        if(rt._hoverIndex == null) return;
+        rt._hoverPinned = !rt._hoverPinned;
+        rt._hoverClient = {x:e.clientX, y:e.clientY};
+        schedule();
+      });
+
+      // If user scrolls while pinned, keep it sane
+      window.addEventListener("scroll",()=>{
+        if(rt._hoverPinned && rt._hoverIndex != null){
+          // leave tooltip; will remain relative, but redraw keeps crosshair
+          schedule();
+        }
+      }, {passive:true});
+    }
+
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+
+    // Clear
+    ctx.clearRect(0,0,W,H);
+
+    const t = rt.history.t;
+    if(!t.length || rt.selected.length===0){
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = "rgba(255,255,255,.70)";
+      ctx.font = "14px system-ui";
+      ctx.fillText("Add one or more line items to start charting.", 20, 42);
+      ctx.globalAlpha = 1;
+      if(tip) tip.style.display = "none";
+      return;
+    }
+
+    // ---- Helpers
+    const fmtMetricVal = (v)=>{
+      if(typeof v !== "number" || !isFinite(v)) return "—";
+      if(rt.metric === "vol") return Math.round(v).toLocaleString();
+      if(rt.metric === "pctToLp") return (Math.round(v*10)/10).toFixed(1) + "%";
+      if(rt.metric === "hrs" || rt.metric === "hrsToLp") return (Math.round(v*10)/10).toFixed(1);
+      // actRate
+      return (Math.round(v*10)/10).toFixed(1);
+    };
+
+    // Compute y-range across selected series
+    let yMin = Infinity, yMax = -Infinity;
+    for(const key of rt.selected){
+      const arr = rt.history.series.get(key) || [];
+      for(const v of arr){
+        if(typeof v === "number" && isFinite(v)){
+          if(v < yMin) yMin = v;
+          if(v > yMax) yMax = v;
+        }
+      }
+    }
+    if(!isFinite(yMin) || !isFinite(yMax)){ yMin = 0; yMax = 1; }
+    if(yMax === yMin){ yMax = yMin + 1; }
+    const pad = (yMax - yMin) * 0.10;
+    yMin -= pad; yMax += pad;
+
+    const left = 56, right = 16, top = 14, bottom = 30;
+    const plotW = W - left - right;
+    const plotH = H - top - bottom;
+
+    rt._plot = {left, right, top, bottom, plotW, plotH, yMin, yMax, W, H};
+
+    const n = t.length;
+    const xAt = (i)=> left + (plotW * (n===1 ? 0 : (i/(n-1))));
+    const yAt = (v)=> top + plotH * (1 - ((v - yMin) / Math.max(1e-9,(yMax - yMin))));
+
+    // Hover gating: only show tooltip when the cursor is near a point (like your Stow Buffer example)
+    const hoverIdxCandidate = (rt._hoverIndex != null) ? rt._hoverIndex : null;
+    let hoverOk = false;
+    if(hoverIdxCandidate != null){
+      if(rt._hoverPinned){
+        hoverOk = true;
+      } else {
+        const mx = rt._hoverMouse?.x;
+        const my = rt._hoverMouse?.y;
+        if(typeof mx === "number" && typeof my === "number"){
+          const px = xAt(hoverIdxCandidate);
+          let best = Infinity;
+          for(const key of rt.selected){
+            const arrH = rt.history.series.get(key) || [];
+            const vH = arrH[hoverIdxCandidate];
+            if(typeof vH !== "number" || !isFinite(vH)) continue;
+            const py = yAt(vH);
+            const d = Math.hypot(mx - px, my - py);
+            if(d < best) best = d;
+          }
+          hoverOk = best <= 12;
+        }
+      }
+    }
+    const hoverIdx = hoverOk ? hoverIdxCandidate : null;
+    rt._hoverNear = hoverOk;
+
+    // Background subtle vignette
+    const grad = ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,"rgba(255,255,255,.03)");
+    grad.addColorStop(1,"rgba(0,0,0,.02)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,W,H);
+
+    // grid
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(255,255,255,.09)";
+    ctx.fillStyle = "rgba(255,255,255,.62)";
+    ctx.font = "11px ui-monospace, monospace";
+
+    const gridN = 4;
+    for(let i=0;i<=gridN;i++){
+      const y = top + (plotH * i / gridN);
+      ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(W-right, y); ctx.stroke();
+
+      const val = yMax - (yMax - yMin) * (i / gridN);
+      let lbl = "";
+      if(rt.metric === "vol") lbl = (Math.round(val)).toLocaleString();
+      else if(rt.metric === "pctToLp") lbl = (Math.round(val*10)/10).toFixed(1) + "%";
+      else lbl = (Math.abs(val) >= 1000) ? val.toFixed(0) : val.toFixed(1);
+      ctx.fillText(lbl, 6, y+4);
+    }
+
+    // vertical grid (time buckets)
+    const vN = Math.min(6, Math.max(2, n-1));
+    ctx.strokeStyle = "rgba(255,255,255,.07)";
+    ctx.setLineDash([3,4]);
+    for(let i=0;i<=vN;i++){
+      const ii = Math.round((n-1) * (i/vN));
+      const x = xAt(ii);
+      ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, H-bottom); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // x axis labels (start / end)
+    const startT = new Date(t[0]);
+    const endT = new Date(t[t.length-1]);
+    ctx.fillText(fmtNiceClock(startT), left, H-10);
+    const endLbl = fmtNiceClock(endT);
+    const mW = ctx.measureText(endLbl).width;
+    ctx.fillText(endLbl, W-right-mW, H-10);
+
+    // series lines + points
+    for(const key of rt.selected){
+      const arr = rt.history.series.get(key) || [];
+      const color = getColor(key);
+
+      // line
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      let started = false;
+
+      for(let i=0;i<n;i++){
+        const v = arr[i];
+        if(typeof v !== "number" || !isFinite(v)) continue;
+        const x = xAt(i);
+        const y = yAt(v);
+        if(!started){ ctx.moveTo(x,y); started = true; }
+        else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+
+      // points
+      ctx.lineWidth = 1.2;
+      for(let i=0;i<n;i++){
+        const v = arr[i];
+        if(typeof v !== "number" || !isFinite(v)) continue;
+        const x = xAt(i);
+        const y = yAt(v);
+
+        const isLast = (i === n-1);
+        const isHover = (hoverIdx === i);
+
+        const r = isLast ? 4.2 : 3.2;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI*2);
+
+        ctx.fillStyle = "rgba(0,0,0,.75)";
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.stroke();
+
+        if(isHover){
+          ctx.beginPath();
+          ctx.arc(x, y, r + 3.0, 0, Math.PI*2);
+          ctx.strokeStyle = "rgba(255,255,255,.55)";
+          ctx.lineWidth = 1.3;
+          ctx.stroke();
+          ctx.lineWidth = 1.2;
+        }
+      }
+    }
+
+    // Hover crosshair + tooltip
+    const effectiveIdx = (hoverIdx != null) ? hoverIdx : null;
+
+    if(effectiveIdx != null){
+      const x = xAt(effectiveIdx);
+
+      // crosshair
+      ctx.strokeStyle = "rgba(255,255,255,.20)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, H-bottom); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // tooltip HTML
+      const time = fmtNiceClock(new Date(t[effectiveIdx])) + " PT";
+      let rows = "";
+      for(const key of rt.selected){
+        const arr = rt.history.series.get(key) || [];
+        const v = arr[effectiveIdx];
+        const color = getColor(key);
+        rows += `<div class="tRow"><span class="sw" style="background:${color}"></span><span class="k">${escapeHtml(key)}</span><span class="v">${escapeHtml(fmtMetricVal(v))}</span></div>`;
+      }
+      const pin = rt._hoverPinned ? " • pinned" : "";
+      const htmlTip = `
+        <div class="tHead"><span>🕒 ${escapeHtml(time)}${pin}</span><span style="opacity:.75">idx ${effectiveIdx+1}/${n}</span></div>
+        <div class="tRows">${rows}</div>
+        <div class="sub">Tip: hover to inspect • click to pin/unpin</div>
+      `;
+      if(tip){
+        // place near last mouse position, else near crosshair
+        const cx = rt._hoverClient?.x || 0;
+        const cy = rt._hoverClient?.y || 0;
+        // Fallback position: center of plot
+        const wr = wrap.getBoundingClientRect();
+        const fx = wr.left + (x / W) * wr.width;
+        const fy = wr.top  + 24;
+        const px = cx || fx;
+        const py = cy || fy;
+
+        // Position
+        tip.innerHTML = htmlTip;
+        tip.style.display = "block";
+        // force measure then clamp
+        const tr = tip.getBoundingClientRect();
+        let leftPx = (px - wr.left) + 14;
+        let topPx  = (py - wr.top)  + 14;
+
+        const clamp = (v,a,b)=> Math.max(a, Math.min(b, v));
+        leftPx = clamp(leftPx, 8, Math.max(8, wr.width - tr.width - 8));
+        topPx  = clamp(topPx,  8, Math.max(8, wr.height- tr.height- 8));
+        tip.style.left = leftPx + "px";
+        tip.style.top  = topPx  + "px";
+      }
+    }else{
+      if(tip && !rt._hoverPinned) tip.style.display = "none";
+    }
+
+    // title
+    ctx.fillStyle = "rgba(255,255,255,.80)";
+    ctx.font = "12px system-ui";
+    ctx.fillText(`Metric: ${document.getElementById("rtMetric")?.selectedOptions?.[0]?.textContent || rt.metric}`, left, 12);
+  }
+
+
+  
+  function fmtAgo(ms){
+    const s = Math.max(0, Math.floor(ms/1000));
+    if(s < 60) return `${s}s ago`;
+    const m = Math.floor(s/60);
+    if(m < 60) return `${m}m ago`;
+    const h = Math.floor(m/60);
+    const mm = m % 60;
+    return `${h}h ${mm}m ago`;
+  }
+
+  function fmtWindowShort(start, end){
+    // e.g., 01/28 6:00 PM–01/29 4:30 AM PT
+    const sd = pad2(start.getMonth()+1)+"/"+pad2(start.getDate());
+    const ed = pad2(end.getMonth()+1)+"/"+pad2(end.getDate());
+    return `${sd} ${fmtNiceClock(start)}–${ed} ${fmtNiceClock(end)} PT`;
+  }
+
+  function markPprImported(range, sourceLabel){
+    const at = Date.now(); // epoch ms (for reliable change detection)
+    rt.lastImportAt = at;
+    if(range && range.start && range.end){
+      rt.lastImportRange = {
+        start: range.start.getTime(),
+        end: range.end.getTime(),
+        shiftLabel: range.shiftLabel || "",
+        flowLabel: range.flowLabel || "",
+        source: sourceLabel || ""
+      };
+    }else{
+      rt.lastImportRange = { source: sourceLabel || "" };
+    }
+    try{
+      localStorage.setItem(LS_RT_IMPORT, JSON.stringify({at: rt.lastImportAt, range: rt.lastImportRange}));
+    }catch(e){}
+    updateRtBadges();
+  }
+
+
+  function flashEl(el, cls){
+    if(!el) return;
+    try{
+      el.classList.remove(cls);
+      // reflow
+      void el.offsetWidth;
+      el.classList.add(cls);
+      setTimeout(() => { try{ el.classList.remove(cls); }catch(e){} }, 650);
+    }catch(e){}
+  }
+
+  function markReportBuilt(){
+    const at = Date.now();
+    rt.lastBuildAt = at;
+    try{ localStorage.setItem(LS_RT_LASTBUILD, JSON.stringify({at: rt.lastBuildAt})); }catch(e){}
+    updateRtBadges();
+
+    // Visual feedback
+    flashEl(document.getElementById("rtBuilt"), "pulseOk");
+    const card = document.getElementById("reportCard");
+    if(card){
+      try{
+        card.classList.remove("reportFlash");
+        void card.offsetWidth;
+        card.classList.add("reportFlash");
+        setTimeout(() => { try{ card.classList.remove("reportFlash"); }catch(e){} }, 650);
+      }catch(e){}
+    }
+  }
+
+  function tryParseWindowFromFilename(name){
+    // Example: processPathReport-BFL2-Intraday-20260128020000-20260128123000(3).csv
+    try{
+      const m = String(name||"").match(/Intraday-(\d{12,14})-(\d{12,14})/i);
+      if(!m) return null;
+      const a = m[1], b = m[2];
+      const parse = (s)=>{
+        // yyyymmddHHMMss or yyyymmddHHMM
+        const yy = Number(s.slice(0,4));
+        const mo = Number(s.slice(4,6));
+        const dd = Number(s.slice(6,8));
+        const hh = Number(s.slice(8,10));
+        const mm = Number(s.slice(10,12));
+        const ss = s.length>=14 ? Number(s.slice(12,14)) : 0;
+        return new Date(yy, mo-1, dd, hh, mm, ss, 0);
+      };
+      const start = parse(a), end = parse(b);
+      return {start, end};
+    }catch(e){ return null; }
+  }
+
+
+function updateRtBadges(){
+    const dot = document.getElementById("rtDot");
+    const st  = document.getElementById("rtStatusText");
+    const imp = document.getElementById("rtImported");
+    const built = document.getElementById("rtBuilt");
+    const win = document.getElementById("rtWindow");
+    const next= document.getElementById("rtNext");
+    if(dot) dot.classList.toggle("on", !!rt.enabled);
+    if(st) st.textContent = rt.enabled ? "Running" : "Idle";
+
+    if(imp){
+      if(rt.lastImportAt){
+        const d = new Date(rt.lastImportAt);
+        const age = fmtAgo(Date.now() - rt.lastImportAt);
+        imp.textContent = "Imported: " + fmtNiceClock(d) + " PT • " + age;
+        try{ imp.dataset.at = String(rt.lastImportAt||""); }catch(e){}
+        imp.title = `Last successful PPR import (PT): ${d.toString()}`;
+      }else{
+        imp.textContent = "Imported: —";
+        try{ imp.dataset.at = ""; }catch(e){}
+        imp.title = "";
+      }
+
+    }
+    if(built){
+      if(rt.lastBuildAt){
+        const d = new Date(rt.lastBuildAt);
+        const age = fmtAgo(Date.now() - rt.lastBuildAt);
+        built.textContent = "Built: " + fmtNiceClock(d) + " PT • " + age;
+        try{ built.dataset.at = String(rt.lastBuildAt||""); }catch(e){}
+        built.title = `Last successful report build (PT): ${d.toString()}`;
+      }else{
+        built.textContent = "Built: —";
+        try{ built.dataset.at = ""; }catch(e){}
+        built.title = "";
+      }
+    }
+    if(win){
+      if(rt.lastImportRange && rt.lastImportRange.start && rt.lastImportRange.end){
+        const s = new Date(Number(rt.lastImportRange.start));
+        const e = new Date(Number(rt.lastImportRange.end));
+        win.textContent = "Window: " + fmtWindowShort(s, e);
+        const extra = [];
+        if(rt.lastImportRange.shiftLabel) extra.push("Shift: " + rt.lastImportRange.shiftLabel);
+        if(rt.lastImportRange.flowLabel)  extra.push("Flow: " + rt.lastImportRange.flowLabel);
+        if(rt.lastImportRange.source)     extra.push("Source: " + rt.lastImportRange.source);
+        win.title = `PPR window (PT): ${fmtYMDslash(s)} ${fmtNiceClock(s)} → ${fmtYMDslash(e)} ${fmtNiceClock(e)} PT` + (extra.length ? ("\n" + extra.join(" | ")) : "");
+      }else if(rt.lastImportRange && rt.lastImportRange.source){
+        win.textContent = "Window: " + rt.lastImportRange.source;
+        win.title = "";
+      }else{
+        win.textContent = "Window: —";
+        win.title = "";
+      }
+    }
+    if(next){
+      if(rt.enabled && rt.nextRunAt){
+        const d = new Date(rt.nextRunAt);
+        next.textContent = "Next: " + fmtNiceClock(d);
+        next.title = d.toString();
+      }else{
+        next.textContent = "Next: —";
+        next.title = "";
+      }
+    }
+  }
+
+  function setRtError(msg){
+    const note = document.getElementById("rtModeNote");
+    if(note){
+      note.textContent = msg;
+      note.style.borderColor = "rgba(255,77,109,.35)";
+      note.style.background = "rgba(255,77,109,.12)";
+      note.style.color = "rgba(255,235,240,.92)";
+    }
+  }
+  function setRtOk(msg){
+    const note = document.getElementById("rtModeNote");
+    if(note){
+      note.textContent = msg;
+      note.style.borderColor = "rgba(60,255,177,.25)";
+      note.style.background = "rgba(60,255,177,.08)";
+      note.style.color = "rgba(235,255,248,.92)";
+    }
+  }
+
+  
+  function isCsvText(txt){
+    const t = String(txt||"").trim();
+    if(!t) return false;
+    if(t.startsWith("<") || /<html/i.test(t)) return false;
+    // PPR CSV always starts with a header that includes "Report,Line Number"
+    return /^Report\s*,\s*Line\s*Number/i.test(t) || /^Report\s*,/i.test(t);
+  }
+
+  async function bridgeFetchCsvViaPopup(urlHtml){
+    // Opens PPR HTML once, Tampermonkey script on fclm-portal fetches CSV and postMessage()s it back.
+    const token = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const allowOrigin = /^https?:\/\/fclm-portal\.amazon\.com(?::\d+)?$/i;
+
+    return new Promise((resolve, reject) => {
+      let done = false;
+      const timeoutMs = 45_000;
+      const t0 = Date.now();
+
+      function cleanup(){
+        if(done) return;
+        done = true;
+        try{ window.removeEventListener("message", onMsg); }catch(e){}
+        try{ clearInterval(pingTimer); }catch(e){}
+        try{ clearTimeout(timeoutTimer); }catch(e){}
+      }
+
+      function fail(msg){
+        cleanup();
+        reject(new Error(msg));
+      }
+
+      function onMsg(ev){
+        const origin = String(ev.origin || "");
+        if(!allowOrigin.test(origin)) return;
+
+        const data = ev.data || {};
+        if(!data || data.type !== "RB_PPR_CSV" || data.token !== token) return;
+
+        cleanup();
+
+        if(data.ok && isCsvText(data.csvText)){
+          resolve(String(data.csvText));
+        }else{
+          const em = data.error ? String(data.error) : "Bridge failed (no CSV received).";
+          reject(new Error(em));
+        }
+      }
+
+      window.addEventListener("message", onMsg);
+
+      const u = new URL(urlHtml);
+      // ensure HTML view in popup
+      u.searchParams.set("reportFormat","HTML");
+      u.searchParams.set("rb","1");
+      u.searchParams.set("rbToken", token);
+      u.searchParams.set("rbDl","1");
+
+      const popup = window.open(u.toString(), "ppr_rb_bridge", "width=980,height=740,menubar=no,toolbar=no,location=yes,status=no,scrollbars=yes,resizable=yes");
+      if(!popup){
+        fail("Popup blocked. Allow pop‑ups for fclm-portal.amazon.com, then try again.");
+        return;
+      }
+
+      // Some environments delay window.opener wiring; ping a few times (script ignores if not ready)
+      const pingTimer = setInterval(() => {
+        if(done) return;
+        try{
+          popup.postMessage({type:"RB_PING", token}, "*");
+        }catch(e){}
+        // If user closes popup manually, fail
+        try{
+          if(popup.closed){
+            fail("Bridge popup was closed before CSV was received.");
+          }
+        }catch(e){}
+      }, 700);
+
+      const timeoutTimer = setTimeout(() => {
+        fail(`Bridge timed out after ${Math.round((Date.now()-t0)/1000)}s. Make sure the Tampermonkey bridge script is installed on FCLM and that you are logged in.`);
+      }, timeoutMs);
+    });
+  }
+
+async function refreshPprOnce({silent}={}){
+    const pack = getPprCsvUrlFromQuickUI();
+    if(!pack) return;
+
+    const urlCsv = pack.urlCsv;
+    const urlHtml = pack.urlHtml;
+
+    if(rt.inFlight) return;
+    rt.inFlight = true;
+
+    rt.lastRunAt = Date.now();
+    rt.nextRunAt = rt.enabled ? (rt.lastRunAt + rt.intervalMin*60_000) : null;
+    updateRtBadges();
+
+    const method = rt.method;
+
+    try{
+      if(method === "bridge"){
+        setRtOk("Bridge: opening PPR (popup) and importing CSV…");
+        const csvText = await bridgeFetchCsvViaPopup(urlHtml);
+
+        const rows = parseCSV(csvText);
+        const prevSel = document.getElementById("pprReport")?.value || "";
+        state.ppr = buildPprIndex(rows);
+        state.pprReports = state.ppr.reports;
+
+        setReportSelect();
+        try{
+          const sel = document.getElementById("pprReport");
+          if(sel && prevSel && state.pprReports.includes(prevSel)) sel.value = prevSel;
+        }catch(e){}
+        buildDatalists();
+        setChips();
+
+        if(rt.autoBuild){
+          renderReport();
+          // renderReport wrapper will stamp "Built"
+          recordSnapshot();
+        }
+        markPprImported(pack.range, "bridge");
+
+        setRtOk("Bridge OK. Imported PPR + chart point recorded.");
+        return;
+      }
+
+      if(method === "open"){
+        // Downloads only (cannot auto-import from Downloads)
+        try{ window.open(urlCsv, "_blank", "noopener,noreferrer"); }catch(e){}
+        setRtOk("Opened CSV download. (Downloads cannot be auto‑imported by a web page.)");
+        return;
+      }
+
+      // Try auto-fetch (may be blocked from file://)
+      setRtOk("Fetching PPR CSV…");
+      const res = await fetch(urlCsv, {credentials:"include"});
+      const text = await res.text();
+
+      if(!isCsvText(text)){
+        throw new Error("Auto‑fetch returned HTML (not CSV). Use Bridge mode for reliable auto‑import.");
+      }
+
+      const rows = parseCSV(text);
+      const prevSel = document.getElementById("pprReport")?.value || "";
+      state.ppr = buildPprIndex(rows);
+      state.pprReports = state.ppr.reports;
+
+      setReportSelect();
+      try{
+        const sel = document.getElementById("pprReport");
+        if(sel && prevSel && state.pprReports.includes(prevSel)) sel.value = prevSel;
+      }catch(e){}
+      buildDatalists();
+      setChips();
+
+      if(rt.autoBuild){
+        renderReport();
+        recordSnapshot();
+      }
+      markPprImported(pack.range, "auto-fetch");
+
+      setRtOk("Auto‑fetch OK. Imported PPR + chart point recorded.");
+    }catch(err){
+      console.error(err);
+      const msg = (err && err.message) ? err.message : String(err||"Unknown error");
+      setRtError(msg);
+    }finally{
+      rt.inFlight = false;
+      updateRtBadges();
+    }
+
+  }
+
+  
+  // Keep the "Imported: … ago" label fresh (lightweight)
+  setInterval(() => {
+    try{
+      if(rt && rt.lastImportAt) updateRtBadges();
+    }catch(e){}
+  }, 30_000);
+
+
+function updateSeriesDatalist(){
+    const dl = document.getElementById("rtSeriesList");
+    if(!dl) return;
+    dl.innerHTML = "";
+
+    const idx = getCurrentRowsIndex();
+    const keys = Array.from(idx.keys()).sort((a,b)=>a.localeCompare(b));
+    for(const k of keys){
+      const o = document.createElement("option");
+      o.value = k;
+      dl.appendChild(o);
+    }
+  }
+
+  function updateView(){
+    const out = document.getElementById("reportOut")?.parentElement; // the cardBody containing reportOut
+    const rtCard = document.getElementById("rtCard");
+    if(!out || !rtCard) return;
+
+    // Table card itself is the parent card; we only hide the reportOut area by toggling display.
+    const reportMount = document.getElementById("reportOut");
+    const kpis = document.getElementById("kpis");
+    const tabs = document.querySelector('.tabs[style*="margin-bottom:10px"]');
+
+    const showTable = (rt.view !== "chart");
+    if(kpis) kpis.style.display = showTable ? "" : "none";
+    if(tabs) tabs.style.display = showTable ? "" : "none";
+    if(reportMount) reportMount.style.display = showTable ? "" : "none";
+
+    // chart is handled in drawChart() via rt.view
+    drawChart();
+  }
+
+  function startSchedule(){
+    stopSchedule();
+    rt.enabled = true;
+    rt.lastRunAt = rt.lastRunAt || null;
+    rt.nextRunAt = Date.now() + rt.intervalMin*60_000;
+    updateRtBadges();
+
+    rt.timer = setInterval(() => {
+      refreshPprOnce({silent:true});
+    }, rt.intervalMin*60_000);
+
+    // also run immediately
+    refreshPprOnce();
+  }
+
+  function stopSchedule(){
+    rt.enabled = false;
+    if(rt.timer) clearInterval(rt.timer);
+    rt.timer = null;
+    rt.nextRunAt = null;
+    updateRtBadges();
+  }
+
+  function bindUI(){
+    if(window.__qjuflore_report_bindUI) return;
+    window.__qjuflore_report_bindUI = true;
+    loadColors();
+    // restore selection
+    try{
+      const raw = localStorage.getItem("qjuflore.report.rt.selected");
+      if(raw) rt.selected = JSON.parse(raw) || [];
+    }catch(e){}
+
+    const elEnable = document.getElementById("rtEnable");
+    const elInt = document.getElementById("rtInterval");
+    const elMethod = document.getElementById("rtMethod");
+    const elMetric = document.getElementById("rtMetric");
+    const elView = document.getElementById("rtView");
+    const btnRun = document.getElementById("rtRunNow");
+    const btnClear = document.getElementById("rtClearHistory");
+    const inp = document.getElementById("rtSeriesInput");
+    const btnAdd = document.getElementById("rtAddSeries");
+
+    if(elInt){
+      elInt.value = String(rt.intervalMin || 5);
+      elInt.addEventListener("change", () => {
+        rt.intervalMin = Math.max(1, Math.min(60, parseInt(elInt.value,10) || 5));
+        if(rt.enabled) startSchedule();
+      });
+    }
+    if(elMethod){
+      elMethod.value = rt.method || "fetch";
+      elMethod.addEventListener("change", () => {
+        rt.method = elMethod.value;
+      });
+    }
+    if(elMetric){
+      elMetric.value = rt.metric || "actRate";
+      elMetric.addEventListener("change", () => {
+        rt.metric = elMetric.value;
+        // recompute existing series arrays from latest snapshot? simplest: just keep history as-is for old points.
+        // For clarity, clear history when metric changes.
+        rt.history = {t: [], series: new Map()};
+        updateLegendAndChart();
+        updateRtBadges();
+      });
+    }
+    if(elView){
+      elView.value = rt.view || "both";
+      elView.addEventListener("change", () => {
+        rt.view = elView.value;
+        updateView();
+      });
+    }
+    if(elEnable){
+      elEnable.checked = !!rt.enabled;
+      elEnable.addEventListener("change", () => {
+        if(elEnable.checked){
+          startSchedule();
+        }else{
+          stopSchedule();
+        }
+      });
+    }
+    if(btnRun){
+      btnRun.addEventListener("click", () => refreshPprOnce());
+    }
+    if(btnClear){
+      btnClear.addEventListener("click", () => {
+        rt.history = {t: [], series: new Map()};
+        updateLegendAndChart();
+        updateRtBadges();
+      });
+    }
+    if(btnAdd && inp){
+      const add = () => {
+        const val = (inp.value || "").trim();
+        if(!val) return;
+        if(!rt.selected.includes(val)) rt.selected.push(val);
+        try{ localStorage.setItem("qjuflore.report.rt.selected", JSON.stringify(rt.selected)); }catch(e){}
+        inp.value = "";
+        updateLegendAndChart();
+      };
+      btnAdd.addEventListener("click", add);
+      inp.addEventListener("keydown", (e) => {
+        if(e.key === "Enter"){ e.preventDefault(); add(); }
+      });
+    }
+
+    updateSeriesDatalist();
+    updateLegendAndChart();
+    updateRtBadges();
+    updateView();
+
+    // Keep the "Next" chip fresh
+    setInterval(() => {
+      if(rt.enabled){
+        // Do not drift if browser sleeps; show best-effort.
+        updateRtBadges();
+      }
+    }, 5_000);
+  }
+
+  // Hook renderReport so we refresh series list after every build
+  const _renderReport = renderReport;
+  renderReport = function(){
+    _renderReport();
+    try{ markReportBuilt(); }catch(e){}
+    try{
+      updateSeriesDatalist();
+      updateView();
+    }catch(e){}
+  };
+
+  // Initialize after the base UI is ready
+  document.addEventListener("DOMContentLoaded", bindUI);
+  // script is at end of body, so DOM is already ready
+  if(document.readyState !== "loading") bindUI();
+})();
+
+tryLoadGalaxyFromCache();
+// init
+setChips();
+renderTabs();
+renderConfig();
+</script>
+</body>
+</html>
