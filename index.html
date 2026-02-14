@@ -40,6 +40,7 @@
     .copy-btn { background: var(--button-bg); color: var(--button-text); padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; box-shadow: var(--button-glow); transition: all 0.3s ease; margin-left: 0.5rem; }
     .copy-btn.copied { background-color: #00c851; color: white; }
     .footer { margin-top: auto; text-align: center; font-size: 0.9rem; padding: 1rem; color: #aaa; }
+
     /* MasterTools */
     .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .8rem; }
     .card { border:1px solid var(--border); background: var(--card-bg); border-radius: var(--radius); padding: .9rem; display:flex; flex-direction:column; gap:.7rem; }
@@ -56,6 +57,7 @@
     .tool-views { margin-left: auto; font-size: .9rem; color: var(--muted); padding: .15rem .45rem; border: 1px solid var(--border); border-radius: 999px; background: rgba(255,255,255,0.03); white-space: nowrap; line-height: 1.1; }
   </style>
 </head>
+
 <body>
   <h1>🚀 Productivity Boost Hub</h1>
 
@@ -86,7 +88,8 @@
   <div id="scripts" class="section">
     <input type="text" id="scriptSearch" placeholder="🔍 Search scripts..." class="search">
     <div class="submit-card" style="background:var(--card-bg); padding:1rem; border:1px dashed var(--accent); border-radius:10px; text-align:center; margin-bottom:2rem;">
-      📝 Want to share your script? <a href="https://docs.google.com/forms/d/e/1FAIpQLSdVhvhkmE28nIxDH2DAo4FR7W14zqUxp2KlGHvib6baAMplEQ/viewform" target="_blank">Submit it here</a>
+      📝 Want to share your script?
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSdVhvhkmE28nIxDH2DAo4FR7W14zqUxp2KlGHvib6baAMplEQ/viewform" target="_blank">Submit it here</a>
     </div>
     <div id="scriptContainer"></div>
   </div>
@@ -165,7 +168,7 @@
         return Array.from(document.querySelectorAll('#masterGrid .card')).map(c=>c.dataset.id).filter(Boolean);
       }
 
-      // --- API pública (misma interfaz que ya usabas) ---
+      // --- API pública ---
       w.PBViews = {
         async bumpOnLoad(area='hub'){
           try{
@@ -173,7 +176,6 @@
             const total = resp?.values?.[KEY_TOTAL];
             if (typeof total === 'number') setTotalUI(total);
           }catch(_){
-            // Fallback por si JSONP se corta: al menos intenta total
             try{ const t = await inc(KEY_TOTAL, 1); if (typeof t?.value === 'number') setTotalUI(t.value); }catch(_){}
           }
         },
@@ -195,7 +197,7 @@
 
           // 1) intento atómico con JSONP
           incMulti([P_TOOL(id), KEY_TOTAL], 1).catch(()=>{
-            // 2) fallback doble ping (Image) para asegurar incremento aun si se navega ya
+            // 2) fallback doble ping (Image)
             try { new Image().src = `${BASE}?op=inc&key=${encodeURIComponent(P_TOOL(id))}&n=1`; } catch(_){}
             try { new Image().src = `${BASE}?op=inc&key=${encodeURIComponent(KEY_TOTAL)}&n=1`; } catch(_){}
           });
@@ -204,7 +206,7 @@
           try{ const t = await get(KEY_TOTAL); if (typeof t?.value === 'number') setTotalUI(t.value); }catch(_){}
           try{ await this.loadToolBadges(); }catch(_){}
         },
-        // Compat (si algo más en tu site lo usa)
+        // Compat
         async bumpTotal(n=1){ const r = await inc(KEY_TOTAL, n); setTotalUI(r?.value); return r?.value; },
         async getTotal(){ const r = await get(KEY_TOTAL); return r?.value||0; },
         async bumpTool(id,n=1){ const r = await inc(P_TOOL(id), n); setToolUI(id, r?.value); return r?.value; },
@@ -267,13 +269,34 @@
     })();
   </script>
 
-  <!-- MasterTools (igual que lo tenías; solo se añade el ping antes de navegar y la carga de badges) -->
+  <!-- MasterTools PRO (auto-discovery + auto title/description/icon from each tool HTML) -->
   <script>
     const LS_FAVS = 'pb.master.favorites';
-    const tools = [
+
+    // 1) Fuente recomendada (bonita y controlada)
+    const MASTERTOOLS_JSON = './MasterTools/tools.json';
+
+    // 2) Fallback (si no existe tools.json): auto-descubre desde GitHub API
+    const DISCOVERY_FALLBACK = true;
+
+    // 3) Fallback final (por si todo falla)
+    const DEFAULT_TOOLS = [
       {id:'trailer-plan', icon:'🚛', name:'Trailer Plan Analyzer', href:'https://qjuflore.github.io/Productivity-Boost-Hub/MasterTools/trailer-plan.html', desc:'Plan injection, density & severity attributes for trailers.'},
       {id:'inbound-flow-planner', icon:'📦', name:'Inbound Flow Planner', href:'https://qjuflore.github.io/Productivity-Boost-Hub/MasterTools/Inbound%20Flow%20Planner.html', desc:'Optimize inbound flow & labor planning.'}
     ];
+
+    // Cache/TTL
+    const DISCOVERY_TTL_MS = 5 * 60 * 1000;          // 5 min (lista de tools)
+    const META_TTL_MS      = 7 * 24 * 60 * 60 * 1000;// 7 días (title/desc/icon)
+    const LOAD_TTL_MS      = 30 * 1000;              // 30s (evita recargas seguidas)
+    const MAX_META_FETCH   = 40;                     // tope
+    const META_CONCURRENCY = 4;                      // fetch paralelo
+
+    const LS_DISCOVERY = 'pb.master.discovery.cache.v1';
+    const LS_META      = 'pb.master.meta.cache.v1';
+
+    let tools = [];
+    let _lastLoad = 0;
 
     const getFavs = () => { try { return JSON.parse(localStorage.getItem(LS_FAVS) || '[]'); } catch { return []; } };
     const setFavs = (arr) => localStorage.setItem(LS_FAVS, JSON.stringify(arr));
@@ -286,25 +309,298 @@
       renderMasterTools();
     }
 
-    function renderMasterTools(){
-      const wrap=document.getElementById('masterGrid');
+    function slugify(s){
+      return String(s||'')
+        .toLowerCase()
+        .replace(/\.html?$/i,'')
+        .replace(/%[0-9a-f]{2}/ig, m => { try { return decodeURIComponent(m); } catch { return m; } })
+        .replace(/[^a-z0-9]+/g,'-')
+        .replace(/(^-|-$)/g,'')
+        .slice(0, 64) || ('tool-' + Math.random().toString(36).slice(2,8));
+    }
+
+    function titleFromFilename(filename){
+      const base = String(filename||'').replace(/\.html?$/i,'');
+      let name = base; try { name = decodeURIComponent(base); } catch {}
+      name = name.replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim();
+      return name ? name.replace(/\b\w/g, c => c.toUpperCase()) : 'Untitled Tool';
+    }
+
+    function normalizeTools(list){
+      const out = [];
+      for(const t of (Array.isArray(list) ? list : [])){
+        if(!t) continue;
+
+        const href = t.href || t.url;
+        const path = t.path;
+        let finalHref = href;
+
+        if(!finalHref && path){
+          const repo = location.pathname.split('/').filter(Boolean)[0] || '';
+          const base = `${location.origin}/${repo}/`;
+          finalHref = new URL(path, base).href;
+        }
+        if(!finalHref) continue;
+
+        const name = t.name || titleFromFilename(finalHref.split('/').pop() || 'tool');
+        const id = t.id || slugify(t.path || finalHref || name);
+
+        out.push({
+          id,
+          icon: t.icon || '🧰',
+          name,
+          href: finalHref,
+          desc: t.desc || t.description || ''
+        });
+      }
+      return out;
+    }
+
+    function setMasterLoading(msg){
+      const wrap = document.getElementById('masterGrid');
       if(!wrap) return;
-      wrap.innerHTML='';
-      const data=[...tools];
+      wrap.innerHTML = `<div style="opacity:.85; padding:.7rem; border:1px dashed rgba(255,255,255,.18); border-radius:12px;">
+        ${msg || 'Loading MasterTools…'}
+      </div>`;
+    }
+
+    function readJSONCache(key){
+      try{
+        const raw = localStorage.getItem(key);
+        if(!raw) return null;
+        return JSON.parse(raw);
+      }catch{ return null; }
+    }
+    function writeJSONCache(key, val){
+      try{ localStorage.setItem(key, JSON.stringify(val)); }catch{}
+    }
+
+    async function loadToolsFromJson(){
+      const u = new URL(MASTERTOOLS_JSON, location.href);
+      u.searchParams.set('v', String(Date.now())); // cache bust
+      const r = await fetch(u.toString(), { cache: 'no-store' });
+      if(!r.ok) throw new Error('tools.json not found');
+      const data = await r.json();
+      const list = Array.isArray(data) ? data : data?.tools;
+      if(!Array.isArray(list)) throw new Error('Invalid tools.json');
+      return list;
+    }
+
+    function detectGithubOwnerRepo(){
+      const owner = location.hostname.split('.')[0] || '';
+      const repo = location.pathname.split('/').filter(Boolean)[0] || '';
+      return { owner, repo };
+    }
+
+    async function loadToolsFromGithubAPI(){
+      const { owner, repo } = detectGithubOwnerRepo();
+      if(!owner || !repo) throw new Error('Cannot detect owner/repo');
+
+      const cached = readJSONCache(LS_DISCOVERY);
+      const now = Date.now();
+      if(cached?.t && Array.isArray(cached?.items) && (now - cached.t) < DISCOVERY_TTL_MS){
+        return cached.items;
+      }
+
+      const api = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/MasterTools`;
+      const r = await fetch(api, { cache: 'no-store' });
+      if(!r.ok) throw new Error('GitHub API failed');
+      const items = await r.json();
+      if(!Array.isArray(items)) throw new Error('GitHub API invalid response');
+
+      const htmlFiles = items
+        .filter(it => it && it.type === 'file' && /\.html?$/i.test(it.name || ''))
+        .filter(it => (it.name || '').toLowerCase() !== 'index.html')
+        .filter(it => !(it.name || '').startsWith('_'));
+
+      const discovered = htmlFiles.map(it => ({
+        id: slugify(it.name),
+        icon: '🧰',
+        name: titleFromFilename(it.name),
+        path: it.path,
+        desc: ''
+      }));
+
+      writeJSONCache(LS_DISCOVERY, { t: now, items: discovered });
+      return discovered;
+    }
+
+    // --- META ENRICH (PRO) ---
+    function loadMetaCache(){
+      const c = readJSONCache(LS_META);
+      return (c && typeof c === 'object') ? c : {};
+    }
+    function saveMetaCache(cacheObj){
+      writeJSONCache(LS_META, cacheObj);
+    }
+
+    function getCardById(id){
+      const esc = (window.CSS && CSS.escape) ? CSS.escape(id) : id.replace(/"/g,'\\"');
+      return document.querySelector(`#masterGrid .card[data-id="${esc}"]`);
+    }
+
+    function setCardUI(id, patch){
+      const card = getCardById(id);
+      if(!card) return;
+
+      if(patch.icon || patch.name){
+        const h3 = card.querySelector('h3');
+        if(h3){
+          const txt = h3.textContent.trim();
+          const first = txt.split(' ')[0] || '🧰';
+          const newIcon = patch.icon || first;
+          const newName = patch.name || txt.split(' ').slice(1).join(' ');
+          h3.textContent = `${newIcon} ${newName}`.trim();
+        }
+      }
+      if(typeof patch.desc === 'string'){
+        const p = card.querySelector('p');
+        if(p) p.textContent = patch.desc;
+      }
+    }
+
+    async function fetchToolMeta(tool){
+      let url;
+      try{ url = new URL(tool.href, location.href); }catch{ return null; }
+      if(url.origin !== location.origin) return null;
+
+      // cache-bust SOLO cuando vamos a fetch real
+      url.searchParams.set('pbmeta', String(Date.now()));
+
+      const r = await fetch(url.toString(), { cache: 'no-store' });
+      if(!r.ok) return null;
+      const html = await r.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+
+      const title =
+        (doc.querySelector('meta[property="og:title"]')?.getAttribute('content') || '').trim()
+        || (doc.querySelector('title')?.textContent || '').trim()
+        || (doc.querySelector('h1')?.textContent || '').trim()
+        || '';
+
+      const desc =
+        (doc.querySelector('meta[name="description"]')?.getAttribute('content') || '').trim()
+        || (doc.querySelector('meta[property="og:description"]')?.getAttribute('content') || '').trim()
+        || '';
+
+      const icon =
+        (doc.querySelector('meta[name="pb:icon"]')?.getAttribute('content') || '').trim()
+        || '';
+
+      return { title, desc, icon };
+    }
+
+    async function enrichToolsMetadata({ force=false } = {}){
+      const metaCache = loadMetaCache();
+      const now = Date.now();
+
+      const eligibles = tools
+        .filter(t => t && t.href)
+        .slice(0, MAX_META_FETCH);
+
+      let idx = 0;
+
+      function applyMetaToTool(toolObj, pack){
+        const patch = {};
+
+        // icon
+        if(pack.icon && toolObj.icon === '🧰'){
+          toolObj.icon = pack.icon;
+          patch.icon = pack.icon;
+        }
+
+        // name
+        if(pack.title && (!toolObj.name || toolObj.name.startsWith('Untitled'))){
+          toolObj.name = pack.title;
+          patch.name = pack.title;
+        } else if (pack.title && toolObj.name === titleFromFilename(toolObj.href.split('/').pop() || '')){
+          toolObj.name = pack.title;
+          patch.name = pack.title;
+        }
+
+        // desc
+        if(pack.desc && (!toolObj.desc || toolObj.desc.trim().length < 6)){
+          toolObj.desc = pack.desc;
+          patch.desc = pack.desc;
+        }
+
+        if(Object.keys(patch).length) setCardUI(toolObj.id, patch);
+      }
+
+      async function worker(){
+        while(idx < eligibles.length){
+          const t = eligibles[idx++];
+
+          const cached = metaCache[t.id];
+          const isFresh = cached?.t && (now - cached.t) < META_TTL_MS;
+
+          // Si force=true, ignoramos cache (pero igual usamos cache si no podemos fetchear)
+          const shouldUseCache = !force && isFresh && cached;
+
+          if(shouldUseCache){
+            applyMetaToTool(t, cached);
+            continue;
+          }
+
+          // Si no hay necesidad (ya tiene data buena) y cache fresh, salta (cuando force=false)
+          if(!force && isFresh && cached){
+            // aplica cache por si el tool actual estaba vacío
+            applyMetaToTool(t, cached);
+            continue;
+          }
+
+          // fetch real
+          try{
+            const meta = await fetchToolMeta(t);
+            if(!meta) {
+              // fallback a cache si existe
+              if(cached) applyMetaToTool(t, cached);
+              continue;
+            }
+
+            const pack = {
+              t: Date.now(),
+              title: meta.title || '',
+              desc: meta.desc || '',
+              icon: meta.icon || ''
+            };
+
+            metaCache[t.id] = pack;
+            saveMetaCache(metaCache);
+            applyMetaToTool(t, pack);
+          }catch(_){
+            if(cached) applyMetaToTool(t, cached);
+          }
+        }
+      }
+
+      const workers = Array.from({length: META_CONCURRENCY}, () => worker());
+      await Promise.all(workers);
+    }
+
+    function renderMasterTools(){
+      const wrap = document.getElementById('masterGrid');
+      if(!wrap) return;
+
+      wrap.innerHTML = '';
+      const data = [...tools];
       data.sort((a,b)=> (isFav(b.id)-isFav(a.id)) || a.name.localeCompare(b.name));
 
       for(const t of data){
-        const card=document.createElement('div');
-        card.className='card';
-        card.dataset.id=t.id;
-        card.innerHTML=`<h3>${t.icon} ${t.name}</h3>
-          <p>${t.desc||''}</p>
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.id = t.id;
+
+        card.innerHTML = `
+          <h3>${t.icon} ${t.name}</h3>
+          <p>${t.desc || ''}</p>
           <div class="row">
             <a class="tool-link" href="${t.href}">Open</a>
             <button class="icon-btn favorite" aria-pressed="${isFav(t.id)}" title="Favorite">★</button>
             <button class="icon-btn copy-btn" title="Copy link">⧉</button>
             <span class="tool-views" data-id="${t.id}">👁️ 0</span>
-          </div>`;
+          </div>
+        `;
 
         card.querySelector('.favorite').addEventListener('click', ()=> toggleFav(t.id));
 
@@ -318,7 +614,7 @@
           }catch(e){ /* ignore */ }
         });
 
-        // ⬇️ suma herramienta + total ANTES de navegar (JSONP + fallback ping)
+        // suma herramienta + total ANTES de navegar
         const openLink = card.querySelector('.tool-link');
         const ping = ()=> window.PBViews?.bumpToolAndTotalOnOpen(t.id);
         openLink.addEventListener('pointerdown', ping, { passive:true });
@@ -330,6 +626,40 @@
       window.PBViews?.loadToolBadges();
     }
 
+    async function ensureToolsFresh(force=false){
+      const now = Date.now();
+      if(!force && tools.length && (now - _lastLoad) < LOAD_TTL_MS) return;
+      _lastLoad = now;
+
+      setMasterLoading('🔄 Loading MasterTools…');
+
+      // 1) tools.json
+      try{
+        const fromJson = await loadToolsFromJson();
+        tools = normalizeTools(fromJson);
+        renderMasterTools();
+        enrichToolsMetadata({ force:false });
+        return;
+      }catch(_){}
+
+      // 2) GitHub discovery
+      if(DISCOVERY_FALLBACK){
+        try{
+          const discovered = await loadToolsFromGithubAPI();
+          tools = normalizeTools(discovered);
+          renderMasterTools();
+          enrichToolsMetadata({ force:false });
+          return;
+        }catch(_){}
+      }
+
+      // 3) fallback
+      tools = normalizeTools(DEFAULT_TOOLS);
+      renderMasterTools();
+      enrichToolsMetadata({ force:false });
+    }
+
+    // Search
     const masterSearch = document.getElementById('masterSearch');
     if(masterSearch){
       masterSearch.addEventListener('input', ()=>{
@@ -341,9 +671,27 @@
       });
     }
 
-    renderMasterTools();
-    // mantener badges al día si cambia el foco
-    window.addEventListener('focus', ()=> window.PBViews?.loadToolBadges());
+    // Init
+    (async ()=>{
+      await ensureToolsFresh(true);
+
+      // Cuando entras al tab MasterTools -> fuerza reload (para ver tools nuevos)
+      document.querySelectorAll('.tab').forEach(t=>{
+        t.addEventListener('click', ()=>{
+          if((t.textContent || '').includes('MasterTools')){
+            ensureToolsFresh(true);
+            // fuerza re-lectura de meta (ignora cache) si acabas de cambiar title/desc/icon en los tools
+            enrichToolsMetadata({ force:true });
+          }
+        });
+      });
+
+      // En foco: refresca badges y lista si ya pasó TTL
+      window.addEventListener('focus', ()=>{
+        window.PBViews?.loadToolBadges();
+        ensureToolsFresh(false);
+      });
+    })();
   </script>
 </body>
 </html>
