@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<title>IB / OB Metrics Report Builder (GalaxyBI + Process Path Rollup) • Column Separation Fix • qjuflore • v48</title>
+<title>IB / OB Metrics Report Builder (GalaxyBI + Process Path Rollup) • Column Separation Fix • qjuflore • v50</title>
 <style>
     :root{
       --bg:#070910;
@@ -735,6 +735,7 @@
       <a class="btn secondary" id="quickGalaxyBI" href="https://galaxybi.aka.corp.amazon.com/reports/labor-planning/lR8NujgNmqXM-print-file/newFromScratch" target="_blank" rel="noopener">GalaxiBI</a>
       <a class="btn secondary" id="quickGalaxyBIScript" href="https://axzile.corp.amazon.com/-/carthamus/script/galaxy-bi-pivot-plan-extractor-(qjuflore)" target="_blank" rel="noopener" title="Open the Carthamus script (galaxy pivot plan extractor)">GalaxyBI Scrip</a>
       <a class="btn secondary" id="quickPPR" href="#" target="_blank" rel="noopener" title="Opens Process Path Rollup with auto-filled dates/times">PPR</a>
+      <a class="btn secondary" id="quickPPRScript" href="https://axzile.corp.amazon.com/-/carthamus/script/ppr-csv-bridge-%E2%86%92-report-builder-(download-+-auto-import)" target="_blank" rel="noopener" title="Open the Carthamus script (PPR CSV Bridge → Report Builder)">PPR script</a>
       <span class="pill" id="pprNowChip">Now: —</span>
     </div>
     <div class="pprPreviewLine" id="pprPreview">PPR range: —</div>
@@ -1114,6 +1115,38 @@ function loadCompactCols(){ try{ const v = localStorage.getItem(LS_COMPACT_COLS)
 function saveCompactCols(v){ try{ localStorage.setItem(LS_COMPACT_COLS, v?"1":"0"); }catch(e){} }
 function loadFocusReport(){ try{ return localStorage.getItem(LS_FOCUS_REPORT)==="1"; }catch(e){ return false; } }
 function saveFocusReport(v){ try{ localStorage.setItem(LS_FOCUS_REPORT, v?"1":"0"); }catch(e){} }
+
+// --- Remember UI preferences across refresh (Report + Config tabs)
+const LS_ACTIVE_CFGTAB = "qjuflore_ib_ob_report_builder_activeCfgTab_v1";
+const LS_ACTIVE_RPT    = "qjuflore_ib_ob_report_builder_activeRpt_v1";
+function loadActiveCfgTab(){ try{ const v = (localStorage.getItem(LS_ACTIVE_CFGTAB) || "ib"); return (v==="ib"||v==="ob") ? v : "ib"; }catch(e){ return "ib"; } }
+function saveActiveCfgTab(v){ try{ localStorage.setItem(LS_ACTIVE_CFGTAB, String(v||"ib")); }catch(e){} }
+function loadActiveRpt(){ try{ const v = (localStorage.getItem(LS_ACTIVE_RPT) || "both"); return (v==="both"||v==="ib"||v==="ob") ? v : "both"; }catch(e){ return "both"; } }
+function saveActiveRpt(v){ try{ localStorage.setItem(LS_ACTIVE_RPT, String(v||"both")); }catch(e){} }
+
+// --- Real-time auto-refresh preferences (persist interval/method/view + enabled)
+const LS_RT_ENABLED  = "qjuflore.report.rt.enabled";
+const LS_RT_INTERVAL = "qjuflore.report.rt.intervalMin";
+const LS_RT_METHOD   = "qjuflore.report.rt.method";
+const LS_RT_METRIC   = "qjuflore.report.rt.metric";
+const LS_RT_VIEW     = "qjuflore.report.rt.view";
+
+// Keep these keys global so RT/history can read them (also used in initQuickLinks scope)
+const LS_RT_IMPORT    = "qjuflore.report.rt.lastPprImport";
+const LS_RT_AUTOBUILD = "qjuflore.report.rt.autoBuild";
+const LS_RT_LASTBUILD = "qjuflore.report.rt.lastBuild";
+
+function loadRtEnabled(){ try{ return localStorage.getItem(LS_RT_ENABLED)==="1"; }catch(e){ return false; } }
+function saveRtEnabled(v){ try{ localStorage.setItem(LS_RT_ENABLED, v?"1":"0"); }catch(e){} }
+function loadRtInterval(){ try{ const n = parseInt(localStorage.getItem(LS_RT_INTERVAL)||"5",10); return Number.isFinite(n)? Math.max(1, Math.min(60,n)) : 5; }catch(e){ return 5; } }
+function saveRtInterval(v){ try{ localStorage.setItem(LS_RT_INTERVAL, String(Math.max(1, Math.min(60, parseInt(v,10)||5)))); }catch(e){} }
+function loadRtMethod(){ try{ return localStorage.getItem(LS_RT_METHOD) || "bridge"; }catch(e){ return "bridge"; } }
+function saveRtMethod(v){ try{ localStorage.setItem(LS_RT_METHOD, String(v||"bridge")); }catch(e){} }
+function loadRtMetric(){ try{ return localStorage.getItem(LS_RT_METRIC) || "actRate"; }catch(e){ return "actRate"; } }
+function saveRtMetric(v){ try{ localStorage.setItem(LS_RT_METRIC, String(v||"actRate")); }catch(e){} }
+function loadRtView(){ try{ return localStorage.getItem(LS_RT_VIEW) || "both"; }catch(e){ return "both"; } }
+function saveRtView(v){ try{ localStorage.setItem(LS_RT_VIEW, String(v||"both")); }catch(e){} }
+
 
 // Excel strict is always ON (fixed)
 const LS_STATUS_BASIS = "qjuflore_ib_ob_report_builder_statusBasis_v2";
@@ -1568,8 +1601,8 @@ let state = {
   galCols: [],
   pprReports: [],
   cfg: loadCfg(),
-  activeTab: "ib",
-  activeRpt: "both",
+  activeTab: loadActiveCfgTab(),
+  activeRpt: loadActiveRpt(),
   showMatchCols: loadShowMatchCols(),
   compactLayout: loadCompactLayout(),
   compactCols: loadCompactCols(),
@@ -1743,6 +1776,12 @@ function setReportSelect(){
 function renderTabs(){
   document.querySelectorAll(".tab[data-tab]").forEach(t=>{
     t.classList.toggle("active", t.dataset.tab===state.activeTab);
+  });
+}
+
+function renderRptTabs(){
+  document.querySelectorAll(".tab[data-rpt]").forEach(t=>{
+    t.classList.toggle("active", t.dataset.rpt===state.activeRpt);
   });
 }
 
@@ -2738,15 +2777,16 @@ if(focusBtn){
 document.querySelectorAll(".tab[data-tab]").forEach(t=>{
   t.addEventListener("click", ()=>{
     state.activeTab = t.dataset.tab;
+    saveActiveCfgTab(state.activeTab);
     renderTabs();
     renderConfig();
   });
 });
 document.querySelectorAll(".tab[data-rpt]").forEach(t=>{
   t.addEventListener("click", ()=>{
-    document.querySelectorAll(".tab[data-rpt]").forEach(x=>x.classList.remove("active"));
-    t.classList.add("active");
     state.activeRpt = t.dataset.rpt;
+    saveActiveRpt(state.activeRpt);
+    renderRptTabs();
     if(state.lastBuild) renderReport();
   });
 });
@@ -3337,11 +3377,11 @@ updateGalaxyCacheUI();
 
   // ---------- History + chart ----------
   const rt = state.rt = state.rt || {};
-  rt.enabled = false;
-  rt.intervalMin = 5;
-  rt.method = "bridge";
-  rt.metric = "actRate";
-  rt.view = "both";
+  rt.enabled = loadRtEnabled();
+  rt.intervalMin = loadRtInterval();
+  rt.method = loadRtMethod();
+  rt.metric = loadRtMetric();
+  rt.view = loadRtView();
   rt.timer = null;
   rt.history = { t: [], series: new Map() };
   rt.colors = rt.colors || {};
@@ -4293,6 +4333,7 @@ function updateSeriesDatalist(){
       elInt.value = String(rt.intervalMin || 5);
       elInt.addEventListener("change", () => {
         rt.intervalMin = Math.max(1, Math.min(60, parseInt(elInt.value,10) || 5));
+        saveRtInterval(rt.intervalMin);
         if(rt.enabled) startSchedule();
       });
     }
@@ -4300,6 +4341,7 @@ function updateSeriesDatalist(){
       elMethod.value = rt.method || "fetch";
       elMethod.addEventListener("change", () => {
         rt.method = elMethod.value;
+        saveRtMethod(rt.method);
       });
     }
     if(elMetric){
@@ -4317,16 +4359,20 @@ function updateSeriesDatalist(){
       elView.value = rt.view || "both";
       elView.addEventListener("change", () => {
         rt.view = elView.value;
+        saveRtView(rt.view);
         updateView();
       });
     }
     if(elEnable){
       elEnable.checked = !!rt.enabled;
+      if(rt.enabled) startSchedule();
       elEnable.addEventListener("change", () => {
         if(elEnable.checked){
           startSchedule();
+          saveRtEnabled(true);
         }else{
           stopSchedule();
+          saveRtEnabled(false);
         }
       });
     }
@@ -4390,6 +4436,7 @@ tryLoadGalaxyFromCache();
 // init
 setChips();
 renderTabs();
+renderRptTabs();
 renderConfig();
 </script>
 </body>
