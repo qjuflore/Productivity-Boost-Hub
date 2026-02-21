@@ -18,6 +18,8 @@
       --bad:#ff4d6d;
       --cyan:#35d3ff;
       --violet:#b07bff;
+      --lpRGB: 53,211,255;
+      --opRGB: 176,123,255;
       --shadow: 0 18px 60px rgba(0,0,0,.55);
       --radius:16px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -179,6 +181,60 @@
       border-color: rgba(53,211,255,.30);
     }
 
+
+    /* LP/OP Color legend (above report table) */
+    .colorLegend{
+      display:flex;
+      justify-content:flex-end;
+      align-items:center;
+      gap:10px;
+      margin: -2px 0 10px 0;
+      padding: 0 2px;
+    }
+    .legendPill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border-radius:999px;
+      padding:6px 10px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.22);
+      font-size:12px;
+      user-select:none;
+      line-height:1;
+    }
+    .legendPill .swatch{
+      width:14px;
+      height:14px;
+      border-radius:6px;
+      background: rgba(255,255,255,.15);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.12);
+    }
+    .legendPill .k{ color: rgba(255,255,255,.78); font-weight:800; letter-spacing:.2px; }
+    .legendPill .v{ font-family: var(--mono); opacity:.92; }
+
+    .legendPill.lp{
+      border-color: rgba(var(--lpRGB), .45);
+      box-shadow: inset 0 0 0 2px rgba(var(--lpRGB), .78), 0 0 14px rgba(var(--lpRGB), .18);
+      color: rgba(var(--lpRGB), .95);
+      text-shadow: 0 0 10px rgba(var(--lpRGB), .22);
+    }
+    .legendPill.lp .swatch{
+      background: var(--cyan);
+      box-shadow: 0 0 0 1px rgba(var(--lpRGB), .35), 0 0 14px rgba(var(--lpRGB), .30);
+    }
+
+    .legendPill.op{
+      border-color: rgba(var(--opRGB), .45);
+      box-shadow: inset 0 0 0 2px rgba(var(--opRGB), .78), 0 0 14px rgba(var(--opRGB), .18);
+      color: rgba(var(--opRGB), .95);
+      text-shadow: 0 0 10px rgba(var(--opRGB), .22);
+    }
+    .legendPill.op .swatch{
+      background: var(--violet);
+      box-shadow: 0 0 0 1px rgba(var(--opRGB), .35), 0 0 14px rgba(var(--opRGB), .30);
+    }
+
     table{
       width:100%;
       border-collapse: collapse;
@@ -250,26 +306,86 @@
       background: linear-gradient(90deg, rgba(255,209,102,.10), rgba(0,0,0,0)) !important;
     }
 
+    /* ===== Text color follows Status (NOT LP/OP) ===== */
+    .reportTable tbody tr.rowGood td{
+      color: rgba(60,255,177,.92) !important;
+      text-shadow: 0 0 10px rgba(60,255,177,.14);
+    }
+    .reportTable tbody tr.rowWarn td{
+      color: rgba(255,209,102,.95) !important;
+      text-shadow: 0 0 10px rgba(255,209,102,.12);
+    }
+    .reportTable tbody tr.rowBad td{
+      color: rgba(255,77,109,.95) !important;
+      text-shadow: 0 0 10px rgba(255,77,109,.12);
+    }
+
     /* Per-cell text coloring (kept consistent across all metric columns) */
     .basisCellGood{ color: rgba(60,255,177,.92) !important; }
     .basisCellBad{ color: rgba(255,77,109,.95) !important; }
     .basisCellWarn{ color: rgba(255,209,102,.95) !important; }
 
     /* Basis stripe: LP vs OP (left edge, stays visible even on hover) */
-    .reportTable tbody tr.basisLP td:first-child{ box-shadow: inset 5px 0 0 rgba(53,211,255,.70); }
-    .reportTable tbody tr.basisOP td:first-child{ box-shadow: inset 5px 0 0 rgba(176,123,255,.70); }
+    .reportTable tbody tr.basisLP td:first-child{ box-shadow: inset 5px 0 0 rgba(var(--lpRGB), .70); }
+    .reportTable tbody tr.basisOP td:first-child{ box-shadow: inset 5px 0 0 rgba(var(--opRGB), .70); }
     .reportTable tbody tr.basisNA td:first-child{ box-shadow: inset 5px 0 0 rgba(255,255,255,.22); }
 
 
-    /* Active target highlight (per-row): subtle border/glow on the target RATE cell only */
-    .reportTable tbody tr.basisLP td.col-lpRate{
-      box-shadow: inset 0 0 0 2px rgba(53,211,255,.78), 0 0 14px rgba(53,211,255,.18) !important;
-    }
-    .reportTable tbody tr.basisOP td.col-opRate{
-      box-shadow: inset 0 0 0 2px rgba(176,123,255,.78), 0 0 14px rgba(176,123,255,.18) !important;
+    /* Per-row: make LP/OP look IDENTICAL across these key columns based on the plan (basis) */
+    .reportTable tbody tr.basisLP td.col-lpRate,
+    .reportTable tbody tr.basisLP td.col-lpHours,
+    .reportTable tbody tr.basisLP td.col-path,
+    .reportTable tbody tr.basisLP td.col-vol,
+    .reportTable tbody tr.basisLP td.col-hrs,
+    .reportTable tbody tr.basisLP td.col-status,
+    .reportTable tbody tr.basisLP td.col-actRate{
+      box-shadow: inset 0 0 0 2px rgba(var(--lpRGB), .78), 0 0 14px rgba(var(--lpRGB), .18) !important;
+      /* NOTE: text color is driven by Status (rowGood/rowWarn/rowBad). LP/OP is LED-only. */
     }
 
-    .statusWrap{ display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .reportTable tbody tr.basisOP td.col-opRate,
+    .reportTable tbody tr.basisOP td.col-opHours,
+    .reportTable tbody tr.basisOP td.col-path,
+    .reportTable tbody tr.basisOP td.col-vol,
+    .reportTable tbody tr.basisOP td.col-hrs,
+    .reportTable tbody tr.basisOP td.col-status,
+    .reportTable tbody tr.basisOP td.col-actRate{
+      box-shadow: inset 0 0 0 2px rgba(var(--opRGB), .78), 0 0 14px rgba(var(--opRGB), .18) !important;
+      /* NOTE: text color is driven by Status (rowGood/rowWarn/rowBad). LP/OP is LED-only. */
+    }
+
+
+
+    /* LP/OP Target columns coloring: Hours/% to LP/OP
+       - Always tint LP-target columns cyan, OP-target columns violet
+       - Extra glow on the side selected by Status rule (basisLP/basisOP) */
+    .reportTable tbody td.col-hrsToLp,
+    .reportTable tbody td.col-pctToLp{
+      box-shadow: inset 0 0 0 1px rgba(var(--lpRGB), .18);
+      /* LP/OP is LED-only. Text color is driven by Status. */
+
+    }
+    .reportTable tbody td.col-hrsToOp,
+    .reportTable tbody td.col-pctToOp{
+      box-shadow: inset 0 0 0 1px rgba(var(--opRGB), .18);
+      /* LP/OP is LED-only. Text color is driven by Status. */
+
+    }
+
+    /* Strong highlight on the chosen basis side (sync with Status rule) */
+    .reportTable tbody tr.basisLP td.col-hrsToLp,
+    .reportTable tbody tr.basisLP td.col-pctToLp{
+      box-shadow: inset 0 0 0 2px rgba(var(--lpRGB), .78), 0 0 14px rgba(var(--lpRGB), .18) !important;
+      /* LP/OP is LED-only. Text color is driven by Status. */
+
+    }
+    .reportTable tbody tr.basisOP td.col-hrsToOp,
+    .reportTable tbody tr.basisOP td.col-pctToOp{
+      box-shadow: inset 0 0 0 2px rgba(var(--opRGB), .78), 0 0 14px rgba(var(--opRGB), .18) !important;
+      /* LP/OP is LED-only. Text color is driven by Status. */
+
+    }
+.statusWrap{ display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; }
     .basisTag{
       display:inline-flex; align-items:center; justify-content:center;
       padding:2px 8px;
@@ -282,9 +398,12 @@
       letter-spacing:.3px;
       line-height:1.2;
     }
-    .basisTag.lp{ border-color: rgba(53,211,255,.45); color: rgba(53,211,255,.95); }
-    .basisTag.op{ border-color: rgba(176,123,255,.45); color: rgba(176,123,255,.95); }
-    .basisTag.na{ border-color: rgba(255,255,255,.18); color: rgba(255,255,255,.70); }
+    .basisTag.lp{ border-color: rgba(53,211,255,.45); /* color inherits from Status */
+      }
+    .basisTag.op{ border-color: rgba(176,123,255,.45); /* color inherits from Status */
+      }
+    .basisTag.na{ border-color: rgba(255,255,255,.18); /* color inherits from Status */
+      }
 
     .note{font-size:12px; color: var(--muted); margin-top:8px; line-height:1.35}
     .split{
@@ -849,6 +968,18 @@
 <div class="tab active" data-rpt="both">IB + OB</div>
 <div class="tab" data-rpt="ib">Inbound only</div>
 <div class="tab" data-rpt="ob">Outbound only</div>
+</div>
+<div class="colorLegend" id="colorLegend">
+  <div class="legendPill lp" title="LP (cyan) color used across LP-highlighted columns">
+    <span class="swatch" id="lpColorSwatch"></span>
+    <span class="k">LP color</span>
+    <span class="v" id="lpColorVal"></span>
+  </div>
+  <div class="legendPill op" title="OP (violet) color used across OP-highlighted columns">
+    <span class="swatch" id="opColorSwatch"></span>
+    <span class="k">OP color</span>
+    <span class="v" id="opColorVal"></span>
+  </div>
 </div>
 <div id="reportOut"></div>
 <div class="note" id="unmatchedNote"></div>
@@ -2514,7 +2645,7 @@ const basisCellClass = (rowClass==="rowGood") ? "basisCellGood" : (rowClass==="r
     tr.className = `${rowClass} ${basisOn==="LP" ? "basisLP" : basisOn==="OP" ? "basisOP" : "basisNA"}`;
 
     const cells = [];
-    cells.push(`<td class="pathCell"><b>${escapeHtml(r.path)}</b></td>`);
+    cells.push(`<td class="pathCell col-path"><b>${escapeHtml(r.path)}</b></td>`);
     if(showMatches){
       const pprTxt = r.foundPpr ? escapeHtml(r.pprMatch || r.ppr || "") : `<span class="badText">NOT FOUND: ${escapeHtml(r.ppr||"")}</span>`;
       const galOk = r.foundGal && (r.gal ? !!r.galMatch : true);
@@ -2528,18 +2659,18 @@ const basisCellClass = (rowClass==="rowGood") ? "basisCellGood" : (rowClass==="r
 
     const cellByCol = (col) => {
       switch(col){
-        case "Actual Rate": return `<td class="right mono ${basisCellClass}">${fmtFixed(r.actRate,1)}</td>`;
+        case "Actual Rate": return `<td class="right mono ${basisCellClass} col-actRate">${fmtFixed(r.actRate,1)}</td>`;
         case "LP Rate": return `<td class="right mono ${basisCellClass} col-lpRate">${fmtFixed(r.lpRate,1)}</td>`;
-        case "Hours to LP": return `<td class="right mono ${basisCellClass}">${fmtSigned(r.hrsToLp,1)}</td>`;
-        case "% to LP": return `<td class="right mono ${basisCellClass}">${pct(r.pctToLp,1)}</td>`;
+        case "Hours to LP": return `<td class="right mono ${basisCellClass} col-hrsToLp">${fmtSigned(r.hrsToLp,1)}</td>`;
+        case "% to LP": return `<td class="right mono ${basisCellClass} col-pctToLp">${pct(r.pctToLp,1)}</td>`;
         case "OP Rate": return `<td class="right mono ${basisCellClass} col-opRate">${fmtFixed(r.opRate,1)}</td>`;
-        case "Hours to OP": return `<td class="right mono ${basisCellClass}">${fmtSigned(r.hrsToOp,1)}</td>`;
-        case "% to OP": return `<td class="right mono ${basisCellClass}">${pct(r.pctToOp,1)}</td>`;
-        case "Volume": return `<td class="right mono ${basisCellClass}">${fmt(r.vol,0)}</td>`;
-        case "Hours": return `<td class="right mono ${basisCellClass}">${fmtFixed(r.hrs,1)}</td>`;
-        case "LP Hours": return `<td class="right mono ${basisCellClass}">${fmtFixed(r.lpHours,1)}</td>`;
-        case "OP Hours": return `<td class="right mono ${basisCellClass}">${fmtFixed(r.opHours,1)}</td>`;
-        case "Status": return `<td class="small ${basisCellClass}">${status}</td>`;
+        case "Hours to OP": return `<td class="right mono ${basisCellClass} col-hrsToOp">${fmtSigned(r.hrsToOp,1)}</td>`;
+        case "% to OP": return `<td class="right mono ${basisCellClass} col-pctToOp">${pct(r.pctToOp,1)}</td>`;
+        case "Volume": return `<td class="right mono ${basisCellClass} col-vol">${fmt(r.vol,0)}</td>`;
+        case "Hours": return `<td class="right mono ${basisCellClass} col-hrs">${fmtFixed(r.hrs,1)}</td>`;
+        case "LP Hours": return `<td class="right mono ${basisCellClass} col-lpHours">${fmtFixed(r.lpHours,1)}</td>`;
+        case "OP Hours": return `<td class="right mono ${basisCellClass} col-opHours">${fmtFixed(r.opHours,1)}</td>`;
+        case "Status": return `<td class="small ${basisCellClass} col-status">${status}</td>`;
         default: return `<td class="right mono ${basisCellClass}"></td>`;
       }
     };
@@ -4432,7 +4563,39 @@ function updateSeriesDatalist(){
   if(document.readyState !== "loading") bindUI();
 })();
 
+
+function _rgbToHex(rgb){
+  if(!rgb) return "";
+  rgb = rgb.trim();
+  if(rgb.startsWith("#")) return rgb.toUpperCase();
+  const m = rgb.match(/rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*([0-9.]+))?\s*\)/i);
+  if(!m) return rgb.toUpperCase();
+  const r = Math.max(0, Math.min(255, Math.round(parseFloat(m[1]))));
+  const g = Math.max(0, Math.min(255, Math.round(parseFloat(m[2]))));
+  const b = Math.max(0, Math.min(255, Math.round(parseFloat(m[3]))));
+  const to2 = (n)=> n.toString(16).padStart(2,"0").toUpperCase();
+  return "#" + to2(r) + to2(g) + to2(b);
+}
+function updateColorLegend(){
+  const cs = getComputedStyle(document.documentElement);
+  const lpRaw = (cs.getPropertyValue("--cyan") || cs.getPropertyValue("--lp") || "").trim();
+  const opRaw = (cs.getPropertyValue("--violet") || cs.getPropertyValue("--op") || "").trim();
+  const lp = _rgbToHex(lpRaw || "#35D3FF");
+  const op = _rgbToHex(opRaw || "#B07BFF");
+
+  const lpVal = document.getElementById("lpColorVal");
+  const opVal = document.getElementById("opColorVal");
+  const lpSw = document.getElementById("lpColorSwatch");
+  const opSw = document.getElementById("opColorSwatch");
+
+  if(lpVal) lpVal.textContent = lp;
+  if(opVal) opVal.textContent = op;
+  if(lpSw) lpSw.style.background = lp;
+  if(opSw) opSw.style.background = op;
+}
+
 tryLoadGalaxyFromCache();
+updateColorLegend();
 // init
 setChips();
 renderTabs();
