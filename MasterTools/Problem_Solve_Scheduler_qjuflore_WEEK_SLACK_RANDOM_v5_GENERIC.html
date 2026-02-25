@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🧩 Problem Solve Scheduler (qjuflore)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg1:#071019; --bg2:#071a2a;
+      --card: rgba(255,255,255,.06);
+      --border: rgba(120,200,255,.22);
+      --text: rgba(245,250,255,.92);
+      --muted: rgba(245,250,255,.65);
+      --good: rgba(100,255,170,.95);
+      --warn: rgba(255,190,80,.95);
+      --bad: rgba(255,110,110,.95);
+      --shadow: 0 14px 50px rgba(0,0,0,.45);
+      --radius: 16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1000px 600px at 10% 10%, rgba(0,220,255,.10), transparent 55%),
+        radial-gradient(900px 600px at 80% 15%, rgba(120,255,200,.08), transparent 55%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+      padding:18px;
+    }
+    header{
+      display:flex; gap:14px; align-items:flex-start; justify-content:space-between;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+    .title{display:flex; flex-direction:column; gap:6px; min-width:280px;}
+    .title h1{
+      margin:0;
+      font-family:'Orbitron', system-ui;
+      letter-spacing:.6px;
+      font-size:18px;
+    }
+    .title .sub{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.2;
+      max-width: 720px;
+    }
+    .kpi{display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:flex-end}
+    .pill{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .pill b{color:var(--text)}
+    .wrap{
+      display:grid;
+      grid-template-columns: 420px 1fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){ .wrap{grid-template-columns: 1fr} }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:12px 14px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .hd .label{
+      font-family:'Orbitron', system-ui;
+      letter-spacing:.45px;
+      font-size:13px;
+    }
+    .hd .hint{ color:var(--muted); font-size:11px; white-space:nowrap; }
+    .card .bd{ padding:14px; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap }
+    .row > *{ flex:1 }
+    textarea, input{
+      width:100%;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      color:var(--text);
+      padding:10px 12px;
+      outline:none;
+    }
+    input[type="date"]{ padding:9px 12px; }
+    textarea{ min-height:170px; resize:vertical; line-height:1.35 }
+    input::placeholder, textarea::placeholder{ color: rgba(245,250,255,.45) }
+    .small{ font-size:12px; color:var(--muted) }
+    .btn{
+      cursor:pointer;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:600;
+      transition: transform .08s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    .btn:hover{ background: rgba(255,255,255,.10); border-color: rgba(0,220,255,.35) }
+    .btn:active{ transform: translateY(1px) }
+    .btn.primary{
+      border-color: rgba(0,220,255,.55);
+      background: rgba(0,220,255,.12);
+    }
+    .btn.danger{
+      border-color: rgba(255,110,110,.55);
+      background: rgba(255,110,110,.10);
+    }
+    .btn.ghost{ background: transparent; }
+    .days{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    .daychip{
+      cursor:pointer;
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      user-select:none;
+      font-size:12px;
+      color:var(--muted);
+      transition: background .12s ease, border-color .12s ease;
+    }
+    .daychip input{ display:none }
+    .daychip.on{
+      border-color: rgba(0,220,255,.50);
+      background: rgba(0,220,255,.10);
+      color: var(--text);
+    }
+    .grid{ display:grid; grid-template-columns: 1fr; gap:12px; }
+    .schedDay{
+      padding:12px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      background: rgba(255,255,255,.04);
+    }
+    .schedDay h3{
+      margin:0 0 8px 0;
+      font-family:'Orbitron', system-ui;
+      font-size:13px;
+      letter-spacing:.4px;
+    }
+    .cols{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
+    @media (max-width: 860px){ .cols{ grid-template-columns:1fr } }
+    .col{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      background: rgba(0,0,0,.15);
+      padding:10px;
+      min-height:120px;
+    }
+    .col .t{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:8px;
+      font-weight:800;
+      font-size:12px;
+    }
+    .tag{
+      font-size:11px; padding:4px 8px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      color:var(--muted);
+    }
+    .tag.good{ border-color: rgba(100,255,170,.35); background: rgba(100,255,170,.10); color: var(--text) }
+    .tag.warn{ border-color: rgba(255,190,80,.35); background: rgba(255,190,80,.10); color: var(--text) }
+    .tag.bad{ border-color: rgba(255,110,110,.35); background: rgba(255,110,110,.10); color: var(--text) }
+    ul{ margin:0; padding-left:18px }
+    li{ margin:4px 0; color: rgba(245,250,255,.9) }
+    .countTable{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.15);
+    }
+    .countTable th, .countTable td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      font-size:12px;
+      text-align:left;
+    }
+    .countTable th{
+      font-family:'Orbitron', system-ui;
+      letter-spacing:.3px;
+      color: rgba(245,250,255,.85);
+      background: rgba(255,255,255,.05);
+    }
+    .countTable tr:last-child td{ border-bottom:none }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace }
+    .toast{
+      position:fixed; left:50%; bottom:14px; transform: translateX(-50%);
+      background: rgba(0,0,0,.75);
+      border:1px solid rgba(0,220,255,.28);
+      padding:10px 14px;
+      border-radius:999px;
+      color: rgba(245,250,255,.92);
+      font-size:12px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.45);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .toast.on{ opacity:1; transform: translateX(-50%) translateY(-2px) }
+    .footer{
+      margin-top:10px;
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+      color: var(--muted);
+      font-size:11px;
+    }
+    .dangerText{ color: var(--bad) }
+    .warnText{ color: var(--warn) }
+    .weekBox{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;
+      margin-top:8px;
+    }
+    .weekBox .field{flex:1; min-width:220px}
+    .weekPreview{
+      margin-top:6px;
+      font-size:12px;
+      color: rgba(245,250,255,.85);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">
+      <h1>🧩 Problem Solve Scheduler</h1>
+      <div class="sub">
+        Add/remove associates with availability • Select days needed • Auto-build 3 before lunch / 3 after lunch / 3 backups • Count how many times each login is scheduled
+      </div>
+
+      <div class="weekBox">
+        <div class="field">
+          <div class="small" style="margin-bottom:6px">Week start date (select the Sunday for that week)</div>
+          <input id="weekStart" type="date"/>
+          <div class="weekPreview" id="weekPreview"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi">
+      <span class="pill">Week: <b id="kWeek">—</b></span>
+      <span class="pill">Days selected: <b id="kDays">0</b></span>
+      <span class="pill">Associates loaded: <b id="kAssoc">0</b></span>
+      <span class="pill">Slots/day: <b>9</b></span>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <section class="card">
+      <div class="hd">
+        <div class="label">⚙️ Setup</div>
+        <div class="hint">Saved locally in your browser</div>
+      </div>
+      <div class="bd">
+        <div class="small">
+          Paste/edit associates using this format (one per line):
+          <div class="mono" style="margin-top:6px; opacity:.9">
+            login | availability<br/>
+            example: berniibe | Sun,Mon,Tue,Wed
+          </div>
+        </div>
+
+        <div style="margin-top:10px">
+          <textarea id="assocInput" spellcheck="false" placeholder="login | Sun,Mon,Tue,Wed
+login2 | Mon,Tue,Thu,Fri
+..."></textarea>
+          <div class="footer">
+            <div class="small">Tip: You can type days as Sun Mon Tue Wed Thu Fri Sat (commas or spaces OK).</div>
+            <div class="row" style="flex:0; gap:8px">
+              <button class="btn ghost" id="btnLoadDefault">Restore saved list</button>
+              <button class="btn danger" id="btnClear">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid rgba(255,255,255,.10); margin:14px 0">
+
+        <div class="row">
+          <div>
+            <div class="small" style="margin-bottom:6px">Days you need schedule</div>
+            <div class="row" style="margin-top:12px; gap:12px; align-items:flex-end; flex-wrap:wrap">
+              <div style="min-width:220px">
+                <div class="small" style="margin-bottom:6px">Assignments per day</div>
+                <div class="row" style="gap:10px; flex-wrap:wrap">
+                  <div style="min-width:150px">
+                    <div class="small" style="opacity:.85; margin-bottom:6px">Before lunch</div>
+                    <input id="cntBefore" type="number" min="0" max="20" step="1" value="3" />
+                  </div>
+                  <div style="min-width:150px">
+                    <div class="small" style="opacity:.85; margin-bottom:6px">After lunch</div>
+                    <input id="cntAfter" type="number" min="0" max="20" step="1" value="3" />
+                  </div>
+                  <div style="min-width:150px">
+                    <div class="small" style="opacity:.85; margin-bottom:6px">Back up</div>
+                    <input id="cntBackup" type="number" min="0" max="20" step="1" value="3" />
+                  </div>
+                </div>
+                <div class="small" style="margin-top:8px; opacity:.85">
+                  Tip: Changing these updates the schedule + Slack output automatically.
+                </div>
+              </div>
+            </div>
+
+            <div class="days" id="daysPicker"></div>
+          </div>
+        </div>
+<div style="margin-top:14px" class="row">
+          <button class="btn primary" id="btnBuild">🎲 Create Random Schedule</button>
+          <button class="btn" id="btnCopySlack">📋 Copy Slack Post</button>
+        </div>
+
+        <div style="margin-top:10px" class="small">
+          Scheduling rules:
+          <ul>
+            <li>Only assigns people who are available on that day.</li>
+            <li>Tries to keep pairs together first.</li>
+            <li>Then fills remaining slots fairly (least-used logins first).</li>
+            <li>Backups are chosen from remaining available people not already assigned that day.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="hd">
+        <div class="label">📅 Output</div>
+        <div class="hint"><span class="mono">Before Lunch • After Lunch • Back Up</span></div>
+      </div>
+      <div class="bd">
+        <div id="scheduleOut" class="grid"></div>
+
+        <div style="margin-top:14px">
+          <div class="row" style="align-items:center; justify-content:space-between">
+            <div class="pill">📊 Usage counts (how many times each associate is scheduled)</div>
+            <div class="small">Counts include Before Lunch + After Lunch + Back Up</div>
+          </div>
+          <div style="margin-top:10px; overflow:auto">
+            <table class="countTable" id="countTable">
+              <thead>
+                <tr>
+                  <th>Login</th>
+                  <th>Assigned Count</th>
+                  <th>Availability</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="margin-top:12px" class="small">
+          <span class="warnText">Note:</span> If there aren’t enough available people for a day, the missing slots will show as <span class="dangerText">NEEDS COVERAGE</span>.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast">Copied ✅</div>
+
+  
+    <section class="card" id="pairingCard" style="margin-top:14px">
+      <div class="hd">
+        <div class="label">🔗 Pairing preferences (optional)</div>
+        <div class="hint"><span class="mono">a+b</span> comma-separated</div>
+      </div>
+      <div class="bd">
+        <input id="pairInput" placeholder="berniibe+crmgonza, gonfanny+sargonzs, agudnath+sjayguer" />
+        <div class="small" style="margin-top:8px">
+          Use format: <span class="mono">a+b</span>. Separate pairs with commas. If a pair isn't available on a selected day, it will be skipped automatically.
+        </div>
+      </div>
+    </section>
+
+
+  <script>
+    const DEFAULT_ASSOC_TEXT =
+`username1 | Sun,Mon,Tue,Wed
+username2 | Mon,Tue,Thu,Fri
+username3 | Sun,Mon,Tue,Wed
+username4 | Mon,Tue,Thu,Fri
+username5 | Sun,Mon,Tue,Wed
+username6 | Mon,Tue,Thu,Fri
+username7 | Sun,Mon,Tue,Wed
+username8 | Mon,Tue,Thu,Fri
+username9 | Sun,Mon,Tue,Wed
+username10 | Thu,Fri,Sat,Sun`;
+
+    const DEFAULT_PAIRS = "username1+username2, username3+username4";
+    const DAY_KEYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    const DAY_LABELS = { Sun:"Sunday", Mon:"Monday", Tue:"Tuesday", Wed:"Wednesday", Thu:"Thursday", Fri:"Friday", Sat:"Saturday" };
+
+    const LS_KEYS = {
+      assoc: "psched.assoc.v2",
+      days: "psched.days.v2",
+      pairs: "psched.pairs.v2",
+      week: "psched.weekStart.v2",
+      counts: "psched.counts.v1"
+    };
+
+    const $ = (id)=>document.getElementById(id);
+
+    function toast(msg="Copied ✅"){
+      const t = $("toast");
+      t.textContent = msg;
+      t.classList.add("on");
+      setTimeout(()=>t.classList.remove("on"), 1200);
+    }
+
+    const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+    function parseISODate(iso){
+      if(!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
+      const [y,m,d] = iso.split("-").map(n=>parseInt(n,10));
+      return new Date(Date.UTC(y, m-1, d, 12, 0, 0));
+    }
+    function addDays(dt, n){
+      const out = new Date(dt.getTime());
+      out.setUTCDate(out.getUTCDate() + n);
+      return out;
+    }
+    function fmtDate(dt){
+      const m = MONTHS[dt.getUTCMonth()];
+      const d = dt.getUTCDate();
+      const y = dt.getUTCFullYear();
+      return `${m} ${d}, ${y}`;
+    }
+    function weekRangeText(startISO){
+      const start = parseISODate(startISO);
+      if(!start) return "—";
+      const end = addDays(start, 6);
+      return `${fmtDate(start)} – ${fmtDate(end)}`;
+    }
+    function updateWeekUI(){
+      const iso = $("weekStart").value;
+      const range = weekRangeText(iso);
+      $("weekPreview").textContent = `Week: ${range}`;
+      $("kWeek").textContent = range;
+    }
+    function persistWeekStart(iso){
+      localStorage.setItem(LS_KEYS.week, iso);
+    }
+
+    function renderDaysPicker(selectedSet){
+      const wrap = $("daysPicker");
+      wrap.innerHTML = "";
+      DAY_KEYS.forEach(k=>{
+        const chip = document.createElement("label");
+        chip.className = "daychip" + (selectedSet.has(k) ? " on" : "");
+        chip.innerHTML = `<input type="checkbox" ${selectedSet.has(k)?"checked":""}>${k} <span style="opacity:.65">(${DAY_LABELS[k]})</span>`;
+        chip.addEventListener("click", (e)=>{
+          e.preventDefault();
+          if(selectedSet.has(k)) selectedSet.delete(k);
+          else selectedSet.add(k);
+          persistDays(selectedSet);
+          renderDaysPicker(selectedSet);
+          updateKPIs();
+        });
+        wrap.appendChild(chip);
+      });
+    }
+
+    function persistAssoc(text){ localStorage.setItem(LS_KEYS.assoc, text); }
+    function persistDays(set){ localStorage.setItem(LS_KEYS.days, JSON.stringify([...set])); }
+    function persistPairs(text){ localStorage.setItem(LS_KEYS.pairs, text); }
+
+    function persistCounts(obj){ localStorage.setItem(LS_KEYS.counts, JSON.stringify(obj)); }
+
+    function clampInt(v, min, max, fallback){
+      const n = parseInt(v, 10);
+      if(Number.isNaN(n)) return fallback;
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function getTargets(){
+      let saved = null;
+      try{ saved = JSON.parse(localStorage.getItem(LS_KEYS.counts) || "null"); }catch(e){ saved = null; }
+      const defaults = { before: 3, after: 3, backup: 3 };
+      const base = (saved && typeof saved === "object") ? { ...defaults, ...saved } : defaults;
+
+      const bEl = $("cntBefore");
+      const aEl = $("cntAfter");
+      const kEl = $("cntBackup");
+
+      const before = clampInt(bEl?.value, 0, 20, base.before);
+      const after  = clampInt(aEl?.value, 0, 20, base.after);
+      const backup = clampInt(kEl?.value, 0, 20, base.backup);
+
+      const t = { before, after, backup };
+
+      if(bEl) bEl.value = t.before;
+      if(aEl) aEl.value = t.after;
+      if(kEl) kEl.value = t.backup;
+
+      persistCounts(t);
+      return t;
+    }
+
+
+    function getSelectedDays(){
+      let days;
+      try{ days = new Set(JSON.parse(localStorage.getItem(LS_KEYS.days) || "[]")); }
+      catch(e){ days = new Set(); }
+      return days;
+    }
+
+    function normalizeDayToken(tok){
+      tok = tok.trim();
+      if(!tok) return null;
+      const t = tok.slice(0,3).toLowerCase();
+      const map = {sun:"Sun", mon:"Mon", tue:"Tue", wed:"Wed", thu:"Thu", fri:"Fri", sat:"Sat"};
+      return map[t] || null;
+    }
+
+    function parseAssoc(text){
+      const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+      const list = [];
+      for(const line of lines){
+        const parts = line.split("|");
+        if(parts.length < 2) continue;
+        const login = parts[0].trim();
+        const daysRaw = parts.slice(1).join("|").trim();
+        const tokens = daysRaw.split(/[, ]+/).map(t=>t.trim()).filter(Boolean);
+        const daySet = new Set();
+        tokens.forEach(t=>{
+          const d = normalizeDayToken(t);
+          if(d) daySet.add(d);
+        });
+        if(login && daySet.size){ list.push({login, days:[...daySet]}); }
+      }
+      const map = new Map();
+      list.forEach(a=>map.set(a.login, a));
+      return [...map.values()];
+    }
+
+    function parsePairs(text){
+      const pairs = [];
+      (text || "").split(",").map(s=>s.trim()).filter(Boolean).forEach(chunk=>{
+        const [a,b] = chunk.split("+").map(x=>x.trim());
+        if(a && b) pairs.push([a,b]);
+      });
+      return pairs;
+    }
+
+    function updateKPIs(){
+      const targets = getTargets();
+      const assoc = parseAssoc($("assocInput").value);
+      $("kAssoc").textContent = assoc.length.toString();
+      const days = getSelectedDays();
+      $("kDays").textContent = days.size.toString();
+      updateWeekUI();
+    }
+
+    function loadSaved(){
+      const assoc = localStorage.getItem(LS_KEYS.assoc) || DEFAULT_ASSOC_TEXT;
+      const pairs = localStorage.getItem(LS_KEYS.pairs) || DEFAULT_PAIRS;
+
+      let days;
+      try{ days = new Set(JSON.parse(localStorage.getItem(LS_KEYS.days) || "[]")); }
+      catch(e){ days = new Set(); }
+      if(days.size === 0){ ["Sun","Mon","Tue","Wed"].forEach(d=>days.add(d)); }
+      // Persist defaults so Build Schedule can read them
+      persistDays(days);
+
+      const savedWeek = localStorage.getItem(LS_KEYS.week) || "2026-02-15";
+
+      $("assocInput").value = assoc;
+      $("pairInput").value = pairs;
+      $("weekStart").value = savedWeek;
+
+      renderDaysPicker(days);
+      getTargets(); // load saved counts
+
+      updateKPIs();
+    }
+
+
+    // --- Random helper (seeded) so every click can produce a different (but fair) schedule ---
+    function newSeed(){
+      // crypto-grade randomness when available; fallback to Math.random
+      try{
+        const buf = new Uint32Array(2);
+        crypto.getRandomValues(buf);
+        return (buf[0] ^ (buf[1] << 1) ^ Date.now()) >>> 0;
+      }catch(e){
+        return ((Math.random()*0xFFFFFFFF) ^ Date.now()) >>> 0;
+      }
+    }
+    function mulberry32(a){
+      return function(){
+        let t = a += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      }
+    }
+    function shuffleInPlace(arr, rng){
+      for(let i=arr.length-1;i>0;i--){
+        const j = Math.floor(rng()*(i+1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+    function pickFairRandom(remaining, counts, rng){
+      if(!remaining.length) return null;
+      let min = Infinity;
+      for(const x of remaining){
+        const c = counts.get(x) || 0;
+        if(c < min) min = c;
+      }
+      const candidates = remaining.filter(x => (counts.get(x)||0) === min);
+      shuffleInPlace(candidates, rng);
+      return candidates[0] || null;
+    }
+
+    function buildSchedule(assocList, selectedDays, pairs, rng, targets){
+      const availByDay = new Map();
+      DAY_KEYS.forEach(d=>{
+        const avail = assocList.filter(a=>a.days.includes(d)).map(a=>a.login);
+        availByDay.set(d, avail);
+      });
+
+      const counts = new Map();
+      assocList.forEach(a=>counts.set(a.login, 0));
+
+      const schedule = {};
+      const missing = {};
+
+      for(const d of DAY_KEYS){
+        if(!selectedDays.has(d)) continue;
+
+        const available = [...(availByDay.get(d) || [])]; // keep original order; we randomize fairly at pick-time
+        const usedToday = new Set();
+        const before = [];
+        const after = [];
+        const backup = [];
+
+        function pick(login, bucket){
+          if(!login) return false;
+          if(usedToday.has(login)) return false;
+          if(!available.includes(login)) return false;
+          bucket.push(login);
+          usedToday.add(login);
+          counts.set(login, (counts.get(login)||0) + 1);
+          return true;
+        }
+
+        // Place preferred pairs first when possible (bucket choice randomized so each click can differ)
+        for(const [a,b] of pairs){
+          if(!available.includes(a) || !available.includes(b)) continue;
+          if(usedToday.has(a) || usedToday.has(b)) continue;
+
+          const buckets = [];
+          if(before.length <= Math.max(0, targets.before-2)) buckets.push(before);
+          if(after.length <= Math.max(0, targets.after-2)) buckets.push(after);
+          shuffleInPlace(buckets, rng);
+
+          for(const bucket of buckets){
+            if(bucket.length <= Math.max(0, (bucket===before?targets.before:targets.after) - 2) && !usedToday.has(a) && !usedToday.has(b)){
+              const okA = pick(a, bucket);
+              const okB = pick(b, bucket);
+              if(okA && okB) break;
+
+              // rollback partial
+              if(okA && !okB){
+                bucket.pop(); usedToday.delete(a);
+                counts.set(a, (counts.get(a)||1) - 1);
+              }
+              if(okB && !okA){
+                bucket.pop(); usedToday.delete(b);
+                counts.set(b, (counts.get(b)||1) - 1);
+              }
+            }
+          }
+        }
+
+        function fill(bucket, targetSize){
+          while(bucket.length < targetSize){
+            const remaining = available.filter(x=>!usedToday.has(x));
+            const choice = pickFairRandom(remaining, counts, rng);
+            if(!choice) break;
+            pick(choice, bucket);
+          }
+        }
+
+        fill(before, targets.before);
+        fill(after, targets.after);
+
+        while(backup.length < targets.backup){
+          const remaining = available.filter(x=>!usedToday.has(x));
+          const choice = pickFairRandom(remaining, counts, rng);
+          if(!choice) break;
+          pick(choice, backup);
+        }
+
+        missing[d] = {
+          before: Math.max(0, targets.before - before.length),
+          after: Math.max(0, targets.after - after.length),
+          backup: Math.max(0, targets.backup - backup.length),
+        };
+
+        schedule[d] = {before, after, backup};
+      }
+
+      return {schedule, counts, missing};
+    }
+
+    function renderSchedule(result, assocList, selectedDays){
+      const out = $("scheduleOut");
+      out.innerHTML = "";
+
+      const {schedule, missing} = result;
+      const selectedOrder = DAY_KEYS.filter(d=>selectedDays.has(d));
+
+      if(selectedOrder.length === 0){
+        out.innerHTML = `<div class="small">Select at least one day to generate a schedule.</div>`;
+        return;
+      }
+
+      function renderListOrNeeds(list, miss){
+        const items = [...list];
+        for(let i=0;i<miss;i++) items.push("NEEDS COVERAGE");
+        return items.map(x=>{
+          if(x === "NEEDS COVERAGE") return `<li class="dangerText"><b>${x}</b></li>`;
+          return `<li>${x}</li>`;
+        }).join("");
+      }
+
+      function buildCol(name, list, miss){
+        const col = document.createElement("div");
+        col.className = "col";
+        const statusTag =
+          miss === 0 ? `<span class="tag good">OK</span>` :
+          miss === 1 ? `<span class="tag warn">Missing 1</span>` :
+                       `<span class="tag bad">Missing ${miss}</span>`;
+        col.innerHTML = `
+          <div class="t">
+            <div>${name}</div>
+            ${statusTag}
+          </div>
+          <ul>${renderListOrNeeds(list, miss)}</ul>
+        `;
+        return col;
+      }
+
+      for(const d of selectedOrder){
+        const dayBlock = document.createElement("div");
+        dayBlock.className = "schedDay";
+
+        const title = document.createElement("h3");
+        title.textContent = `${DAY_LABELS[d]} (${d})`;
+        dayBlock.appendChild(title);
+
+        const cols = document.createElement("div");
+        cols.className = "cols";
+
+        const targets = getTargets();
+        const day = schedule[d] || {before:[], after:[], backup:[]};
+        cols.appendChild(buildCol(`Before Lunch (${targets.before})`, day.before, missing[d]?.before ?? targets.before));
+        cols.appendChild(buildCol(`After Lunch (${targets.after})`, day.after, missing[d]?.after ?? targets.after));
+        cols.appendChild(buildCol(`Back Up (${targets.backup})`, day.backup, missing[d]?.backup ?? targets.backup));
+
+        dayBlock.appendChild(cols);
+        out.appendChild(dayBlock);
+      }
+
+      const tbody = document.querySelector("#countTable tbody");
+      tbody.innerHTML = "";
+
+      const counts = result.counts;
+      const rows = assocList.map(a=>({
+        login: a.login,
+        count: counts.get(a.login) || 0,
+        avail: a.days.map(d=>DAY_LABELS[d] || d).join(", ")
+      })).sort((r1,r2)=> (r2.count - r1.count) || r1.login.localeCompare(r2.login));
+
+      for(const r of rows){
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="mono">${r.login}</td>
+          <td><b>${r.count}</b></td>
+          <td class="small">${r.avail}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    function buildSlackPost(result, selectedDays){
+      const selectedOrder = DAY_KEYS.filter(d=>selectedDays.has(d));
+      const {schedule, missing} = result;
+
+      const weekText = weekRangeText($("weekStart").value);
+
+      const lines = [];
+      lines.push("@channel");
+      lines.push(`*📋 Problem Solve Schedule*`);
+      lines.push(`*Week:* ${weekText}`);
+      lines.push(`Selected days: *${selectedOrder.map(d=>DAY_LABELS[d]).join(", ")}*`);
+      lines.push("");
+      lines.push("We will run:");
+      lines.push("• *3* before lunch");
+      lines.push("• *3* after lunch");
+      lines.push("• *3* backups (as needed)");
+      lines.push("");
+
+      for(const d of selectedOrder){
+        const targets = getTargets();
+        const day = schedule[d] || {before:[], after:[], backup:[]};
+        const m = missing[d] || {before:3, after:3, backup:3};
+
+        const fmt = (arr, miss) => {
+          const a = [...arr];
+          for(let i=0;i<miss;i++) a.push("_NEEDS COVERAGE_");
+          return a.map(x=> x === "_NEEDS COVERAGE_" ? x : `\`${x}\``).join(", ");
+        };
+
+        lines.push(`*${DAY_LABELS[d]}*`);
+        lines.push(`• Before Lunch: ${fmt(day.before, m.before)}`);
+        lines.push(`• After Lunch: ${fmt(day.after, m.after)}`);
+        lines.push(`• Back Up: ${fmt(day.backup, m.backup)}`);
+        lines.push("");
+      }
+
+            return lines.join("\n");
+    }
+
+    let lastResult = null;
+
+    document.getElementById("btnLoadDefault").addEventListener("click", ()=>{
+      const savedAssoc = localStorage.getItem(LS_KEYS.assoc);
+      const savedPairs = localStorage.getItem(LS_KEYS.pairs);
+
+      const assocText = (savedAssoc && savedAssoc.trim().length) ? savedAssoc : DEFAULT_ASSOC_TEXT;
+      const pairText  = (savedPairs && savedPairs.trim().length) ? savedPairs : DEFAULT_PAIRS;
+
+      document.getElementById("assocInput").value = assocText;
+      document.getElementById("pairInput").value = pairText;
+
+      // persist back (so the UI state is always the truth)
+      persistAssoc(assocText);
+      persistPairs(pairText);
+
+      toast((savedAssoc && savedAssoc.trim().length) ? "Restored ✅" : "Loaded default ✅");
+      updateKPIs();
+    });
+
+    document.getElementById("btnClear").addEventListener("click", ()=>{
+      document.getElementById("assocInput").value = "";
+      persistAssoc("");
+      toast("Cleared");
+      updateKPIs();
+    });
+
+    document.getElementById("assocInput").addEventListener("input", ()=>{
+      persistAssoc(document.getElementById("assocInput").value);
+      updateKPIs();
+    });
+
+    document.getElementById("pairInput").addEventListener("input", ()=>{
+      persistPairs(document.getElementById("pairInput").value);
+    });
+
+
+    ["cntBefore","cntAfter","cntBackup"].forEach(id=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.addEventListener("input", ()=>{
+        getTargets(); // clamps + persists
+        if(lastResult){
+          // rebuild so UI + Slack stay synchronized with target counts
+          document.getElementById("btnBuild").click();
+        }else{
+          updateKPIs();
+        }
+      });
+    });
+
+    document.getElementById("weekStart").addEventListener("input", ()=>{
+      persistWeekStart(document.getElementById("weekStart").value);
+      updateWeekUI();
+    });
+
+    document.getElementById("btnBuild").addEventListener("click", ()=>{
+      const assocList = parseAssoc(document.getElementById("assocInput").value);
+      const selectedDays = getSelectedDays();
+      const pairs = parsePairs(document.getElementById("pairInput").value);
+
+      if(assocList.length === 0){
+        toast("Add associates first");
+        document.getElementById("scheduleOut").innerHTML =
+          `<div class="small"><span class="dangerText">No associates loaded.</span> Paste logins + availability on the left.</div>`;
+        return;
+      }
+
+      const seed = newSeed();
+      const rng = mulberry32(seed);
+      const targets = getTargets();
+      const res = buildSchedule(assocList, selectedDays, pairs, rng, targets);
+      lastResult = {res, assocList, selectedDays};
+      renderSchedule(res, assocList, selectedDays);
+      toast("Random schedule created ✅");
+    });
+
+    document.getElementById("btnCopySlack").addEventListener("click", async ()=>{
+      if(!lastResult){ document.getElementById("btnBuild").click(); }
+      if(!lastResult) return;
+
+      const slack = buildSlackPost(lastResult.res, lastResult.selectedDays);
+      try{
+        await navigator.clipboard.writeText(slack);
+        toast("Slack post copied ✅");
+      }catch(e){
+        const ta = document.createElement("textarea");
+        ta.value = slack;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+        toast("Slack post copied ✅");
+      }
+    });
+
+    (function init(){
+      loadSaved();
+      updateWeekUI();
+      setTimeout(()=>document.getElementById("btnBuild").click(), 250);
+    })();
+  </script>
+</body>
+</html>
