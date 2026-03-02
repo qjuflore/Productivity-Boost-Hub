@@ -188,6 +188,7 @@
       justify-content:flex-end;
       align-items:center;
       gap:10px;
+      flex-wrap:wrap;
       margin: -2px 0 10px 0;
       padding: 0 2px;
     }
@@ -233,6 +234,24 @@
     .legendPill.op .swatch{
       background: var(--violet);
       box-shadow: 0 0 0 1px rgba(var(--opRGB), .35), 0 0 14px rgba(var(--opRGB), .30);
+    }
+
+    .legendPill.pprMeta{
+      border-color: rgba(60,255,177,.28);
+      box-shadow: inset 0 0 0 1px rgba(60,255,177,.18), 0 0 14px rgba(60,255,177,.08);
+      color: rgba(255,255,255,.94);
+      max-width: min(100%, 560px);
+    }
+    .legendPill.pprMeta .swatch{
+      background: linear-gradient(135deg, rgba(60,255,177,.95), rgba(53,211,255,.95));
+      box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 0 10px rgba(53,211,255,.20);
+    }
+    .legendPill.pprMeta .k{ color: rgba(60,255,177,.92); }
+    .legendPill.pprMeta .v{
+      max-width: 430px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     table{
@@ -385,18 +404,40 @@
       /* LP/OP is LED-only. Text color is driven by Status. */
 
     }
-.statusWrap{ display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.statusWrap{ display:inline-flex; align-items:center; gap:4px; flex-wrap:nowrap; white-space:nowrap; min-width:0; max-width:100%; line-height:1; }
+    .basisPct{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-family: var(--mono);
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.15px;
+      line-height:1;
+    }
+    .bridgeFlag{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.28px;
+      line-height:1;
+    }
+    .bridgeOk{ color: rgba(60,255,177,.96) !important; text-shadow: 0 0 10px rgba(60,255,177,.18); }
+    .bridgeNeed{ color: rgba(255,77,109,.98) !important; text-shadow: 0 0 10px rgba(255,77,109,.18); }
+    .bridgeNA{ color: rgba(255,255,255,.60) !important; text-shadow: none; }
     .basisTag{
       display:inline-flex; align-items:center; justify-content:center;
-      padding:2px 8px;
+      padding:1px 6px;
       border-radius:999px;
       border:1px solid var(--border);
       background: rgba(0,0,0,.18);
       font-family: var(--mono);
-      font-size:11px;
+      font-size:10px;
       font-weight:900;
-      letter-spacing:.3px;
-      line-height:1.2;
+      letter-spacing:.26px;
+      line-height:1.05;
     }
     .basisTag.lp{ border-color: rgba(53,211,255,.45); /* color inherits from Status */
       }
@@ -509,23 +550,23 @@
     /* ===== Compact / Focus modes (reduce empty space) ===== */
     body.compact{ padding:10px; }
     body.compact .grid{ gap:10px; }
-    body.compact .cardHead{ padding:10px 12px; gap:10px; }
-    body.compact .cardBody{ padding:10px 12px; }
-    body.compact h1{ font-size:20px; margin-bottom:4px; }
+    body.compact .cardHead{ padding:8px 10px; gap:8px; }
+    body.compact .cardBody{ padding:8px 10px; }
+    body.compact h1{ font-size:18px; margin-bottom:2px; }
     body.compact .sub{ display:none; }
-    body.compact .row{ gap:8px; }
-    body.compact .field{ min-width: 160px; gap:5px; }
+    body.compact .row{ gap:6px; }
+    body.compact .field{ min-width: 148px; gap:4px; }
     body.compact input[type="file"], body.compact select, body.compact input[type="text"], body.compact input[type="number"]{
-      padding:8px 10px;
-      font-size:12px;
+      padding:7px 9px;
+      font-size:11.5px;
     }
-    body.compact .btn{ padding:8px 10px; font-size:12px; }
-    body.compact .note{ padding:8px 10px; font-size:12px; }
+    body.compact .btn{ padding:7px 9px; font-size:11.5px; }
+    body.compact .note{ padding:7px 9px; font-size:11.5px; }
     body.compact .kpiGrid{ grid-template-columns: repeat(6, minmax(0,1fr)); gap:6px; }
     @media (max-width: 980px){ body.compact .kpiGrid{ grid-template-columns: repeat(3, minmax(0,1fr)); } }
-    body.compact .kpi{ padding:7px 8px; border-radius: 12px; }
-    body.compact .kpi .v{ font-size:14px; margin-top:4px; }
-    body.compact .hr{ margin:10px 0; }
+    body.compact .kpi{ padding:6px 7px; border-radius: 10px; }
+    body.compact .kpi .v{ font-size:13px; margin-top:3px; }
+    body.compact .hr{ margin:8px 0; }
 
     /* Essentials columns mode (Compact report columns) */
     body.colsEssential .reportTable{ min-width: 0; table-layout: fixed; }
@@ -543,11 +584,12 @@
       cursor: help;
     }
     body.colsEssential .reportTable th.right{ width: 92px; }
-    body.colsEssential .reportTable th.small{ width: 120px; }
+    body.colsEssential .reportTable th.small{ width: 190px; }
+    body.colsEssential .reportTable td.col-status{ overflow: visible; text-overflow: clip; }
     body.colsEssential td.pathCell{ white-space: normal; overflow: visible; }
 
 /* Compact table density + better fit */
-    body.compact th, body.compact td{ padding:6px 8px; font-size:12px; }
+    body.compact th, body.compact td{ padding:5px 6px; font-size:11.5px; }
     body.compact table{ min-width: 0; table-layout: fixed; }
     body.compact .cfgTable{ min-width: 0; }
     body.compact .reportTable{ min-width: 0; }
@@ -555,10 +597,15 @@
       overflow:hidden; text-overflow: ellipsis;
     }
     body.compact td.pathCell{ white-space: normal; overflow: visible; }
-    body.compact .reportTable th.right{ width: 86px; }
-    body.compact .reportTable th.small{ width: 110px; }
-    body.compact .reportTable th:first-child{ width: 220px; }
+    body.compact .reportTable th.right{ width: 78px; }
+    body.compact .reportTable th.small{ width: 190px; }
+    body.compact .reportTable th:first-child{ width: 190px; }
     body.compact .cfgTable th:first-child{ width: 220px; }
+    body.compact .reportTable td.col-status{ overflow: visible; text-overflow: clip; }
+    body.compact .statusWrap{ gap:3px; }
+    body.compact .basisPct{ font-size:10px; }
+    body.compact .bridgeFlag{ font-size:9px; letter-spacing:.18px; }
+    body.compact .basisTag{ padding:1px 4px; font-size:9px; }
 
     /* Focus report: hide setup + mapping to avoid scrolling */
     body.focus #uploadCard{ display:none; }
@@ -595,8 +642,15 @@
     .reportTable td{
       border-right: 1px solid var(--gridV);
       border-bottom: 1px solid var(--gridH);
-      font-size: 13.5px;
-      line-height: 1.25;
+      padding: 7px 8px;
+      font-size: 12.25px;
+      line-height: 1.10;
+    }
+    body.compact .reportTable th,
+    body.compact .reportTable td{
+      padding: 4px 6px;
+      font-size: 11px;
+      line-height: 1;
     }
     .reportTable th{
       box-shadow: 0 8px 18px rgba(0,0,0,.22);
@@ -834,7 +888,7 @@
 <div class="card" id="uploadCard">
 <div class="cardHead">
 <div>
-<h1>IB / OB Metrics Report Builder</h1><div class="mini" style="margin-top:-6px;color:rgba(255,255,255,.65)">Update: separated columns + horizontal table scroll (IB/OB mapping + report tables) + explicit PPR/Galaxy match columns + Super‑exact mapping (no forced ETI+STP merge for IB Total) + KPI breakdown for ETI and STP</div>
+<h1>IB / OB Metrics Report Builder</h1>
 <p class="sub">
             Upload <span class="mono">GalaxyBI LP Rate Forecast</span> + <span class="mono">Process Path Rollup (PPR)</span> CSVs, then build an Excel-aligned report.
             Includes editable mapping tables for <b>Inbound</b> and <b>Outbound</b> (saved in your browser).
@@ -980,6 +1034,11 @@
     <span class="k">OP color</span>
     <span class="v" id="opColorVal"></span>
   </div>
+  <div class="legendPill pprMeta" id="reportPprMeta" title="PPR date/time window currently loaded for the report">
+    <span class="swatch"></span>
+    <span class="k">PPR used</span>
+    <span class="v" id="reportPprMetaVal">—</span>
+  </div>
 </div>
 <div id="reportOut"></div>
 <div class="note" id="unmatchedNote"></div>
@@ -1112,18 +1171,6 @@
             </div>
 </div>
 <div>
-<div class="warnBox">
-<b>Why numbers were “wrong” before</b><br/>
-              Most mismatches come from (1) selecting the wrong PPR report filter, (2) line item names not matching exactly,
-              or (3) OP rate coming back as 0 when a “Total” line has no plan productivity.
-              <br/><br/>
-              This version fixes that by:
-              <ul style="margin:6px 0 0 18px; padding:0">
-<li>Exact matching (no smart/fuzzy) + clear NOT FOUND flags</li>
-<li>Safe fallbacks for OP rate (if 0 or missing)</li>
-<li>Separate editable IB and OB mapping tables</li>
-</ul>
-</div>
 <div class="hr"></div>
 <div class="field">
 <label>Paste config JSON here (for import)</label>
@@ -2638,7 +2685,13 @@ for(const r of tableObj.rows){
     const basisTag = (basisOn==="LP") ? `<span class="basisTag lp">LP</span>` :
                      (basisOn==="OP") ? `<span class="basisTag op">OP</span>` :
                      `<span class="basisTag na">N/A</span>`;
-    const status = `<span class="statusWrap">${statusLabel}${basisTag}</span>`;
+    const basisPctText = `<span class="basisPct mono">${basisPct===null ? "N/A" : pct(basisPct,1)}</span>`;
+    const bridgeFlag = (basisPct===null)
+      ? `<span class="bridgeFlag bridgeNA">BRIDGE N/A</span>`
+      : (basisPct>=0.98)
+        ? `<span class="bridgeFlag bridgeOk">NO BRIDGE</span>`
+        : `<span class="bridgeFlag bridgeNeed">BRIDGE NEEDED</span>`;
+    const status = `<span class="statusWrap">${statusLabel}${basisTag}${basisPctText}${bridgeFlag}</span>`;
 const basisCellClass = (rowClass==="rowGood") ? "basisCellGood" : (rowClass==="rowBad") ? "basisCellBad" : "basisCellWarn";
     const tr = document.createElement("tr");
 
@@ -3254,16 +3307,32 @@ updateGalaxyCacheUI();
       `</div>`;
   }
 
+  function nudgeLatestDateSuggestion(){
+    if(!elDate) return;
+    const suggested = autoShiftStartDate(nowPacific(), elShift.value, elFlow.value);
+    const nextVal = fmtYMDdash(suggested);
+    if(elDate.value !== nextVal){
+      elDate.value = nextVal;
+      try{ localStorage.setItem(LS_DATE, elDate.value); }catch(e){}
+    }
+    update(true);
+  }
+
   // Auto-update on changes
   elShift.addEventListener("change", () => update(true));
   elFlow.addEventListener("change",  () => update(true));
-  if(elDate) elDate.addEventListener("change", () => update(true));
+  if(elDate){
+    elDate.addEventListener("change", () => update(true));
+    // When you click/focus the date box, suggest the latest shift-start date first.
+    elDate.addEventListener("mousedown", nudgeLatestDateSuggestion);
+    elDate.addEventListener("focus", nudgeLatestDateSuggestion);
+  }
   if(btnUpd) btnUpd.addEventListener("click", () => {
     // Apply selections and trigger a SINGLE auto-import cycle (no double-open).
     if(btnUpd.dataset.busy === "1") return;
     btnUpd.dataset.busy = "1";
 
-    // Recalculate dates/times
+    // Recalculate dates/times without forcing a new date
     update(true);
 
     // Visual confirmation that Apply was clicked
@@ -4034,10 +4103,11 @@ updateGalaxyCacheUI();
   }
 
   function fmtWindowShort(start, end){
-    // e.g., 01/28 6:00 PM–01/29 4:30 AM PT
+    // e.g., 6:00 PM–4:30 AM • 01/28–01/29 PT
     const sd = pad2(start.getMonth()+1)+"/"+pad2(start.getDate());
     const ed = pad2(end.getMonth()+1)+"/"+pad2(end.getDate());
-    return `${sd} ${fmtNiceClock(start)}–${ed} ${fmtNiceClock(end)} PT`;
+    const datePart = (sd===ed) ? sd : `${sd}–${ed}`;
+    return `${fmtNiceClock(start)}–${fmtNiceClock(end)} • ${datePart} PT`;
   }
 
   function markPprImported(range, sourceLabel){
@@ -4113,6 +4183,40 @@ updateGalaxyCacheUI();
   }
 
 
+function updateReportPprMetaBadge(){
+  const wrap = document.getElementById("reportPprMeta");
+  const val = document.getElementById("reportPprMetaVal");
+  if(!wrap || !val) return;
+
+  if(rt.lastImportRange && rt.lastImportRange.start && rt.lastImportRange.end){
+    const s = new Date(Number(rt.lastImportRange.start));
+    const e = new Date(Number(rt.lastImportRange.end));
+    val.textContent = fmtWindowShort(s, e);
+
+    const extra = [];
+    if(rt.lastImportAt){
+      const d = new Date(rt.lastImportAt);
+      extra.push(`Imported: ${fmtYMDslash(d)} ${fmtNiceClock(d)} PT`);
+    }
+    if(rt.lastImportRange.shiftLabel) extra.push("Shift: " + rt.lastImportRange.shiftLabel);
+    if(rt.lastImportRange.flowLabel)  extra.push("Flow: " + rt.lastImportRange.flowLabel);
+    if(rt.lastImportRange.source)     extra.push("Source: " + rt.lastImportRange.source);
+
+    wrap.title = `PPR window (PT): ${fmtYMDslash(s)} ${fmtNiceClock(s)} → ${fmtYMDslash(e)} ${fmtNiceClock(e)} PT` + (extra.length ? ("\n" + extra.join(" | ")) : "");
+    return;
+  }
+
+  if(rt.lastImportAt){
+    const d = new Date(rt.lastImportAt);
+    val.textContent = "Imported " + fmtYMDslash(d) + " " + fmtNiceClock(d) + " PT";
+    wrap.title = `Last successful PPR import (PT): ${fmtYMDslash(d)} ${fmtNiceClock(d)} PT`;
+    return;
+  }
+
+  val.textContent = "—";
+  wrap.title = "Load or import a PPR CSV to show the exact date/time window used by the report.";
+}
+
 function updateRtBadges(){
     const dot = document.getElementById("rtDot");
     const st  = document.getElementById("rtStatusText");
@@ -4178,6 +4282,8 @@ function updateRtBadges(){
         next.title = "";
       }
     }
+
+    updateReportPprMetaBadge();
   }
 
   function setRtError(msg){
