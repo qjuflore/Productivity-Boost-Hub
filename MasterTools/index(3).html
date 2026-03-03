@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Printmon Neo</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(17, 25, 47, 0.9);
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #eef4ff;
+      --muted: #9fb0d1;
+      --accent: #ff9900;
+      --good: #23c483;
+      --warn: #ffb020;
+      --bad: #ff6b6b;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(255, 153, 0, 0.12), transparent 28%),
+        radial-gradient(circle at top left, rgba(35, 196, 131, 0.08), transparent 24%),
+        linear-gradient(180deg, #08101f, #0b1020 38%, #0c1325 100%);
+      color: var(--text);
+    }
+
+    body { padding: 20px; }
+
+    .shell {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(255,153,0,0.12), rgba(255,255,255,0.03));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .accent {
+      color: var(--accent);
+      text-shadow: 0 0 24px rgba(255, 153, 0, 0.25);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--warn);
+      box-shadow: 0 0 12px rgba(255, 176, 32, 0.45);
+    }
+
+    .dot.ok {
+      background: var(--good);
+      box-shadow: 0 0 12px rgba(35, 196, 131, 0.45);
+    }
+
+    .grid-main {
+      display: grid;
+      grid-template-columns: minmax(320px, 400px) 1fr;
+      gap: 18px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 15px 18px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+
+    .card-body { padding: 18px; }
+
+    .field { margin-bottom: 14px; }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+
+    input[type="text"], input[type="number"], textarea {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      padding: 12px 14px;
+      font: inherit;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    textarea:focus {
+      border-color: rgba(255,153,0,0.55);
+      box-shadow: 0 0 0 4px rgba(255,153,0,0.12);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 180px;
+      line-height: 1.45;
+    }
+
+    .row,
+    .row-3 {
+      display: grid;
+      gap: 12px;
+    }
+
+    .row { grid-template-columns: 1fr 1fr; }
+    .row-3 { grid-template-columns: repeat(3, 1fr); }
+
+    .checks {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--muted);
+      user-select: none;
+      cursor: pointer;
+    }
+
+    .check input { accent-color: var(--accent); }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: 14px;
+      padding: 11px 14px;
+      font: inherit;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      color: #1a2238;
+      background: linear-gradient(180deg, #ffd27a, #ffb22e);
+      box-shadow: 0 12px 25px rgba(255,153,0,0.18);
+      transition: transform .12s ease, box-shadow .15s ease, filter .15s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+      box-shadow: 0 16px 30px rgba(255,153,0,0.22);
+    }
+
+    .btn:active { transform: translateY(0); }
+
+    .btn.secondary {
+      background: linear-gradient(180deg, #f2f5fb, #dfe6f4);
+      color: #1f2a44;
+      box-shadow: none;
+    }
+
+    .btn.ghost {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid var(--line);
+      box-shadow: none;
+    }
+
+    .btn.good {
+      background: linear-gradient(180deg, #6fe3b7, #23c483);
+      color: #082517;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(280px, 1fr));
+      gap: 18px;
+    }
+
+    .panel-block {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.03);
+      overflow: hidden;
+    }
+
+    .panel-block h3 {
+      margin: 0;
+      padding: 14px 16px;
+      font-size: 15px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,0.025);
+    }
+
+    .panel-block .inner { padding: 14px; }
+
+    .button-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .button-cloud .btn {
+      flex: 1 1 auto;
+      min-width: 160px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .log-list {
+      display: grid;
+      gap: 10px;
+      max-height: 320px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .log-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.04);
+      font-size: 13px;
+    }
+
+    .log-tag {
+      font-size: 11px;
+      font-weight: 900;
+      padding: 5px 8px;
+      border-radius: 999px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .log-tag.ok { background: rgba(35,196,131,.15); color: #7df2c6; }
+    .log-tag.fail { background: rgba(255,107,107,.15); color: #ffc2c2; }
+    .log-tag.preview { background: rgba(255,176,32,.12); color: #ffd78a; }
+    .log-tag.idle { background: rgba(159,176,209,.12); color: #c9d6ee; }
+
+    .log-meta {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .toast-wrap {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      gap: 10px;
+      z-index: 9999;
+      width: min(420px, calc(100vw - 32px));
+    }
+
+    .toast {
+      border-radius: 16px;
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #fff;
+      background: rgba(14, 20, 35, 0.92);
+      backdrop-filter: blur(10px);
+      font-size: 14px;
+      line-height: 1.45;
+      transform: translateY(8px);
+      opacity: 0;
+      animation: toastIn .18s ease forwards;
+    }
+
+    .toast.ok { border-color: rgba(35,196,131,.25); }
+    .toast.warn { border-color: rgba(255,176,32,.25); }
+    .toast.bad { border-color: rgba(255,107,107,.25); }
+
+    @keyframes toastIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.58);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 18px;
+    }
+
+    .overlay.show { display: flex; }
+
+    .modal {
+      width: min(520px, 100%);
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(20,29,53,.97), rgba(11,16,32,.98));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .modal .body { padding: 20px; }
+
+    @media (max-width: 1180px) {
+      .grid-main,
+      .quick-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 700px) {
+      body { padding: 14px; }
+      .row,
+      .row-3 { grid-template-columns: 1fr; }
+      .hero { padding: 16px; }
+      .button-cloud .btn { min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <h1><span class="accent">Printmon</span> Neo</h1>
+      <div class="hero-actions">
+        <div class="badge-pill">
+          <span id="bridgeDot" class="dot"></span>
+          <span id="bridgeState">Bridge idle</span>
+        </div>
+        <div class="badge-pill" id="identityBadge">No badge</div>
+        <button class="btn ghost" type="button" id="openIdentityBtn">Badge / Login</button>
+        <button class="btn ghost" type="button" id="testBridgeBtn">Test Bridge</button>
+      </div>
+    </section>
+
+    <section class="grid-main">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Custom Label Printer</h2>
+        </div>
+        <div class="card-body">
+          <div class="checks">
+            <label class="check"><input type="checkbox" id="printafter" checked> Print after scanning</label>
+            <label class="check"><input type="checkbox" id="jumptoq"> Jump to quantity</label>
+            <label class="check"><input type="checkbox" id="nowhitespace" checked> Trim whitespace</label>
+            <label class="check"><input type="checkbox" id="previewMode"> Preview if bridge fails</label>
+          </div>
+
+          <div class="field">
+            <label for="barcodedata">Barcode Data</label>
+            <input id="barcodedata" maxlength="43" type="text" />
+          </div>
+
+          <div class="field">
+            <label for="displaytext">Display Text</label>
+            <input id="displaytext" maxlength="43" type="text" />
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label for="quantity">Quantity</label>
+              <input id="quantity" type="number" min="1" max="500" value="1" />
+            </div>
+            <div class="field">
+              <label for="bridgeUrl">Bridge URL</label>
+              <input id="bridgeUrl" type="text" value="http://localhost:5965" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn" type="button" id="printLabelBtn">Print Label</button>
+            <button class="btn ghost" type="button" id="clearFieldsBtn">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Quick Print Actions</h2>
+        </div>
+        <div class="card-body">
+          <div class="quick-grid" id="quickGrid"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stack">
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">Item Quantity Sticker</h2>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="field">
+              <label for="quantitySticker">Quantity</label>
+              <input id="quantitySticker" type="number" min="1" max="999" value="1" />
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn" type="button" id="quantityStickerBtn">Print Quantity Sticker</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">Multiple Labels</h2>
+        </div>
+        <div class="card-body">
+          <div class="row-3">
+            <div class="field">
+              <label for="bulkQuantity">Quantity Each</label>
+              <input id="bulkQuantity" type="number" min="1" max="500" value="1" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="textAreaID">One barcode per line</label>
+            <textarea id="textAreaID"></textarea>
+          </div>
+          <div class="actions">
+            <button class="btn" type="button" id="bulkPrintBtn">Print Multiple Labels</button>
+            <button class="btn ghost" type="button" id="clearBulkBtn">Clear</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">Activity Log</h2>
+          <button class="btn ghost" type="button" id="clearLogBtn">Clear Log</button>
+        </div>
+        <div class="card-body">
+          <div class="log-list" id="logList"></div>
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <div class="overlay" id="identityOverlay">
+    <div class="modal">
+      <div class="card-header">
+        <h2 class="card-title">Badge / Login</h2>
+        <button class="btn ghost" type="button" id="closeIdentityBtn">Close</button>
+      </div>
+      <div class="body">
+        <div class="field">
+          <label for="badgeInput">Badge ID or Login</label>
+          <input id="badgeInput" type="text" />
+        </div>
+        <div class="actions">
+          <button class="btn good" type="button" id="saveIdentityBtn">Save</button>
+          <button class="btn secondary" type="button" id="clearIdentityBtn">Clear Saved Value</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEYS = {
+      prefs: 'printmonNeo:prefs',
+      badge: 'printmonNeo:badge',
+      log: 'printmonNeo:log'
+    };
+
+    const quickSections = [
+      {
+        title: 'Station Setup and Tote Stickers',
+        items: [
+          { label: 'Inbound Receive' },
+          { label: 'Problem Receive' },
+          { label: 'ATAC' },
+          { label: 'Received Damages' },
+          { label: 'Needs Prep Receive' },
+          { label: 'Ready to Receive' },
+          { label: 'dz-P-PREP' }
+        ]
+      },
+      {
+        title: 'Damage-Related',
+        items: [
+          { label: 'Damaged' },
+          { label: 'Item orphaned from Set' },
+          { label: 'Broken Set' },
+          { label: 'Liquid Damages' },
+          { label: 'CAUTION: BROKEN GLASS' },
+          { label: 'DO NOT OPEN' },
+          { label: 'dz-S-T-Damage' }
+        ]
+      },
+      {
+        title: 'Prep-Related',
+        items: [
+          { label: 'Needs ASINs' },
+          { label: 'Needs X-Stickers' },
+          { label: 'ASINs do not scan, Please Re-Sticker', multi: ['ASINs do not scan', 'Please Re-Sticker'] },
+          { label: 'Needs Bagging' },
+          { label: 'Needs Bubble Wrap' }
+        ]
+      },
+      {
+        title: 'Misc. and AA Communication',
+        items: [
+          { label: 'Received Non-Con' },
+          { label: 'True Mis-ship' },
+          { label: 'Hazmat' },
+          { label: 'Scan csX' },
+          { label: 'Scan frX' },
+          { label: 'Scan FBA' },
+          { label: 'dz-S-NON_CON' },
+          { label: 'dz-S-Quarantine' },
+          { label: 'Open internal boxes, Scan items inside', multi: ['Open internal boxes', 'Scan items inside'] },
+          { label: 'Bad/No Transparency Code' },
+          { label: 'Bad/No Serial Number' }
+        ]
+      }
+    ];
+
+    const $ = (id) => document.getElementById(id);
+
+    function showToast(message, type = 'ok', timeout = 3400) {
+      const wrap = $('toastWrap');
+      const node = document.createElement('div');
+      node.className = `toast ${type}`;
+      node.textContent = message;
+      wrap.appendChild(node);
+      setTimeout(() => {
+        node.style.opacity = '0';
+        node.style.transform = 'translateY(8px)';
+        setTimeout(() => node.remove(), 180);
+      }, timeout);
+    }
+
+    function readPrefs() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.prefs) || '{}');
+      } catch {
+        return {};
+      }
+    }
+
+    function savePrefs() {
+      const prefs = {
+        printafter: $('printafter').checked,
+        jumptoq: $('jumptoq').checked,
+        nowhitespace: $('nowhitespace').checked,
+        previewMode: $('previewMode').checked,
+        bridgeUrl: $('bridgeUrl').value.trim(),
+        bulkQuantity: $('bulkQuantity').value.trim()
+      };
+      localStorage.setItem(STORAGE_KEYS.prefs, JSON.stringify(prefs));
+    }
+
+    function applyPrefs() {
+      const prefs = readPrefs();
+      if (typeof prefs.printafter === 'boolean') $('printafter').checked = prefs.printafter;
+      if (typeof prefs.jumptoq === 'boolean') $('jumptoq').checked = prefs.jumptoq;
+      if (typeof prefs.nowhitespace === 'boolean') $('nowhitespace').checked = prefs.nowhitespace;
+      if (typeof prefs.previewMode === 'boolean') $('previewMode').checked = prefs.previewMode;
+      if (prefs.bridgeUrl) $('bridgeUrl').value = prefs.bridgeUrl;
+      if (prefs.bulkQuantity) $('bulkQuantity').value = prefs.bulkQuantity;
+    }
+
+    function getBadge() {
+      return (localStorage.getItem(STORAGE_KEYS.badge) || '').trim();
+    }
+
+    function setBadge(value) {
+      if (value) {
+        localStorage.setItem(STORAGE_KEYS.badge, value.trim());
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.badge);
+      }
+      syncIdentityBadge();
+    }
+
+    function syncIdentityBadge() {
+      const badge = getBadge();
+      $('identityBadge').textContent = badge ? `Badge: ${badge}` : 'No badge';
+    }
+
+    function readLog() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.log) || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function writeLog(items) {
+      localStorage.setItem(STORAGE_KEYS.log, JSON.stringify(items.slice(0, 100)));
+    }
+
+    function addLog(type, text, detail = '') {
+      const items = readLog();
+      items.unshift({
+        type,
+        text,
+        detail,
+        time: new Date().toLocaleString()
+      });
+      writeLog(items);
+      renderLog();
+    }
+
+    function renderLog() {
+      const items = readLog();
+      const list = $('logList');
+      if (!items.length) {
+        list.innerHTML = '<div class="log-item"><span class="log-tag idle">idle</span><div>No activity</div><div class="log-meta">Ready</div></div>';
+        return;
+      }
+      list.innerHTML = items.map(item => `
+        <div class="log-item">
+          <span class="log-tag ${item.type}">${escapeHtml(item.type)}</span>
+          <div>
+            <div>${escapeHtml(item.text)}</div>
+            ${item.detail ? `<div class="log-meta">${escapeHtml(item.detail)}</div>` : ''}
+          </div>
+          <div class="log-meta">${escapeHtml(item.time)}</div>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function genId() {
+      let id = '';
+      for (let i = 0; i < 10; i++) id += Math.floor(Math.random() * 10);
+      return id;
+    }
+
+    function asciiHex(str) {
+      let text = '';
+      for (let i = 0; i < str.length; i++) {
+        text += Number(str.charCodeAt(i)).toString(16);
+      }
+      return text;
+    }
+
+    function trimPair(a, b) {
+      if ($('nowhitespace').checked) {
+        return [String(a).trim(), String(b).trim()];
+      }
+      return [String(a), String(b)];
+    }
+
+    function getQuantity(id = 'quantity', max = 500) {
+      const value = Number(($(id).value || '').trim());
+      if (!Number.isFinite(value) || value < 1 || value > max) {
+        throw new Error(`Quantity must be between 1 and ${max}.`);
+      }
+      return value;
+    }
+
+    function buildPrintUrl(data, text, quantity) {
+      const bridgeUrl = ($('bridgeUrl').value || '').trim().replace(/\/$/, '');
+      const badge = getBadge();
+      return `${bridgeUrl}/printer?action=print&type=barcode&data=${asciiHex(data)}&text=${asciiHex(text)}&quantity=${quantity}&badgeid=${encodeURIComponent(badge)}&seq=${genId()}`;
+    }
+
+    function setBridgeUi(stateText, ok = false) {
+      $('bridgeState').textContent = stateText;
+      $('bridgeDot').classList.toggle('ok', !!ok);
+    }
+
+    function requestText(url) {
+      return new Promise((resolve, reject) => {
+        try {
+          const xhr = new XMLHttpRequest();
+          xhr.open('GET', url, true);
+          xhr.timeout = 10000;
+          xhr.onreadystatechange = function () {
+            if (xhr.readyState !== 4) return;
+            resolve({
+              status: xhr.status,
+              text: xhr.responseText || ''
+            });
+          };
+          xhr.onerror = function () {
+            reject(new Error('Could not reach the print bridge.'));
+          };
+          xhr.ontimeout = function () {
+            reject(new Error('Print bridge timed out.'));
+          };
+          xhr.send();
+        } catch (err) {
+          reject(err);
+        }
+      });
+    }
+
+    function isSuccessfulResponse(result) {
+      const text = (result.text || '').trim().toLowerCase();
+      if (result.status >= 200 && result.status < 300) {
+        if (!text) return true;
+        if (text === 'valid' || text === 'ok' || text === 'success' || text === 'printed') return true;
+        if (text.includes('invalid') || text.includes('error') || text.includes('failed')) return false;
+        return true;
+      }
+      return false;
+    }
+
+    async function pingBridge() {
+      savePrefs();
+      try {
+        const url = ($('bridgeUrl').value || '').trim().replace(/\/$/, '') + '/';
+        const result = await requestText(url);
+        const ok = result.status > 0 && result.status < 500;
+        setBridgeUi(ok ? `Bridge ${result.status}` : 'Bridge unavailable', ok);
+        addLog(ok ? 'ok' : 'fail', 'Bridge test', `${result.status}`);
+        showToast(ok ? `Bridge responded: ${result.status}` : 'Bridge unavailable', ok ? 'ok' : 'bad');
+        return ok;
+      } catch (err) {
+        setBridgeUi('Bridge unavailable', false);
+        addLog('fail', 'Bridge test failed', err.message);
+        showToast(err.message, 'bad', 4200);
+        return false;
+      }
+    }
+
+    async function sendPrint(data, text, quantity, labelForLog) {
+      savePrefs();
+      const url = buildPrintUrl(data, text, quantity);
+
+      try {
+        const result = await requestText(url);
+        if (!isSuccessfulResponse(result)) {
+          throw new Error((result.text || `Bridge responded with status ${result.status}`).trim());
+        }
+        setBridgeUi('Bridge active', true);
+        addLog('ok', `Printed: ${labelForLog}`, `${quantity} copy/copies`);
+        return { ok: true, preview: false };
+      } catch (err) {
+        setBridgeUi('Bridge unavailable', false);
+        if ($('previewMode').checked) {
+          addLog('preview', `Preview: ${labelForLog}`, err.message);
+          return { ok: true, preview: true, error: err.message };
+        }
+        addLog('fail', `Print failed: ${labelForLog}`, err.message);
+        throw err;
+      }
+    }
+
+    async function printSticker(printString, quantityOverride = null) {
+      let [data, text] = trimPair(printString, printString);
+      const qty = quantityOverride ?? getQuantity('quantity', 500);
+      return sendPrint(data, text, qty, text || data);
+    }
+
+    function lpnReprintBlocked(barcode) {
+      const hasLpnAt0 = barcode.includes('LPN', 0);
+      const confirm = Number(barcode.includes('LPN', 1)) + Number(barcode.includes('LPN', 2)) + Number(barcode.includes('LPN', 3));
+      return hasLpnAt0 && confirm < 1;
+    }
+
+    async function printLabel() {
+      try {
+        let barcode = $('barcodedata').value || '';
+        let text = $('displaytext').value || '';
+        if (!barcode.trim()) throw new Error('Please enter barcode data.');
+        if (lpnReprintBlocked(barcode)) {
+          throw new Error('Reprinting of LPN stickers is not allowed.');
+        }
+        [barcode, text] = trimPair(barcode, text);
+        const qty = getQuantity('quantity', 500);
+        const result = await sendPrint(barcode, text, qty, text || barcode);
+        $('barcodedata').focus();
+        $('barcodedata').select();
+        showToast(result.preview ? `Preview: ${text || barcode}` : `Printed: ${text || barcode}`, result.preview ? 'warn' : 'ok');
+      } catch (err) {
+        showToast(err.message, 'bad', 4200);
+      }
+    }
+
+    async function printQuantitySticker() {
+      try {
+        const amount = Number(($('quantitySticker').value || '').trim());
+        if (!Number.isFinite(amount) || amount < 1 || amount > 999) {
+          throw new Error('Enter a valid quantity.');
+        }
+        const text = `Quantity ${amount}`;
+        const result = await printSticker(text);
+        showToast(result.preview ? `Preview: ${text}` : `Printed: ${text}`, result.preview ? 'warn' : 'ok');
+      } catch (err) {
+        showToast(err.message, 'bad');
+      }
+    }
+
+    async function printBulk() {
+      const raw = $('textAreaID').value || '';
+      const lines = raw.split(/\r?\n/).map(v => v.trim()).filter(Boolean);
+
+      try {
+        if (!lines.length) throw new Error('Add at least one barcode.');
+      } catch (err) {
+        showToast(err.message, 'bad');
+        return;
+      }
+
+      let qty;
+      try {
+        qty = getQuantity('bulkQuantity', 500);
+      } catch (err) {
+        showToast(err.message, 'bad');
+        return;
+      }
+
+      let printed = 0;
+      let preview = 0;
+      const failed = [];
+
+      for (const line of lines) {
+        try {
+          const result = await printSticker(line, qty);
+          if (result.preview) preview += 1;
+          else printed += 1;
+        } catch (err) {
+          failed.push(line);
+          addLog('fail', `Bulk failed: ${line}`, err.message);
+        }
+      }
+
+      if (failed.length) {
+        $('textAreaID').value = failed.join('\n');
+      } else {
+        $('textAreaID').value = '';
+      }
+
+      if (failed.length && (printed || preview)) {
+        showToast(`Done: ${printed} printed, ${preview} preview, ${failed.length} failed.`, 'warn', 5200);
+        return;
+      }
+
+      if (failed.length) {
+        showToast(`Failed: ${failed.length} label(s).`, 'bad', 4200);
+        return;
+      }
+
+      if (preview) {
+        showToast(`Done: ${preview} preview label(s).`, 'warn', 4200);
+      } else {
+        showToast(`Printed ${printed} label(s).`, 'ok');
+      }
+    }
+
+    function keyCheck(e) {
+      if (e.key !== 'Enter') return;
+
+      if (document.activeElement === $('barcodedata') && $('jumptoq').checked) {
+        e.preventDefault();
+        setTimeout(() => {
+          $('quantity').focus();
+          $('quantity').select();
+        }, 10);
+        return;
+      }
+
+      if (document.activeElement === $('barcodedata')) {
+        e.preventDefault();
+        if ($('printafter').checked) {
+          printLabel();
+        } else {
+          $('barcodedata').select();
+        }
+        return;
+      }
+
+      if (document.activeElement === $('quantity') && $('jumptoq').checked && $('printafter').checked) {
+        e.preventDefault();
+        printLabel();
+        setTimeout(() => {
+          $('barcodedata').focus();
+          $('barcodedata').select();
+        }, 10);
+      }
+    }
+
+    function renderQuickSections() {
+      const host = $('quickGrid');
+      host.innerHTML = quickSections.map(section => `
+        <section class="panel-block">
+          <h3>${escapeHtml(section.title)}</h3>
+          <div class="inner">
+            <div class="button-cloud">
+              ${section.items.map((item, idx) => `
+                <button class="btn ${idx % 5 === 4 ? 'secondary' : ''}" type="button" data-quick="${escapeHtml(item.label)}">${escapeHtml(item.label)}</button>
+              `).join('')}
+            </div>
+          </div>
+        </section>
+      `).join('');
+
+      host.querySelectorAll('[data-quick]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const label = btn.getAttribute('data-quick');
+          const section = quickSections.flatMap(s => s.items).find(i => i.label === label);
+          try {
+            if (section && section.multi) {
+              let preview = 0;
+              for (const item of section.multi) {
+                const result = await printSticker(item);
+                if (result.preview) preview += 1;
+              }
+              showToast(preview ? `Done: ${label} (${preview} preview)` : `Printed: ${label}`, preview ? 'warn' : 'ok');
+            } else {
+              const result = await printSticker(label);
+              showToast(result.preview ? `Preview: ${label}` : `Printed: ${label}`, result.preview ? 'warn' : 'ok');
+            }
+          } catch (err) {
+            showToast(err.message, 'bad', 4200);
+          }
+        });
+      });
+    }
+
+    function bindUi() {
+      document.addEventListener('keydown', keyCheck, false);
+
+      ['printafter', 'jumptoq', 'nowhitespace', 'previewMode', 'bridgeUrl', 'bulkQuantity'].forEach(id => {
+        $(id).addEventListener('change', savePrefs);
+        $(id).addEventListener('input', savePrefs);
+      });
+
+      $('printLabelBtn').addEventListener('click', printLabel);
+      $('clearFieldsBtn').addEventListener('click', () => {
+        $('barcodedata').value = '';
+        $('displaytext').value = '';
+        $('quantity').value = '1';
+        $('barcodedata').focus();
+      });
+
+      $('quantityStickerBtn').addEventListener('click', printQuantitySticker);
+      $('bulkPrintBtn').addEventListener('click', printBulk);
+      $('clearBulkBtn').addEventListener('click', () => $('textAreaID').value = '');
+      $('testBridgeBtn').addEventListener('click', pingBridge);
+
+      $('clearLogBtn').addEventListener('click', () => {
+        writeLog([]);
+        renderLog();
+        showToast('Log cleared.', 'ok');
+      });
+
+      $('openIdentityBtn').addEventListener('click', () => {
+        $('badgeInput').value = getBadge();
+        $('identityOverlay').classList.add('show');
+      });
+      $('closeIdentityBtn').addEventListener('click', () => $('identityOverlay').classList.remove('show'));
+      $('saveIdentityBtn').addEventListener('click', () => {
+        setBadge(($('badgeInput').value || '').trim());
+        $('identityOverlay').classList.remove('show');
+        showToast('Badge saved.', 'ok');
+      });
+      $('clearIdentityBtn').addEventListener('click', () => {
+        setBadge('');
+        $('badgeInput').value = '';
+        showToast('Saved badge cleared.', 'ok');
+      });
+      $('identityOverlay').addEventListener('click', (e) => {
+        if (e.target === $('identityOverlay')) $('identityOverlay').classList.remove('show');
+      });
+    }
+
+    function init() {
+      renderQuickSections();
+      applyPrefs();
+      bindUi();
+      syncIdentityBadge();
+      renderLog();
+      $('barcodedata').focus();
+    }
+
+    init();
+  </script>
+</body>
+</html>
