@@ -2686,9 +2686,12 @@ for(const r of tableObj.rows){
                      (basisOn==="OP") ? `<span class="basisTag op">OP</span>` :
                      `<span class="basisTag na">N/A</span>`;
     const basisPctText = `<span class="basisPct mono">${basisPct===null ? "N/A" : pct(basisPct,1)}</span>`;
-    const bridgeFlag = (basisPct===null)
+    const bridgePctForRule = (basisPct===null || basisPct===undefined || !isFinite(basisPct))
+      ? null
+      : Number((basisPct*100).toFixed(1));
+    const bridgeFlag = (bridgePctForRule===null)
       ? `<span class="bridgeFlag bridgeNA">BRIDGE N/A</span>`
-      : (basisPct>=0.98)
+      : (bridgePctForRule>=98)
         ? `<span class="bridgeFlag bridgeOk">NO BRIDGE</span>`
         : `<span class="bridgeFlag bridgeNeed">BRIDGE NEEDED</span>`;
     const status = `<span class="statusWrap">${statusLabel}${basisTag}${basisPctText}${bridgeFlag}</span>`;
