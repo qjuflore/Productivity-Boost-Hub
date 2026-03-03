@@ -936,7 +936,7 @@
     <input id="quickShiftDate" type="date"/>
   </div>
 
-<button class="btn secondary" id="quickUpdatePPR" type="button" title="Recalculate dates/times, then auto-import PPR (Bridge mode)">Apply + Import PPR</button>
+<button class="btn secondary" id="quickUpdatePPR" type="button" title="Recalculate dates/times, then auto-import PPR (hidden bridge mode)">Apply + Import PPR</button>
 </div>
 
 <div class="row">
@@ -1039,6 +1039,12 @@
     <span class="k">PPR used</span>
     <span class="v" id="reportPprMetaVal">—</span>
   </div>
+  <div class="legendPill pprMeta" id="reportImportMeta" title="Last successful PPR import time and age">
+    <span class="swatch"></span>
+    <span class="k">Imported</span>
+    <span class="v" id="reportImportMetaVal">—</span>
+  </div>
+  <button class="btn secondary" id="reportRefreshBtn" type="button" title="Same hidden PPR import as Apply + Import PPR" style="min-width:110px">Refresh</button>
 </div>
 <div id="reportOut"></div>
 <div class="note" id="unmatchedNote"></div>
@@ -1072,7 +1078,7 @@
           <input id="rtAutoBuild" type="checkbox"/>
           <span>Auto build report + chart</span>
         </label>
-        <div class="note" style="margin-top:8px" id="rtModeNote">Mode: Auto‑fetch CSV (best). If blocked, it will fall back to opening the CSV download and you can upload it.</div>
+        <div class="note" style="margin-top:8px" id="rtModeNote">Mode: Bridge Hidden (best): imports PPR invisibly with no visible window. If hidden framing is blocked, use Auto-fetch or the open-download option.</div>
       </div>
 
       <div class="field">
@@ -1090,8 +1096,8 @@
 
       <div class="field">
         <label>Refresh method</label>
-        <select id="rtMethod" class="cp" title="Bridge is recommended: it opens PPR once in a small popup, grabs the CSV, and sends it back here for auto‑import. Auto‑fetch tries to pull CSV directly. Open‑download only downloads (cannot auto‑import from Downloads).">
-          <option value="bridge" selected>Bridge (popup → download + auto-import) ✅</option>
+        <select id="rtMethod" class="cp" title="Bridge Hidden is recommended: it uses an invisible iframe to open PPR, grab the CSV, and send it back here for auto-import. Auto-fetch tries to pull CSV directly. Open-download only downloads (cannot auto-import from Downloads).">
+          <option value="bridge" selected>Bridge Hidden (invisible iframe → auto-import) ✅</option>
           <option value="fetch">Auto‑fetch CSV (no tab)</option>
           <option value="open">Open CSV download (new tab)</option>
 </select>
@@ -3081,6 +3087,7 @@ updateGalaxyCacheUI();
   const elPrev  = document.getElementById("pprPreview");
   const elNow   = document.getElementById("pprNowChip");
   const btnUpd  = document.getElementById("quickUpdatePPR");
+  const btnReportRefresh = document.getElementById("reportRefreshBtn");
   if(!elShift || !elFlow || !elPpr || !elPrev) return;
 
   const LS_SHIFT = "qjuflore.report.quickLinks.shift";
@@ -3089,6 +3096,30 @@ updateGalaxyCacheUI();
   const LS_RT_IMPORT = "qjuflore.report.rt.lastPprImport";
   const LS_RT_AUTOBUILD = "qjuflore.report.rt.autoBuild";
   const LS_RT_LASTBUILD = "qjuflore.report.rt.lastBuild";
+
+  function syncReportRefreshBtn(){
+    if(!btnReportRefresh) return;
+    const raw = String((btnUpd && btnUpd.textContent) || "").trim();
+    btnReportRefresh.textContent = (!raw || raw === "Apply + Import PPR") ? "Refresh" : raw;
+    btnReportRefresh.disabled = !!(btnUpd && btnUpd.dataset && btnUpd.dataset.busy === "1");
+  }
+
+  if(btnReportRefresh && btnUpd){
+    btnReportRefresh.addEventListener("click", () => {
+      try{ btnUpd.click(); }catch(e){}
+      syncReportRefreshBtn();
+    });
+    try{
+      new MutationObserver(syncReportRefreshBtn).observe(btnUpd, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["data-busy", "class"]
+      });
+    }catch(e){}
+    syncReportRefreshBtn();
+  }
 
   // Pacific time "now" as Date with PT wall-clock components
   const PT_TZ = "America/Los_Angeles";
@@ -3364,19 +3395,20 @@ updateGalaxyCacheUI();
       try{ methodSel.dispatchEvent(new Event("change", {bubbles:true})); }catch(e){}
     }
 
-    // Trigger the same Refresh-now path (opens ONE popup, imports CSV, then closes)
+    // Trigger the same Refresh-now path (single hidden import cycle, no visible window)
     const runBtn = document.getElementById("rtRunNow");
     btnUpd.textContent = "Importing PPR…";
 
-    try{
-      if(runBtn){
-        runBtn.click();
-      }else{
-        // Fallback: open the PPR link once (manual)
-        const url = elPpr && elPpr.href ? elPpr.href : null;
-        if(url) window.open(url, "_blank", "noopener,noreferrer");
-      }
-    }catch(e){}
+    if(runBtn){
+      try{ runBtn.click(); }catch(e){}
+    }else{
+      btnUpd.textContent = "Refresh control unavailable";
+      setTimeout(() => {
+        btnUpd.textContent = "Apply + Import PPR";
+        btnUpd.dataset.busy = "0";
+      }, 1800);
+      return;
+    }
 
     // Wait for the import badge timestamp to change (proof it imported)
     const t0 = Date.now();
@@ -3430,7 +3462,7 @@ updateGalaxyCacheUI();
             btnUpd.dataset.busy = "0";
           }, 1200);
         }else{
-          btnUpd.textContent = "No import detected (check pop‑ups / login)";
+          btnUpd.textContent = "No import detected (check hidden bridge / login)";
           setTimeout(() => {
             btnUpd.textContent = "Apply + Import PPR";
             btnUpd.dataset.busy = "0";
@@ -4113,28 +4145,129 @@ updateGalaxyCacheUI();
     return `${fmtNiceClock(start)}–${fmtNiceClock(end)} • ${datePart} PT`;
   }
 
-  function markPprImported(range, sourceLabel){
-    const at = Date.now(); // epoch ms (for reliable change detection)
-    rt.lastImportAt = at;
-    if(range && range.start && range.end){
-      rt.lastImportRange = {
-        start: range.start.getTime(),
-        end: range.end.getTime(),
-        shiftLabel: range.shiftLabel || "",
-        flowLabel: range.flowLabel || "",
-        source: sourceLabel || ""
-      };
-    }else{
-      rt.lastImportRange = { source: sourceLabel || "" };
+let importToastTimer = 0;
+
+function showImportToast(range, sourceLabel, at){
+  try{
+    const root = document.body || document.documentElement;
+    if(!root) return;
+
+    let host = document.getElementById("rbImportToastHost");
+    if(!host){
+      host = document.createElement("div");
+      host.id = "rbImportToastHost";
+      Object.assign(host.style, {
+        position: "fixed",
+        right: "18px",
+        top: "18px",
+        zIndex: "99999",
+        display: "flex",
+        flexDirection: "column",
+        gap: "10px",
+        pointerEvents: "none"
+      });
+      root.appendChild(host);
     }
-    try{
-      localStorage.setItem(LS_RT_IMPORT, JSON.stringify({at: rt.lastImportAt, range: rt.lastImportRange}));
-    }catch(e){}
-    updateRtBadges();
+
+    let toast = document.getElementById("rbImportToast");
+    if(!toast){
+      toast = document.createElement("div");
+      toast.id = "rbImportToast";
+      Object.assign(toast.style, {
+        minWidth: "280px",
+        maxWidth: "520px",
+        padding: "12px 14px",
+        borderRadius: "14px",
+        border: "1px solid rgba(60,255,177,.35)",
+        background: "rgba(8,10,18,.95)",
+        color: "rgba(255,255,255,.94)",
+        boxShadow: "0 18px 50px rgba(0,0,0,.45), 0 0 18px rgba(60,255,177,.10)",
+        backdropFilter: "blur(8px)",
+        opacity: "0",
+        transform: "translateY(-8px)",
+        transition: "opacity .18s ease, transform .18s ease",
+        pointerEvents: "none"
+      });
+
+      const title = document.createElement("div");
+      title.id = "rbImportToastTitle";
+      Object.assign(title.style, {
+        fontWeight: "900",
+        letterSpacing: ".2px",
+        marginBottom: "6px"
+      });
+
+      const body = document.createElement("div");
+      body.id = "rbImportToastBody";
+      Object.assign(body.style, {
+        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+        fontSize: "12px",
+        lineHeight: "1.4",
+        color: "rgba(255,255,255,.82)",
+        whiteSpace: "pre-line"
+      });
+
+      toast.appendChild(title);
+      toast.appendChild(body);
+      host.appendChild(toast);
+    }
+
+    const titleEl = document.getElementById("rbImportToastTitle");
+    const bodyEl = document.getElementById("rbImportToastBody");
+    const when = new Date(at || Date.now());
+
+    const titleParts = ["PPR imported"];
+    if(sourceLabel) titleParts.push(`via ${sourceLabel}`);
+
+    const lines = [];
+    if(range && range.start && range.end){
+      const s = new Date(range.start);
+      const e = new Date(range.end);
+      lines.push(`Data: ${fmtYMDslash(s)} ${fmtNiceClock(s)} → ${fmtYMDslash(e)} ${fmtNiceClock(e)} PT`);
+      if(range.shiftLabel || range.flowLabel){
+        lines.push([range.shiftLabel || "", range.flowLabel || ""].filter(Boolean).join(" • "));
+      }
+    }
+    lines.push(`Imported at: ${fmtYMDslash(when)} ${fmtNiceClock(when)} PT`);
+
+    if(titleEl) titleEl.textContent = titleParts.join(" • ");
+    if(bodyEl) bodyEl.textContent = lines.join("\n");
+
+    clearTimeout(importToastTimer);
+    toast.style.opacity = "1";
+    toast.style.transform = "translateY(0)";
+    importToastTimer = setTimeout(() => {
+      try{
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(-8px)";
+      }catch(e){}
+    }, 4200);
+  }catch(e){}
+}
+
+function markPprImported(range, sourceLabel){
+  const at = Date.now(); // epoch ms (for reliable change detection)
+  rt.lastImportAt = at;
+  if(range && range.start && range.end){
+    rt.lastImportRange = {
+      start: range.start.getTime(),
+      end: range.end.getTime(),
+      shiftLabel: range.shiftLabel || "",
+      flowLabel: range.flowLabel || "",
+      source: sourceLabel || ""
+    };
+  }else{
+    rt.lastImportRange = { source: sourceLabel || "" };
   }
+  try{
+    localStorage.setItem(LS_RT_IMPORT, JSON.stringify({at: rt.lastImportAt, range: rt.lastImportRange}));
+  }catch(e){}
+  updateRtBadges();
+  showImportToast(range, sourceLabel, at);
+}
 
 
-  function flashEl(el, cls){
+function flashEl(el, cls){
     if(!el) return;
     try{
       el.classList.remove(cls);
@@ -4189,6 +4322,21 @@ updateGalaxyCacheUI();
 function updateReportPprMetaBadge(){
   const wrap = document.getElementById("reportPprMeta");
   const val = document.getElementById("reportPprMetaVal");
+  const impWrap = document.getElementById("reportImportMeta");
+  const impVal = document.getElementById("reportImportMetaVal");
+
+  if(impWrap && impVal){
+    if(rt.lastImportAt){
+      const d = new Date(rt.lastImportAt);
+      const age = fmtAgo(Date.now() - rt.lastImportAt);
+      impVal.textContent = `${fmtNiceClock(d)} PT • ${age}`;
+      impWrap.title = `Last successful PPR import (PT): ${fmtYMDslash(d)} ${fmtNiceClock(d)} PT`;
+    }else{
+      impVal.textContent = "—";
+      impWrap.title = "Load or import a PPR CSV to show when the data was last imported.";
+    }
+  }
+
   if(!wrap || !val) return;
 
   if(rt.lastImportRange && rt.lastImportRange.start && rt.lastImportRange.end){
@@ -4318,21 +4466,22 @@ function updateRtBadges(){
   }
 
   async function bridgeFetchCsvViaPopup(urlHtml){
-    // Opens PPR HTML once, Tampermonkey script on fclm-portal fetches CSV and postMessage()s it back.
+    // Hidden bridge: opens PPR inside an invisible iframe, the Tampermonkey bridge grabs CSV and postMessage()s it back.
     const token = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     const allowOrigin = /^https?:\/\/fclm-portal\.amazon\.com(?::\d+)?$/i;
 
     return new Promise((resolve, reject) => {
       let done = false;
-      const timeoutMs = 45_000;
+      let frame = null;
+      const timeoutMs = 25_000;
       const t0 = Date.now();
 
       function cleanup(){
         if(done) return;
         done = true;
         try{ window.removeEventListener("message", onMsg); }catch(e){}
-        try{ clearInterval(pingTimer); }catch(e){}
         try{ clearTimeout(timeoutTimer); }catch(e){}
+        try{ if(frame) frame.remove(); }catch(e){}
       }
 
       function fail(msg){
@@ -4347,47 +4496,53 @@ function updateRtBadges(){
         const data = ev.data || {};
         if(!data || data.type !== "RB_PPR_CSV" || data.token !== token) return;
 
-        cleanup();
-
         if(data.ok && isCsvText(data.csvText)){
-          resolve(String(data.csvText));
-        }else{
-          const em = data.error ? String(data.error) : "Bridge failed (no CSV received).";
-          reject(new Error(em));
+          const out = String(data.csvText);
+          cleanup();
+          resolve(out);
+          return;
         }
+
+        if(data.ok && data.done){
+          return;
+        }
+
+        const em = data.error ? String(data.error) : "Hidden bridge failed (no CSV received).";
+        fail(em);
       }
 
       window.addEventListener("message", onMsg);
 
       const u = new URL(urlHtml);
-      // ensure HTML view in popup
       u.searchParams.set("reportFormat","HTML");
       u.searchParams.set("rb","1");
       u.searchParams.set("rbToken", token);
-      u.searchParams.set("rbDl","1");
+      u.searchParams.set("rbDl","0");
 
-      const popup = window.open(u.toString(), "ppr_rb_bridge", "width=980,height=740,menubar=no,toolbar=no,location=yes,status=no,scrollbars=yes,resizable=yes");
-      if(!popup){
-        fail("Popup blocked. Allow pop‑ups for fclm-portal.amazon.com, then try again.");
+      frame = document.createElement("iframe");
+      frame.setAttribute("aria-hidden", "true");
+      frame.setAttribute("tabindex", "-1");
+      Object.assign(frame.style, {
+        position: "fixed",
+        width: "1px",
+        height: "1px",
+        opacity: "0",
+        pointerEvents: "none",
+        left: "-9999px",
+        top: "-9999px",
+        border: "0"
+      });
+      frame.src = u.toString();
+
+      try{
+        (document.body || document.documentElement).appendChild(frame);
+      }catch(e){
+        fail("Could not create hidden bridge frame.");
         return;
       }
 
-      // Some environments delay window.opener wiring; ping a few times (script ignores if not ready)
-      const pingTimer = setInterval(() => {
-        if(done) return;
-        try{
-          popup.postMessage({type:"RB_PING", token}, "*");
-        }catch(e){}
-        // If user closes popup manually, fail
-        try{
-          if(popup.closed){
-            fail("Bridge popup was closed before CSV was received.");
-          }
-        }catch(e){}
-      }, 700);
-
       const timeoutTimer = setTimeout(() => {
-        fail(`Bridge timed out after ${Math.round((Date.now()-t0)/1000)}s. Make sure the Tampermonkey bridge script is installed on FCLM and that you are logged in.`);
+        fail(`Hidden bridge timed out after ${Math.round((Date.now()-t0)/1000)}s. Make sure the Tampermonkey bridge script is installed on FCLM, that you are logged in, and that FCLM is allowed to load in an iframe on this browser.`);
       }, timeoutMs);
     });
   }
@@ -4410,7 +4565,7 @@ async function refreshPprOnce({silent}={}){
 
     try{
       if(method === "bridge"){
-        setRtOk("Bridge: opening PPR (popup) and importing CSV…");
+        setRtOk("Bridge Hidden: importing PPR invisibly…");
         const csvText = await bridgeFetchCsvViaPopup(urlHtml);
 
         const rows = parseCSV(csvText);
@@ -4433,7 +4588,7 @@ async function refreshPprOnce({silent}={}){
         }
         markPprImported(pack.range, "bridge");
 
-        setRtOk("Bridge OK. Imported PPR + chart point recorded.");
+        setRtOk("Bridge Hidden OK. Imported PPR + chart point recorded.");
         return;
       }
 
