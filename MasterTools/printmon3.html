@@ -253,170 +253,301 @@
 
     .quick-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      grid-auto-rows: 8px;
-      grid-auto-flow: row dense;
-      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
       align-items: start;
+      grid-auto-flow: dense;
     }
 
     .panel-block {
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: rgba(255,255,255,0.03);
+      position: relative;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025)),
+        linear-gradient(135deg, rgba(17, 27, 56, 0.94), rgba(10, 18, 38, 0.92));
       overflow: hidden;
-      align-self: start;
-      height: fit-content;
+      box-shadow:
+        0 16px 44px rgba(0,0,0,0.26),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+      isolation: isolate;
     }
 
-    .panel-block.is-wide {
+    .panel-block::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(135deg, rgba(255,153,0,0.10), transparent 36%, transparent 70%, rgba(35,196,131,0.08));
+      opacity: 0.9;
+      z-index: 0;
+    }
+
+    .panel-block > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .section--wide {
       grid-column: span 2;
     }
 
-    .panel-block h3 {
-      margin: 0;
-      padding: 11px 13px;
-      font-size: 14px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(255,255,255,0.025);
+    .section--hero {
+      grid-column: 1 / -1;
     }
 
-    .panel-block .inner { padding: 10px 12px; }
+    .parent-block {
+      border-color: rgba(255,153,0,0.14);
+      box-shadow:
+        0 20px 54px rgba(0,0,0,0.34),
+        0 0 0 1px rgba(255,153,0,0.05),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px 18px 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.02));
+    }
+
+    .panel-head-main {
+      min-width: 0;
+    }
+
+    .panel-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: #b9c8e8;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      opacity: 0.92;
+    }
+
+    .panel-kicker::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 16px rgba(255,153,0,0.55);
+      flex: 0 0 auto;
+    }
+
+    .parent-block .panel-kicker::before {
+      background: linear-gradient(135deg, var(--accent), #ffcf66);
+      box-shadow: 0 0 16px rgba(255,153,0,0.65);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 0.01em;
+      line-height: 1.15;
+    }
+
+    .panel-note {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .panel-stats {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .mini-pill,
+    .count-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.05);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: #dfe9ff;
+      white-space: nowrap;
+    }
+
+    .count-pill {
+      min-width: 48px;
+      background: linear-gradient(135deg, rgba(255,153,0,0.18), rgba(255,153,0,0.08));
+      border-color: rgba(255,153,0,0.18);
+      color: #ffe4b1;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    .panel-block .inner {
+      padding: 14px;
+    }
+
+    .parent-inner {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-start;
+    }
 
     .button-cloud {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(138px, 1fr));
-      gap: 8px;
-      align-items: start;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
     }
 
     .button-cloud .btn {
       width: 100%;
       min-width: 0;
-      padding: 9px 11px;
-      border-radius: 12px;
-      box-shadow: none;
+      justify-content: center;
+      min-height: 48px;
     }
 
-    .child-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 10px;
-      align-items: start;
+    .button-cloud.compact {
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 9px;
     }
 
-    .child-block {
-      border: 1px solid rgba(255,255,255,0.06);
+    .button-cloud.compact .btn {
+      min-height: 42px;
+      padding: 11px 12px;
       border-radius: 14px;
-      background: rgba(255,255,255,0.025);
-      min-width: 0;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .quick-mini {
+      letter-spacing: 0.01em;
+    }
+
+    .group-shell {
+      flex: 1 1 290px;
+      min-width: 260px;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.03);
       overflow: hidden;
-      transition: border-color .12s ease, background .12s ease;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
     }
 
-    .child-block.is-open {
-      border-color: rgba(255,153,0,0.18);
-      background: rgba(255,255,255,0.035);
+    .group-shell:hover {
+      border-color: rgba(255,153,0,0.16);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.03);
     }
 
-    .child-toggle {
+    .group-shell.is-open {
+      border-color: rgba(255,153,0,0.20);
+      box-shadow: 0 14px 30px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    .accordion-toggle {
       width: 100%;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      padding: 10px 12px;
+      gap: 14px;
+      padding: 14px 15px;
       border: 0;
-      background: transparent;
-      color: var(--text);
-      font: inherit;
+      background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015));
+      color: inherit;
       cursor: pointer;
       text-align: left;
     }
 
-    .child-toggle:hover {
-      background: rgba(255,255,255,0.025);
-    }
-
-    .child-meta {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .accordion-copy {
+      display: grid;
+      gap: 4px;
       min-width: 0;
     }
 
-    .chevron {
-      width: 9px;
-      height: 9px;
-      flex: 0 0 auto;
-      border-right: 2px solid var(--muted);
-      border-bottom: 2px solid var(--muted);
-      transform: rotate(-45deg);
-      transition: transform .16s ease, border-color .16s ease;
-      margin-left: 2px;
-    }
-
-    .child-block.is-open .chevron {
-      transform: rotate(45deg);
-      border-color: var(--accent2);
-    }
-
-    .child-title {
-      font-size: 12px;
+    .accordion-overline {
+      color: #9db0d8;
+      font-size: 10px;
       font-weight: 900;
-      line-height: 1.2;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
     }
 
-    .count-badge {
+    .accordion-title {
+      font-size: 14px;
+      font-weight: 900;
+      color: #f5f8ff;
+      line-height: 1.2;
+    }
+
+    .accordion-sub {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .accordion-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
+    .accordion-count {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 34px;
-      padding: 4px 9px;
+      min-width: 38px;
+      min-height: 30px;
+      padding: 6px 10px;
       border-radius: 999px;
-      background: rgba(255,153,0,0.14);
-      border: 1px solid rgba(255,153,0,0.18);
-      color: #ffdca0;
+      background: rgba(255,153,0,0.12);
+      border: 1px solid rgba(255,153,0,0.14);
+      color: #ffd896;
       font-size: 11px;
       font-weight: 900;
-      line-height: 1;
+      letter-spacing: 0.05em;
+    }
+
+    .accordion-chevron {
+      width: 10px;
+      height: 10px;
+      border-right: 2px solid #c9d8f5;
+      border-bottom: 2px solid #c9d8f5;
+      transform: rotate(45deg);
+      transition: transform 0.18s ease, border-color 0.18s ease;
+      margin-right: 2px;
       flex: 0 0 auto;
     }
 
-    .child-panel {
-      display: none;
-      padding: 0 10px 10px;
+    .group-shell.is-open .accordion-chevron {
+      transform: rotate(225deg);
+      border-color: #ffd896;
+    }
+
+    .accordion-panel {
+      padding: 0 14px 14px;
       border-top: 1px solid rgba(255,255,255,0.05);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.008));
     }
 
-    .child-block.is-open .child-panel {
-      display: block;
-      animation: panelIn .14s ease;
-    }
-
-    .child-panel .button-cloud {
-      margin-top: 10px;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 6px;
-    }
-
-    .child-panel .btn {
-      padding: 8px 10px;
-      border-radius: 10px;
-      font-size: 12px;
-      box-shadow: none;
-    }
-
-    @keyframes panelIn {
-      from {
-        opacity: 0;
-        transform: translateY(-3px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    .accordion-panel[hidden] {
+      display: none;
     }
 
     .log-list {
@@ -500,28 +631,23 @@
 
     @media (max-width: 1180px) {
       .layout { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 860px) {
-      .quick-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      }
+      .quick-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+      .section--hero,
+      .section--wide { grid-column: auto; }
     }
 
     @media (max-width: 720px) {
       body { padding: 14px; }
       .row-2 { grid-template-columns: 1fr; }
       .hero { padding: 16px; }
-      .quick-grid {
-        grid-template-columns: 1fr;
-        grid-auto-rows: auto;
-      }
-      .panel-block,
-      .panel-block.is-wide {
-        grid-column: span 1;
-        grid-row-end: auto !important;
-      }
-      .button-cloud { grid-template-columns: 1fr; }
+      .panel-head,
+      .accordion-toggle { padding-inline: 14px; }
+      .panel-head { flex-direction: column; align-items: stretch; }
+      .panel-stats { justify-content: flex-start; }
+      .button-cloud,
+      .button-cloud.compact { grid-template-columns: 1fr; }
+      .parent-inner { flex-direction: column; }
+      .group-shell { min-width: 100%; }
       .log-item { grid-template-columns: 1fr; }
       .log-actions { justify-content: flex-start; }
     }
@@ -658,6 +784,7 @@
     const quickSections = [
       {
         title: 'Damage-Related',
+        note: 'High-volume exception labels with a denser layout for faster access.',
         items: [
           { label: 'Damaged' },
           { label: 'Damages' },
@@ -716,231 +843,233 @@
       },
       {
         title: 'Dropzones',
-        wide: true,
-        children: [
+        kind: 'parent',
+        note: 'Expandable parent section. Open one zone family at a time for a cleaner, easier scan.',
+        groups: [
           {
-            title: "P1 Zones",
+            title: 'P1 Zones',
             items: [
-            { label: "dz-P-1A135" },
-            { label: "dz-P-1A175" },
-            { label: "dz-P-1A222" },
-            { label: "dz-P-1A266" },
-            { label: "dz-P-1B135" },
-            { label: "dz-P-1B175" },
-            { label: "dz-P-1B222" },
-            { label: "dz-P-1B266" },
-            { label: "dz-P-1C135" },
-            { label: "dz-P-1C175" },
-            { label: "dz-P-1C222" },
-            { label: "dz-P-1C266" },
-            { label: "dz-P-1D135" },
-            { label: "dz-P-1D175" },
-            { label: "dz-P-1D222" },
-            { label: "dz-P-1D266" },
-            { label: "dz-P-1M327" },
-            { label: "dz-P-1M361" },
-            { label: "dz-P-1M395" },
-            { label: "dz-P-1N327" },
-            { label: "dz-P-1N361" },
-            { label: "dz-P-1N395" },
-            { label: "dz-P-IBMezz" },
-            { label: "dz-P-RECYCLE" },
-            { label: "dz-P-RECEIVE-DOCK-A" },
-            { label: "dz-P-SAP" },
-            { label: "dz-P-S-NonCon" },
-            { label: "dzg-P" },
-            { label: "dzg-VRET" },
-            { label: "AFT_TRANS_DOCK" },
-            { label: "STAGING_ROOT" },
-            { label: "cvpm01_to_divert1_01" },
-            { label: "cvpm01_to_divert1_02" },
-            { label: "cvpm01_to_divert3_01" },
-            { label: "cvpm01_to_divert3_02" },
-            { label: "cvpm01_to_divert5_01" },
-            { label: "cvpm01_to_divert5_02" },
-            { label: "cvpm03_to_divert2_01" },
-            { label: "cvpm03_to_divert2_02" },
-            { label: "cvpm03_to_divert4_01" },
-            { label: "cvpm03_to_divert4_02" },
-            { label: "cvpm05_to_divert2_01" },
-            { label: "cvpm05_to_divert2_02" },
-            { label: "cvpm05_to_divert4_01" },
-            { label: "cvpm05_to_divert4_02" },
-            { label: "cvpm07_to_divert2_01" },
-            { label: "cvpm07_to_divert2_02" },
-            { label: "cvpm07_to_divert4_01" },
-            { label: "cvpm07_to_divert4_02" },
-            { label: "cvts01_trans_01" },
-            { label: "cvts01_trans_02" },
-            { label: "cvts01_trans_03" },
-            { label: "cvts01_trans_04" },
-            { label: "cvts01_trans_05" },
-            { label: "cvts01_trans_06" },
-            { label: "cvts01_trans_07" }
-          ]
+              { label: 'dz-P-1A135' },
+              { label: 'dz-P-1A175' },
+              { label: 'dz-P-1A222' },
+              { label: 'dz-P-1A266' },
+              { label: 'dz-P-1B135' },
+              { label: 'dz-P-1B175' },
+              { label: 'dz-P-1B222' },
+              { label: 'dz-P-1B266' },
+              { label: 'dz-P-1C135' },
+              { label: 'dz-P-1C175' },
+              { label: 'dz-P-1C222' },
+              { label: 'dz-P-1C266' },
+              { label: 'dz-P-1D135' },
+              { label: 'dz-P-1D175' },
+              { label: 'dz-P-1D222' },
+              { label: 'dz-P-1D266' },
+              { label: 'dz-P-1M327' },
+              { label: 'dz-P-1M361' },
+              { label: 'dz-P-1M395' },
+              { label: 'dz-P-1N327' },
+              { label: 'dz-P-1N361' },
+              { label: 'dz-P-1N395' },
+              { label: 'dz-P-IBMezz' },
+              { label: 'dz-P-RECYCLE' },
+              { label: 'dz-P-RECEIVE-DOCK-A' },
+              { label: 'dz-P-SAP' },
+              { label: 'dz-P-S-NonCon' },
+              { label: 'dzg-P' },
+              { label: 'dzg-VRET' },
+              { label: 'AFT_TRANS_DOCK' },
+              { label: 'STAGING_ROOT' },
+              { label: 'cvpm01_to_divert1_01' },
+              { label: 'cvpm01_to_divert1_02' },
+              { label: 'cvpm01_to_divert3_01' },
+              { label: 'cvpm01_to_divert3_02' },
+              { label: 'cvpm01_to_divert5_01' },
+              { label: 'cvpm01_to_divert5_02' },
+              { label: 'cvpm03_to_divert2_01' },
+              { label: 'cvpm03_to_divert2_02' },
+              { label: 'cvpm03_to_divert4_01' },
+              { label: 'cvpm03_to_divert4_02' },
+              { label: 'cvpm05_to_divert2_01' },
+              { label: 'cvpm05_to_divert2_02' },
+              { label: 'cvpm05_to_divert4_01' },
+              { label: 'cvpm05_to_divert4_02' },
+              { label: 'cvpm07_to_divert2_01' },
+              { label: 'cvpm07_to_divert2_02' },
+              { label: 'cvpm07_to_divert4_01' },
+              { label: 'cvpm07_to_divert4_02' },
+              { label: 'cvts01_trans_01' },
+              { label: 'cvts01_trans_02' },
+              { label: 'cvts01_trans_03' },
+              { label: 'cvts01_trans_04' },
+              { label: 'cvts01_trans_05' },
+              { label: 'cvts01_trans_06' },
+              { label: 'cvts01_trans_07' }
+            ]
           },
           {
-            title: "P2 Zones",
+            title: 'P2 Zones',
             items: [
-            { label: "dz-P-2A135" },
-            { label: "dz-P-2A175" },
-            { label: "dz-P-2A222" },
-            { label: "dz-P-2A266" },
-            { label: "dz-P-2B135" },
-            { label: "dz-P-2B175" },
-            { label: "dz-P-2B222" },
-            { label: "dz-P-2B266" },
-            { label: "dz-P-2C135" },
-            { label: "dz-P-2C175" },
-            { label: "dz-P-2C222" },
-            { label: "dz-P-2C266" },
-            { label: "dz-P-2D135" },
-            { label: "dz-P-2D175" },
-            { label: "dz-P-2D222" },
-            { label: "dz-P-2D266" },
-            { label: "dz-P-2M327" },
-            { label: "dz-P-2M362" },
-            { label: "dz-P-2M395" },
-            { label: "dz-P-2N327" },
-            { label: "dz-P-2N362" },
-            { label: "dz-P-2N395" },
-            { label: "dz-P-HRV327" },
-            { label: "dz-P-HRV364" },
-            { label: "cvpm01_to_divert2_01" },
-            { label: "cvpm01_to_divert2_02" },
-            { label: "cvpm01_to_divert4_01" },
-            { label: "cvpm01_to_divert4_02" },
-            { label: "cvpm03_to_divert1_01" },
-            { label: "cvpm03_to_divert1_02" },
-            { label: "cvpm03_to_divert3_01" },
-            { label: "cvpm03_to_divert3_02" },
-            { label: "cvpm03_to_divert5_01" },
-            { label: "cvpm03_to_divert5_02" },
-            { label: "cvpm05_to_divert1_01" },
-            { label: "cvpm05_to_divert1_02" },
-            { label: "cvpm05_to_divert3_01" },
-            { label: "cvpm05_to_divert3_02" },
-            { label: "cvpm05_to_divert5_01" },
-            { label: "cvpm05_to_divert5_02" },
-            { label: "cvpm07_to_divert1_01" },
-            { label: "cvpm07_to_divert1_02" },
-            { label: "cvpm07_to_divert3_01" },
-            { label: "cvpm07_to_divert3_02" },
-            { label: "cvpm07_to_divert5_01" },
-            { label: "cvpm07_to_divert5_02" }
-          ]
+              { label: 'dz-P-2A135' },
+              { label: 'dz-P-2A175' },
+              { label: 'dz-P-2A222' },
+              { label: 'dz-P-2A266' },
+              { label: 'dz-P-2B135' },
+              { label: 'dz-P-2B175' },
+              { label: 'dz-P-2B222' },
+              { label: 'dz-P-2B266' },
+              { label: 'dz-P-2C135' },
+              { label: 'dz-P-2C175' },
+              { label: 'dz-P-2C222' },
+              { label: 'dz-P-2C266' },
+              { label: 'dz-P-2D135' },
+              { label: 'dz-P-2D175' },
+              { label: 'dz-P-2D222' },
+              { label: 'dz-P-2D266' },
+              { label: 'dz-P-2M327' },
+              { label: 'dz-P-2M362' },
+              { label: 'dz-P-2M395' },
+              { label: 'dz-P-2N327' },
+              { label: 'dz-P-2N362' },
+              { label: 'dz-P-2N395' },
+              { label: 'dz-P-HRV327' },
+              { label: 'dz-P-HRV364' },
+              { label: 'cvpm01_to_divert2_01' },
+              { label: 'cvpm01_to_divert2_02' },
+              { label: 'cvpm01_to_divert4_01' },
+              { label: 'cvpm01_to_divert4_02' },
+              { label: 'cvpm03_to_divert1_01' },
+              { label: 'cvpm03_to_divert1_02' },
+              { label: 'cvpm03_to_divert3_01' },
+              { label: 'cvpm03_to_divert3_02' },
+              { label: 'cvpm03_to_divert5_01' },
+              { label: 'cvpm03_to_divert5_02' },
+              { label: 'cvpm05_to_divert1_01' },
+              { label: 'cvpm05_to_divert1_02' },
+              { label: 'cvpm05_to_divert3_01' },
+              { label: 'cvpm05_to_divert3_02' },
+              { label: 'cvpm05_to_divert5_01' },
+              { label: 'cvpm05_to_divert5_02' },
+              { label: 'cvpm07_to_divert1_01' },
+              { label: 'cvpm07_to_divert1_02' },
+              { label: 'cvpm07_to_divert3_01' },
+              { label: 'cvpm07_to_divert3_02' },
+              { label: 'cvpm07_to_divert5_01' },
+              { label: 'cvpm07_to_divert5_02' }
+            ]
           },
           {
-            title: "P3 Zones",
+            title: 'P3 Zones',
             items: [
-            { label: "dz-P-3A135" },
-            { label: "dz-P-3A175" },
-            { label: "dz-P-3A222" },
-            { label: "dz-P-3A266" },
-            { label: "dz-P-3B135" },
-            { label: "dz-P-3B175" },
-            { label: "dz-P-3B222" },
-            { label: "dz-P-3B266" },
-            { label: "dz-P-3C135" },
-            { label: "dz-P-3C175" },
-            { label: "dz-P-3C222" },
-            { label: "dz-P-3C266" },
-            { label: "dz-P-3D135" },
-            { label: "dz-P-3D175" },
-            { label: "dz-P-3D222" },
-            { label: "dz-P-3D266" },
-            { label: "cvpm02_to_divert1_01" },
-            { label: "cvpm02_to_divert1_02" },
-            { label: "cvpm02_to_divert3_01" },
-            { label: "cvpm02_to_divert3_02" },
-            { label: "cvpm02_to_divert5_01" },
-            { label: "cvpm02_to_divert5_02" },
-            { label: "cvpm04_to_divert1_01" },
-            { label: "cvpm04_to_divert1_02" },
-            { label: "cvpm04_to_divert3_01" },
-            { label: "cvpm04_to_divert3_02" },
-            { label: "cvpm04_to_divert5_01" },
-            { label: "cvpm04_to_divert5_02" },
-            { label: "cvpm06_to_divert1_01" },
-            { label: "cvpm06_to_divert1_02" },
-            { label: "cvpm06_to_divert3_01" },
-            { label: "cvpm06_to_divert3_02" },
-            { label: "cvpm06_to_divert5_01" },
-            { label: "cvpm06_to_divert5_02" }
-          ]
+              { label: 'dz-P-3A135' },
+              { label: 'dz-P-3A175' },
+              { label: 'dz-P-3A222' },
+              { label: 'dz-P-3A266' },
+              { label: 'dz-P-3B135' },
+              { label: 'dz-P-3B175' },
+              { label: 'dz-P-3B222' },
+              { label: 'dz-P-3B266' },
+              { label: 'dz-P-3C135' },
+              { label: 'dz-P-3C175' },
+              { label: 'dz-P-3C222' },
+              { label: 'dz-P-3C266' },
+              { label: 'dz-P-3D135' },
+              { label: 'dz-P-3D175' },
+              { label: 'dz-P-3D222' },
+              { label: 'dz-P-3D266' },
+              { label: 'cvpm02_to_divert1_01' },
+              { label: 'cvpm02_to_divert1_02' },
+              { label: 'cvpm02_to_divert3_01' },
+              { label: 'cvpm02_to_divert3_02' },
+              { label: 'cvpm02_to_divert5_01' },
+              { label: 'cvpm02_to_divert5_02' },
+              { label: 'cvpm04_to_divert1_01' },
+              { label: 'cvpm04_to_divert1_02' },
+              { label: 'cvpm04_to_divert3_01' },
+              { label: 'cvpm04_to_divert3_02' },
+              { label: 'cvpm04_to_divert5_01' },
+              { label: 'cvpm04_to_divert5_02' },
+              { label: 'cvpm06_to_divert1_01' },
+              { label: 'cvpm06_to_divert1_02' },
+              { label: 'cvpm06_to_divert3_01' },
+              { label: 'cvpm06_to_divert3_02' },
+              { label: 'cvpm06_to_divert5_01' },
+              { label: 'cvpm06_to_divert5_02' }
+            ]
           },
           {
-            title: "P4 Zones",
+            title: 'P4 Zones',
             items: [
-            { label: "dz-P-4A135" },
-            { label: "dz-P-4A175" },
-            { label: "dz-P-4A222" },
-            { label: "dz-P-4A266" },
-            { label: "dz-P-4B135" },
-            { label: "dz-P-4B175" },
-            { label: "dz-P-4B222" },
-            { label: "dz-P-4B266" },
-            { label: "dz-P-4C135" },
-            { label: "dz-P-4C175" },
-            { label: "dz-P-4C222" },
-            { label: "dz-P-4C266" },
-            { label: "dz-P-4D135" },
-            { label: "dz-P-4D175" },
-            { label: "dz-P-4D222" },
-            { label: "dz-P-4D266" },
-            { label: "cvpm02_to_divert2_01" },
-            { label: "cvpm02_to_divert2_02" },
-            { label: "cvpm02_to_divert4_01" },
-            { label: "cvpm02_to_divert4_02" },
-            { label: "cvpm04_to_divert2_01" },
-            { label: "cvpm04_to_divert2_02" },
-            { label: "cvpm04_to_divert4_01" },
-            { label: "cvpm04_to_divert4_02" },
-            { label: "cvpm06_to_divert2_01" },
-            { label: "cvpm06_to_divert2_02" },
-            { label: "cvpm06_to_divert4_01" },
-            { label: "cvpm06_to_divert4_02" }
-          ]
+              { label: 'dz-P-4A135' },
+              { label: 'dz-P-4A175' },
+              { label: 'dz-P-4A222' },
+              { label: 'dz-P-4A266' },
+              { label: 'dz-P-4B135' },
+              { label: 'dz-P-4B175' },
+              { label: 'dz-P-4B222' },
+              { label: 'dz-P-4B266' },
+              { label: 'dz-P-4C135' },
+              { label: 'dz-P-4C175' },
+              { label: 'dz-P-4C222' },
+              { label: 'dz-P-4C266' },
+              { label: 'dz-P-4D135' },
+              { label: 'dz-P-4D175' },
+              { label: 'dz-P-4D222' },
+              { label: 'dz-P-4D266' },
+              { label: 'cvpm02_to_divert2_01' },
+              { label: 'cvpm02_to_divert2_02' },
+              { label: 'cvpm02_to_divert4_01' },
+              { label: 'cvpm02_to_divert4_02' },
+              { label: 'cvpm04_to_divert2_01' },
+              { label: 'cvpm04_to_divert2_02' },
+              { label: 'cvpm04_to_divert4_01' },
+              { label: 'cvpm04_to_divert4_02' },
+              { label: 'cvpm06_to_divert2_01' },
+              { label: 'cvpm06_to_divert2_02' },
+              { label: 'cvpm06_to_divert4_01' },
+              { label: 'cvpm06_to_divert4_02' }
+            ]
           },
           {
-            title: "Problem Solve",
+            title: 'Problem Solve',
             items: [
-            { label: "dz-P-1ABModPS" },
-            { label: "dz-P-1BCModPS" },
-            { label: "dz-P-1CDModPS" },
-            { label: "dz-P-1MNPS" },
-            { label: "dz-P-2ABModPS" },
-            { label: "dz-P-2BCModPS" },
-            { label: "dz-P-2CDModPS" },
-            { label: "dz-P-2MNPS" },
-            { label: "dz-P-HRVPS" },
-            { label: "dz-P-3ABModPS" },
-            { label: "dz-P-3BCModPS" },
-            { label: "dz-P-3CDModPS" },
-            { label: "dz-P-4ABModPS" },
-            { label: "dz-P-4BCModPS" },
-            { label: "dz-P-4CDModPS" },
-            { label: "dz-S-NonCon" },
-            { label: "dz-P-ReturnReturns" },
-            { label: "dz-P-DAMAGELAND" },
-            { label: "dz-P-DockHRV" },
-            { label: "dz-P-DockPS" },
-            { label: "dz-S-ISS-Hazmat" },
-            { label: "dz-S-ISSWIP1" },
-            { label: "dz-S-ISSWIP2" },
-            { label: "dz-S-ISSWIP3" },
-            { label: "dz-S-ISSWIP4" },
-            { label: "dz-S-ISSWIP5" }
-          ]
+              { label: 'dz-P-1ABModPS' },
+              { label: 'dz-P-1BCModPS' },
+              { label: 'dz-P-1CDModPS' },
+              { label: 'dz-P-1MNPS' },
+              { label: 'dz-P-2ABModPS' },
+              { label: 'dz-P-2BCModPS' },
+              { label: 'dz-P-2CDModPS' },
+              { label: 'dz-P-2MNPS' },
+              { label: 'dz-P-HRVPS' },
+              { label: 'dz-P-3ABModPS' },
+              { label: 'dz-P-3BCModPS' },
+              { label: 'dz-P-3CDModPS' },
+              { label: 'dz-P-4ABModPS' },
+              { label: 'dz-P-4BCModPS' },
+              { label: 'dz-P-4CDModPS' },
+              { label: 'dz-S-NonCon' },
+              { label: 'dz-P-ReturnReturns' },
+              { label: 'dz-P-DAMAGELAND' },
+              { label: 'dz-P-DockHRV' },
+              { label: 'dz-P-DockPS' },
+              { label: 'dz-S-ISS-Hazmat' },
+              { label: 'dz-S-ISSWIP1' },
+              { label: 'dz-S-ISSWIP2' },
+              { label: 'dz-S-ISSWIP3' },
+              { label: 'dz-S-ISSWIP4' },
+              { label: 'dz-S-ISSWIP5' }
+            ]
           }
         ]
       },
       {
         title: 'Routing Profiles',
-        wide: true,
-        children: [
+        kind: 'parent',
+        note: 'Expandable parent section. Keep it collapsed until you need a specific routing profile.',
+        groups: [
           {
-            title: 'All Profiles',
+            title: 'Profile Library',
             items: [
               { label: 'dz-P-Books' },
               { label: 'dz-P-BULKY' },
@@ -1347,65 +1476,58 @@
       }
     }
 
-    let quickGridResizeTimer = 0;
-
-    function fitQuickGrid() {
-      const host = $('quickGrid');
-      if (!host) return;
-
-      const styles = getComputedStyle(host);
-      const autoRow = parseFloat(styles.gridAutoRows);
-      const rowGap = parseFloat(styles.rowGap || styles.gap || 0);
-      const stacked = window.matchMedia('(max-width: 720px)').matches || !Number.isFinite(autoRow) || autoRow <= 0;
-
-      host.querySelectorAll('.panel-block').forEach(panel => {
-        if (stacked) {
-          panel.style.gridRowEnd = '';
-          return;
-        }
-
-        panel.style.gridRowEnd = 'span 1';
-        const height = panel.getBoundingClientRect().height;
-        const span = Math.max(1, Math.ceil((height + rowGap) / (autoRow + rowGap)));
-        panel.style.gridRowEnd = `span ${span}`;
-      });
-    }
-
-    function queueQuickGridLayout() {
-      clearTimeout(quickGridResizeTimer);
-      quickGridResizeTimer = setTimeout(() => {
-        requestAnimationFrame(fitQuickGrid);
-      }, 40);
-    }
-
     function renderQuickSections() {
       const host = $('quickGrid');
-      host.innerHTML = quickSections.map(section => {
-        const ownItemCount = Array.isArray(section.items) ? section.items.length : 0;
-        const childCount = Array.isArray(section.children) ? section.children.length : 0;
-        const totalButtonCount = ownItemCount + (Array.isArray(section.children)
-          ? section.children.reduce((sum, child) => sum + (Array.isArray(child.items) ? child.items.length : 0), 0)
-          : 0);
-        const panelClass = section.wide || ownItemCount >= 10 || childCount >= 6 ? 'panel-block is-wide' : 'panel-block';
 
-        const content = childCount
+      const getSectionCount = (section) => {
+        if (Array.isArray(section.items)) return section.items.length;
+        if (Array.isArray(section.groups)) {
+          return section.groups.reduce((total, group) => total + (Array.isArray(group.items) ? group.items.length : 0), 0);
+        }
+        return 0;
+      };
+
+      const buildButtons = (items, compact = false) => `
+        <div class="button-cloud${compact ? ' compact' : ''}">
+          ${items.map(item => `<button class="btn quick-btn${compact ? ' quick-mini' : ''}" type="button" data-quick="${escapeHtml(item.label)}">${escapeHtml(item.label)}</button>`).join('')}
+        </div>
+      `;
+
+      host.innerHTML = quickSections.map((section, sectionIndex) => {
+        const count = getSectionCount(section);
+        const isParent = Array.isArray(section.groups);
+        const sectionClasses = [
+          'panel-block',
+          isParent ? 'parent-block section--hero' : '',
+          !isParent && count >= 12 ? 'section--wide' : ''
+        ].filter(Boolean).join(' ');
+
+        const stats = isParent
+          ? `<div class="panel-stats"><span class="mini-pill">${section.groups.length} groups</span><span class="count-pill">${count}</span></div>`
+          : `<div class="panel-stats"><span class="count-pill">${count}</span></div>`;
+
+        const body = isParent
           ? `
-            <div class="child-grid">
-              ${section.children.map(child => {
-                const childItems = Array.isArray(child.items) ? child.items : [];
+            <div class="inner parent-inner">
+              ${section.groups.map((group, groupIndex) => {
+                const groupId = `${sectionIndex}-${groupIndex}`;
+                const groupCount = Array.isArray(group.items) ? group.items.length : 0;
+                const subLabel = section.title === 'Routing Profiles' ? 'routing profiles' : 'dropzones';
                 return `
-                  <section class="child-block">
-                    <button class="child-toggle" type="button" data-child-toggle aria-expanded="false">
-                      <span class="child-meta">
-                        <span class="chevron" aria-hidden="true"></span>
-                        <span class="child-title">${escapeHtml(child.title)}</span>
+                  <section class="group-shell" data-group-shell>
+                    <button class="accordion-toggle" type="button" data-group="${groupId}" aria-expanded="false" aria-controls="accordion-panel-${groupId}">
+                      <span class="accordion-copy">
+                        <span class="accordion-overline">${section.title === 'Routing Profiles' ? 'Profile Cluster' : 'Zone Cluster'}</span>
+                        <span class="accordion-title">${escapeHtml(group.title)}</span>
+                        <span class="accordion-sub">Tap to reveal only the ${subLabel} inside this group.</span>
                       </span>
-                      <span class="count-badge">${childItems.length}</span>
+                      <span class="accordion-right">
+                        <span class="accordion-count">${groupCount}</span>
+                        <span class="accordion-chevron" aria-hidden="true"></span>
+                      </span>
                     </button>
-                    <div class="child-panel">
-                      <div class="button-cloud">
-                        ${childItems.map(item => `<button class="btn" type="button" data-quick="${escapeHtml(item.label)}">${escapeHtml(item.label)}</button>`).join('')}
-                      </div>
+                    <div class="accordion-panel" id="accordion-panel-${groupId}" hidden>
+                      ${buildButtons(group.items || [], true)}
                     </div>
                   </section>
                 `;
@@ -1413,58 +1535,53 @@
             </div>
           `
           : `
-            <div class="button-cloud">
-              ${section.items.map(item => `<button class="btn" type="button" data-quick="${escapeHtml(item.label)}">${escapeHtml(item.label)}</button>`).join('')}
+            <div class="inner">
+              ${buildButtons(section.items || [], count > 8)}
             </div>
           `;
 
         return `
-        <section class="${panelClass}" data-count="${totalButtonCount}">
-          <h3>${escapeHtml(section.title)}</h3>
-          <div class="inner">
-            ${content}
-          </div>
-        </section>
-      `;
+          <section class="${sectionClasses}">
+            <div class="panel-head">
+              <div class="panel-head-main">
+                <div class="panel-kicker">${isParent ? 'Parent Section' : 'Quick Labels'}</div>
+                <h3 class="panel-title">${escapeHtml(section.title)}</h3>
+                ${section.note ? `<div class="panel-note">${escapeHtml(section.note)}</div>` : ''}
+              </div>
+              ${stats}
+            </div>
+            ${body}
+          </section>
+        `;
       }).join('');
 
-      const allQuickItems = quickSections.flatMap(section => [
-        ...(Array.isArray(section.items) ? section.items : []),
-        ...(Array.isArray(section.children)
-          ? section.children.flatMap(child => Array.isArray(child.items) ? child.items : [])
-          : [])
-      ]);
+      const setAccordionState = (shell, open) => {
+        const toggle = shell.querySelector('.accordion-toggle');
+        const panel = shell.querySelector('.accordion-panel');
+        shell.classList.toggle('is-open', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        panel.hidden = !open;
+      };
 
-      host.querySelectorAll('[data-child-toggle]').forEach(toggle => {
+      host.querySelectorAll('.accordion-toggle').forEach(toggle => {
         toggle.addEventListener('click', () => {
-          const block = toggle.closest('.child-block');
-          const group = block && block.parentElement;
-          if (!block || !group) return;
-
-          const shouldOpen = !block.classList.contains('is-open');
-
-          group.querySelectorAll('.child-block.is-open').forEach(openBlock => {
-            openBlock.classList.remove('is-open');
-            const openToggle = openBlock.querySelector('[data-child-toggle]');
-            if (openToggle) openToggle.setAttribute('aria-expanded', 'false');
-          });
-
-          if (shouldOpen) {
-            block.classList.add('is-open');
-            toggle.setAttribute('aria-expanded', 'true');
-          } else {
-            block.classList.remove('is-open');
-            toggle.setAttribute('aria-expanded', 'false');
-          }
-
-          queueQuickGridLayout();
+          const shell = toggle.closest('[data-group-shell]');
+          const parent = toggle.closest('.parent-inner');
+          const shouldOpen = toggle.getAttribute('aria-expanded') !== 'true';
+          parent.querySelectorAll('[data-group-shell]').forEach(node => setAccordionState(node, false));
+          if (shouldOpen) setAccordionState(shell, true);
         });
       });
 
       host.querySelectorAll('[data-quick]').forEach(btn => {
         btn.addEventListener('click', async () => {
           const label = btn.getAttribute('data-quick');
-          const item = allQuickItems.find(entry => entry.label === label);
+          const item = quickSections
+            .flatMap(section => Array.isArray(section.items)
+              ? section.items
+              : (section.groups || []).flatMap(group => group.items || []))
+            .find(entry => entry.label === label);
+
           try {
             if (item && Array.isArray(item.multi)) {
               for (const part of item.multi) {
@@ -1480,14 +1597,10 @@
           }
         });
       });
-
-      queueQuickGridLayout();
     }
 
     function bindUi() {
       document.addEventListener('keydown', keyCheck, false);
-      window.addEventListener('resize', queueQuickGridLayout, { passive: true });
-      window.addEventListener('load', queueQuickGridLayout, { once: true });
 
       ['printafter', 'jumptoq', 'nowhitespace', 'previewMode', 'bridgeUrl', 'bulkQuantity'].forEach(id => {
         $(id).addEventListener('change', savePrefs);
@@ -1519,9 +1632,6 @@
       renderQuickSections();
       bindUi();
       renderLog();
-      if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(queueQuickGridLayout).catch(() => {});
-      }
       $('barcodedata').focus();
     }
 
