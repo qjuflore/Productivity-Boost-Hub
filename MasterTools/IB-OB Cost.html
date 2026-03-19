@@ -486,6 +486,53 @@
     }
 
     .mini.warn{ color: var(--warn); }
+    .etiHeaderMeta{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .etiMixWrap{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .etiMixLabel{
+      font-size:12px;
+      font-weight:850;
+      letter-spacing:.25px;
+      color:rgba(255,255,255,.82);
+    }
+    .etiMixBadge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      font-family: var(--mono);
+      font-size:12px;
+      line-height:1;
+      color:rgba(255,255,255,.92);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.04) inset;
+    }
+    .etiMixBadge b{ font-weight:900; }
+    .etiMixBadge.small{
+      border-color: rgba(53,211,255,.35);
+      box-shadow: inset 0 0 0 1px rgba(53,211,255,.14), 0 0 14px rgba(53,211,255,.10);
+    }
+    .etiMixBadge.medium{
+      border-color: rgba(255,209,102,.35);
+      box-shadow: inset 0 0 0 1px rgba(255,209,102,.14), 0 0 14px rgba(255,209,102,.10);
+    }
+    .etiMixBadge.large{
+      border-color: rgba(176,123,255,.35);
+      box-shadow: inset 0 0 0 1px rgba(176,123,255,.14), 0 0 14px rgba(176,123,255,.10);
+    }
     .kpiBreak{
       display:grid;
       grid-template-columns: repeat(2, minmax(0,1fr));
@@ -1467,7 +1514,7 @@ const DEFAULT_CFG = {
       "opSource": ""
     },
     {
-      "enabled": false,
+      "enabled": true,
       "path": "ETI Small",
       "ppr": "Each Transfer In - Small",
       "gal": "Each Transfer In - Small",
@@ -1476,7 +1523,7 @@ const DEFAULT_CFG = {
       "opSource": ""
     },
     {
-      "enabled": false,
+      "enabled": true,
       "path": "ETI Medium",
       "ppr": "Each Transfer In - Medium",
       "gal": "Each Transfer In - Medium",
@@ -1485,7 +1532,7 @@ const DEFAULT_CFG = {
       "opSource": ""
     },
     {
-      "enabled": false,
+      "enabled": true,
       "path": "ETI Large",
       "ppr": "Each Transfer In - Large",
       "gal": "Each Transfer In - Large",
@@ -1833,6 +1880,25 @@ function migrateCfg(cfg){
   return cfg;
 }
 
+function enforceIbEtiRows(cfg){
+  try{
+    const mustEnable = new Set([
+      normalizeKey("ETI Small"),
+      normalizeKey("ETI Medium"),
+      normalizeKey("ETI Large"),
+      normalizeKey("Each Transfer In - Small"),
+      normalizeKey("Each Transfer In - Medium"),
+      normalizeKey("Each Transfer In - Large")
+    ]);
+    for(const row of (cfg?.ib || [])){
+      const pathKey = normalizeKey(row?.path);
+      const pprKey = normalizeKey(row?.ppr);
+      if(mustEnable.has(pathKey) || mustEnable.has(pprKey)) row.enabled = true;
+    }
+  }catch(e){}
+  return cfg;
+}
+
 function mergeWithDefault(saved){
   // Rebase to DEFAULT_CFG order using Path label as a stable key.
   // This prevents "row shifting" across versions (e.g., IB PA values landing on IB Problem Solve).
@@ -1880,7 +1946,7 @@ function mergeWithDefault(saved){
     }
   }
 
-  return out;
+  return enforceIbEtiRows(out);
 }
 
 function loadCfg(){
@@ -2583,10 +2649,34 @@ function dedupe(arr){
 
 function renderOne(mount, title, tableObj, key){
   const box = document.createElement("div");
+
+  const findRow = (name) => tableObj.rows.find(r => keyCI(r.path) === keyCI(name));
+  const etiTotalRow = (key === "ib") ? findRow("ETI Total") : null;
+  const etiSmallRow = (key === "ib") ? findRow("ETI Small") : null;
+  const etiMediumRow = (key === "ib") ? findRow("ETI Medium") : null;
+  const etiLargeRow = (key === "ib") ? findRow("ETI Large") : null;
+  const etiTotalVol = (etiTotalRow && typeof etiTotalRow.vol === "number" && isFinite(etiTotalRow.vol)) ? etiTotalRow.vol : null;
+  const etiMixPct = (row) => {
+    const rowVol = (row && typeof row.vol === "number" && isFinite(row.vol)) ? row.vol : null;
+    return (etiTotalVol && etiTotalVol > 0 && rowVol !== null) ? (rowVol / etiTotalVol) : null;
+  };
+
+  const etiHeaderHtml = (key === "ib") ? `
+    <div class="etiHeaderMeta">
+      <div class="etiMixWrap" title="ETI processed mix vs ETI Total">
+        <span class="etiMixLabel">ETI Mix</span>
+        <span class="etiMixBadge small">Small <b>${pct(etiMixPct(etiSmallRow),1)}</b></span>
+        <span class="etiMixBadge medium">Medium <b>${pct(etiMixPct(etiMediumRow),1)}</b></span>
+        <span class="etiMixBadge large">Large <b>${pct(etiMixPct(etiLargeRow),1)}</b></span>
+      </div>
+      <div class="mini">Indirect % (hours): <b>${pct(tableObj.indirectPct,1)}</b></div>
+    </div>
+  ` : `<div class="mini">Indirect % (hours): <b>${pct(tableObj.indirectPct,1)}</b></div>`;
+
   box.innerHTML = `
     <div class="flexBetween" style="margin-bottom:10px">
       <div style="font-weight:900; letter-spacing:.2px">${title}</div>
-      <div class="mini">Indirect % (hours): <b>${pct(tableObj.indirectPct,1)}</b></div>
+      ${etiHeaderHtml}
     </div>
   `;
 
