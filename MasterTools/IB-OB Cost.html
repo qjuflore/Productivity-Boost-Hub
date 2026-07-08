@@ -314,7 +314,7 @@
     .ok{color:rgba(60,255,177,.92)}
     .warnText{color:rgba(255,209,102,.95)}
     .badText{color:rgba(255,77,109,.95)}
-    /* ===== Row-wide status coloring (LP/OP basis) ===== */
+    /* ===== Row-wide status coloring (LP-only standard) ===== */
     .reportTable tbody tr.rowGood td:not(:first-child){
       background: linear-gradient(90deg, rgba(60,255,177,.10), rgba(0,0,0,0)) !important;
     }
@@ -344,13 +344,13 @@
     .basisCellBad{ color: rgba(255,77,109,.95) !important; }
     .basisCellWarn{ color: rgba(255,209,102,.95) !important; }
 
-    /* Basis stripe: LP vs OP (left edge, stays visible even on hover) */
+    /* Basis stripe: LP is the primary standard; OP stripe is kept only for legacy/secondary display */
     .reportTable tbody tr.basisLP td:first-child{ box-shadow: inset 5px 0 0 rgba(var(--lpRGB), .70); }
     .reportTable tbody tr.basisOP td:first-child{ box-shadow: inset 5px 0 0 rgba(var(--opRGB), .70); }
     .reportTable tbody tr.basisNA td:first-child{ box-shadow: inset 5px 0 0 rgba(255,255,255,.22); }
 
 
-    /* Per-row: make LP/OP look IDENTICAL across these key columns based on the plan (basis) */
+    /* Per-row: LP is the main highlighted basis. OP highlighting is secondary/legacy only. */
     .reportTable tbody tr.basisLP td.col-lpRate,
     .reportTable tbody tr.basisLP td.col-lpHours,
     .reportTable tbody tr.basisLP td.col-path,
@@ -377,7 +377,7 @@
 
     /* LP/OP Target columns coloring: Hours/% to LP/OP
        - Always tint LP-target columns cyan, OP-target columns violet
-       - Extra glow on the side selected by Status rule (basisLP/basisOP) */
+       - Extra glow on LP because LP is the current status standard */
     .reportTable tbody td.col-hrsToLp,
     .reportTable tbody td.col-pctToLp{
       box-shadow: inset 0 0 0 1px rgba(var(--lpRGB), .18);
@@ -391,7 +391,7 @@
 
     }
 
-    /* Strong highlight on the chosen basis side (sync with Status rule) */
+    /* Strong highlight on the LP standard side (sync with Status rule) */
     .reportTable tbody tr.basisLP td.col-hrsToLp,
     .reportTable tbody tr.basisLP td.col-pctToLp{
       box-shadow: inset 0 0 0 2px rgba(var(--lpRGB), .78), 0 0 14px rgba(var(--lpRGB), .18) !important;
@@ -1020,14 +1020,10 @@
 <label class="checkLine"><input id="showMatchCols" type="checkbox"/> Show match columns (PPR Match / Galaxy Match)</label>
 </div>
 <div class="field" style="min-width:260px">
-<label>Status rule (sync with colored % columns)</label>
+<label>Status rule (LP standard)</label>
 <div class="row" style="gap:8px; align-items:center">
-<select class="cp" id="statusBasis">
-<option value="higherTarget">Higher target (LP vs OP)</option>
-<option value="lp">%LP</option>
-<option value="op">%OP</option>
-<option value="worst">Worst of %LP/%OP (min %)</option>
-<option value="best">Best of %LP/%OP (max %)</option>
+<select class="cp" id="statusBasis" title="LP is now the primary standard for row status/coloring.">
+<option value="lp">%LP — main standard</option>
 </select>
 <div class="row" style="gap:6px; align-items:center">
 <span class="muted small">Threshold</span>
@@ -1035,7 +1031,7 @@
 <span class="muted small">%</span>
 </div>
 </div>
-<div class="muted small" style="margin-top:6px">Status + row colors follow the rule above, and show whether each row is being judged vs LP or OP.</div>
+<div class="muted small" style="margin-top:6px">Status + green/red row colors now compare Actual Rate vs LP only. OP stays visible as a secondary reference column.</div>
 </div>
 <div class="field" style="min-width:180px">
 <label> </label>
@@ -1380,10 +1376,10 @@ function saveRtView(v){ try{ localStorage.setItem(LS_RT_VIEW, String(v||"both"))
 
 
 // Excel strict is always ON (fixed)
-const LS_STATUS_BASIS = "qjuflore_ib_ob_report_builder_statusBasis_v2";
+const LS_STATUS_BASIS = "qjuflore_ib_ob_report_builder_statusBasis_v3_lp_standard";
 const LS_STATUS_THRESHOLD = "qjuflore_ib_ob_report_builder_statusThresholdPct_v1";
-function loadStatusBasis(){ try{ return (localStorage.getItem(LS_STATUS_BASIS) || "higherTarget"); }catch(e){ return "higherTarget"; } }
-function saveStatusBasis(v){ try{ localStorage.setItem(LS_STATUS_BASIS, String(v||"lp")); }catch(e){} }
+function loadStatusBasis(){ return "lp"; }
+function saveStatusBasis(v){ try{ localStorage.setItem(LS_STATUS_BASIS, "lp"); }catch(e){} }
 function loadStatusThresholdPct(){ 
   try{ 
     const v = localStorage.getItem(LS_STATUS_THRESHOLD);
@@ -2713,45 +2709,16 @@ tbl.innerHTML = `<thead><tr>${headCells.join("")}</tr></thead><tbody></tbody>`;
   const tb = tbl.querySelector("tbody");
 for(const r of tableObj.rows){
     const thr = (Number(state.statusThresholdPct)||100)/100;
-    const basis = String(state.statusBasis || "higherTarget");
 
-    // Determine which target drives status/coloring for THIS row
-    // basisOn = "LP" or "OP" (shown as a colored tag)
+    // LP STANDARD: row status/colors are now judged ONLY against LP.
+    // OP remains visible in the table as a secondary reference, but it no longer
+    // decides rowGood/rowBad, bridge flags, or the main colored basis highlight.
     let basisPct = null;
     let basisOn = null;
-
-    const cand = [];
-    if(r.pctToLp!==null && r.pctToLp!==undefined && !Number.isNaN(r.pctToLp)) cand.push({k:"LP", v:r.pctToLp});
-    if(r.pctToOp!==null && r.pctToOp!==undefined && !Number.isNaN(r.pctToOp)) cand.push({k:"OP", v:r.pctToOp});
-
-    if(basis==="lp"){
-      basisPct = r.pctToLp; basisOn = "LP";
-    }else if(basis==="op"){
-      basisPct = r.pctToOp; basisOn = "OP";
-    }else if(basis==="higherTarget"){
-      // Pick the HIGHER rate target (harder target): max(lpRate, opRate)
-      const lpOk = (r.lpRate && r.lpRate>0 && r.pctToLp!==null && !Number.isNaN(r.pctToLp));
-      const opOk = (r.opRate && r.opRate>0 && r.pctToOp!==null && !Number.isNaN(r.pctToOp));
-      if(lpOk && opOk){
-        if(r.lpRate >= r.opRate){ basisPct = r.pctToLp; basisOn = "LP"; }
-        else { basisPct = r.pctToOp; basisOn = "OP"; }
-      }else if(opOk){
-        basisPct = r.pctToOp; basisOn = "OP";
-      }else if(lpOk){
-        basisPct = r.pctToLp; basisOn = "LP";
-      }else{
-        basisPct = null; basisOn = null;
-      }
-    }else if(basis==="worst"){
-      if(cand.length){
-        const pick = cand.reduce((a,b)=> (b.v<a.v ? b : a));
-        basisPct = pick.v; basisOn = pick.k;
-      }
-    }else if(basis==="best"){
-      if(cand.length){
-        const pick = cand.reduce((a,b)=> (b.v>a.v ? b : a));
-        basisPct = pick.v; basisOn = pick.k;
-      }
+    const lpOk = (r.lpRate && r.lpRate>0 && r.pctToLp!==null && r.pctToLp!==undefined && !Number.isNaN(r.pctToLp));
+    if(lpOk){
+      basisPct = r.pctToLp;
+      basisOn = "LP";
     }
 
     const opMissing = (!r.opRate || r.opRate<=0) && (r.vol!==null && r.vol>0);
@@ -2763,9 +2730,6 @@ for(const r of tableObj.rows){
       rowClass = "rowBad";
     }else if(!r.foundGal){
       statusLabel = `<span class="warnText">LP NOT FOUND</span>`;
-      rowClass = "rowWarn";
-    }else if((basisOn==="OP") && opMissing){
-      statusLabel = `<span class="warnText">OP RATE 0</span>`;
       rowClass = "rowWarn";
     }else if(basisPct===null){
       statusLabel = `<span class="muted">N/A</span>`;
@@ -3006,7 +2970,7 @@ document.getElementById("focusReport").checked = !!state.focusReport;
 
 const statusBasisEl = document.getElementById("statusBasis");
 const statusThrEl   = document.getElementById("statusThreshold");
-if(statusBasisEl){ statusBasisEl.value = state.statusBasis || "higherTarget"; }
+if(statusBasisEl){ statusBasisEl.value = "lp"; state.statusBasis = "lp"; saveStatusBasis("lp"); }
 if(statusThrEl){ statusThrEl.value = String(state.statusThresholdPct ?? 100); }
 
 applyLayoutClasses();
@@ -3031,8 +2995,9 @@ document.getElementById("focusReport").addEventListener("change", (e)=>{
 // Status rule controls
 if(statusBasisEl){
   statusBasisEl.addEventListener("change", (e)=>{
-    state.statusBasis = String(e.target.value || "higherTarget");
-    saveStatusBasis(state.statusBasis);
+    state.statusBasis = "lp";
+    if(e && e.target) e.target.value = "lp";
+    saveStatusBasis("lp");
     if(state.lastBuild) renderReport();
   });
 }
