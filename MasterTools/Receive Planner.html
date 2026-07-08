@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Receive Planner</title>
+  <title>Receive Planner - IB Rodeo WIP</title>
   <style>
     :root{
       --bg:#070A12;
@@ -95,7 +95,7 @@
       white-space:nowrap;
     }
 
-/* IB Rodeo BL focus pill */
+/* IB Rodeo WIP focus pill */
 .pill.ibr{
   display:flex;
   align-items:center;
@@ -776,28 +776,134 @@
     }
 
 
-    .v--backlog{
+    .v--wip{
       font-size: 44px;
       letter-spacing: .5px;
       line-height: 1.05;
       font-weight: 900;
     }
     @media (max-width: 980px){
-      .v--backlog{ font-size: 38px; }
+      .v--wip{ font-size: 38px; }
     }
     @media (max-width: 640px){
-      .v--backlog{ font-size: 34px; }
+      .v--wip{ font-size: 34px; }
     }
-    .card--backlog-simple .k{
+    .card--wip-simple .k{
       letter-spacing: .6px;
       text-transform: uppercase;
     }
 
-    .card--backlog-simple{
+    .card--wip-simple{
       display:flex;
       flex-direction:column;
       justify-content:center;
       min-height: 150px;
+    }
+
+
+    /* Smart Snapshot: compact decision graphics */
+    .smartSummary{
+      margin: 0 0 12px;
+      border:1px solid rgba(144,179,255,.14);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(10,16,32,.82), rgba(8,12,26,.66));
+      overflow:hidden;
+    }
+    .smartHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:12px 12px 10px;
+      border-bottom:1px solid rgba(144,179,255,.10);
+    }
+    .smartHead strong{font-size:13px; letter-spacing:.35px;}
+    .smartHead .muted{font-size:11px; display:block; margin-top:2px;}
+    .smartGrid{
+      display:grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap:10px;
+      padding:12px;
+    }
+    @media (max-width: 980px){ .smartGrid{ grid-template-columns:1fr; } }
+    .smartCard{
+      border:1px solid rgba(144,179,255,.12);
+      border-radius:12px;
+      background: rgba(255,255,255,.03);
+      padding:10px;
+      min-width:0;
+    }
+    .smartCard .smartLabel{
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      color:rgba(155,176,209,.95);
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      margin-bottom:8px;
+    }
+    .smartActionText{font-size:17px; font-weight:950; line-height:1.2; margin-top:2px;}
+    .smartActionSub{font-size:12px; color:rgba(155,176,209,.95); line-height:1.35; margin-top:7px;}
+    .smartMiniRow{display:grid; grid-template-columns: 64px 1fr 62px; gap:8px; align-items:center; margin:8px 0;}
+    .smartMiniRow .name{font-size:11px; font-weight:900; color:rgba(234,242,255,.9);}
+    .smartMiniRow .num{font-size:11px; color:rgba(155,176,209,.95); text-align:right; font-family:var(--mono);}
+    .smartTrack{
+      height:12px;
+      border-radius:999px;
+      border:1px solid rgba(144,179,255,.14);
+      background: rgba(255,255,255,.035);
+      overflow:hidden;
+    }
+    .smartTrack > i{
+      display:block;
+      height:100%;
+      width:0%;
+      border-radius:999px;
+      background: linear-gradient(90deg, rgba(62,231,255,.92), rgba(60,255,180,.86));
+      transition: width .25s ease;
+    }
+    .smartTrack.bad > i{ background: linear-gradient(90deg, rgba(255,77,109,.88), rgba(255,209,102,.80)); }
+    .smartTrack.warn > i{ background: linear-gradient(90deg, rgba(255,209,102,.90), rgba(62,231,255,.82)); }
+    .flowBars{display:grid; gap:8px;}
+    .flowBarLine{display:grid; grid-template-columns: 54px 1fr 76px; gap:8px; align-items:center;}
+    .flowBarLine .name{font-size:11px; font-weight:900; color:rgba(234,242,255,.9);}
+    .flowBarLine .num{font-size:11px; color:rgba(155,176,209,.95); text-align:right; font-family:var(--mono);}
+    .flowTrack{height:14px; border-radius:999px; border:1px solid rgba(144,179,255,.14); background:rgba(255,255,255,.035); overflow:hidden;}
+    .flowTrack > i{display:block; height:100%; width:0%; border-radius:999px; transition:width .25s ease; background:rgba(144,179,255,.70);}
+    .flowTrack.burn > i{ background: linear-gradient(90deg, rgba(60,255,180,.85), rgba(62,231,255,.72)); }
+    .flowTrack.build > i{ background: linear-gradient(90deg, rgba(255,209,102,.84), rgba(255,77,109,.68)); }
+    .smartNet{font-size:12px; margin-top:8px; color:rgba(155,176,209,.95);}
+    .howMeter{
+      position:relative;
+      height:26px;
+      margin:10px 2px 4px;
+    }
+    .howMeter .line{
+      position:absolute; left:0; right:0; top:10px; height:10px;
+      border-radius:999px;
+      border:1px solid rgba(144,179,255,.14);
+      background: linear-gradient(90deg, rgba(255,77,109,.32), rgba(255,209,102,.30) 62.5%, rgba(60,255,180,.34));
+    }
+    .howMeter .target{
+      position:absolute; top:3px; bottom:0; width:2px; left:62.5%;
+      background:rgba(255,255,255,.55);
+      box-shadow:0 0 10px rgba(255,255,255,.22);
+    }
+    .howMeter .marker{
+      position:absolute; top:2px; width:18px; height:18px; margin-left:-9px; border-radius:50%;
+      border:2px solid rgba(234,242,255,.92);
+      background:rgba(12,18,34,.96);
+      box-shadow:0 0 18px rgba(62,231,255,.30);
+      left:0%;
+      transition:left .25s ease;
+    }
+    .howScale{display:flex; justify-content:space-between; font-size:10px; color:rgba(155,176,209,.88); font-family:var(--mono);}
+    .dashPngExport #dashboardPanel .smartSummary,
+    .dashPngExport #dashboardPanel .smartCard,
+    .dashPngExport #dashboardPanel .smartTrack,
+    .dashPngExport #dashboardPanel .flowTrack{
+      box-shadow:none !important;
+      text-shadow:none !important;
     }
 </style>
 
@@ -811,7 +917,7 @@
       <div class="brand">
         <div class="orb" aria-hidden="true"></div>
         <div>
-          <h1>Receive Planner (Night Shift)</h1>
+          <h1>Receive Planner (Night Shift) - IB Rodeo WIP</h1>
           <div class="sub">
             <span>BG/S1: midnight→midnight (deadline = next midnight) • Night ALPS: per shift (can cross midnight) • Auto reminders</span>
             <span class="pill" id="nowPill" style="margin-left:8px;">—</span>
@@ -848,7 +954,7 @@
         <div class="panel-b">
           <div class="note" id="remindersBox" style="margin-top:0">
             <strong>Update Reminders</strong>
-            <div class="muted" style="margin-top:6px">Rules: Hourly @ :00 (KIPS/Transfer/Shift TI/Backlog + Stow HC/UPH + Decant HC/UPH + Injection rates) • After midnight (BG/S1) • Start-of-shift (Date) • Verify Night ALPS mid-shift • Verify Day ALPS near end-of-shift • Shift times are mostly static.</div>
+            <div class="muted" style="margin-top:6px">Rules: Hourly @ :00 (AFT/Transfer/Shift TI/IB Rodeo WIP + Stow HC/UPH + Decant HC/UPH + Injection rates) • After midnight (BG/S1) • Start-of-shift (Date) • Verify Night ALPS mid-shift • Verify Day ALPS near end-of-shift • Shift times are mostly static.</div>
             <div id="remindersList" style="margin-top:10px"></div>
           </div>
           <div class="note" id="quickConsole" style="margin-top:12px">
@@ -871,8 +977,8 @@
 
             <div class="row" style="margin-top:10px">
               <div class="field">
-                <label><span>KIPS Received (hourly)</span><span class="tag mono">KIPS</span></label>
-                <input id="qKips" inputmode="decimal" placeholder="enter value" />
+                <label><span>AFT Received (hourly)</span><span class="tag mono">AFT</span></label>
+                <input id="qAFT" inputmode="decimal" placeholder="enter value" />
               </div>
               <div class="field">
                 <label><span>Transfer In Total (hourly)</span><span class="tag mono">TI</span></label>
@@ -887,8 +993,8 @@
                 <input id="qShiftTI" inputmode="decimal" placeholder="enter value" />
               </div>
               <div class="field">
-                <label><span>Manual Backlog (hourly)</span><span class="tag mono">Backlog</span></label>
-                <input id="qBacklog" inputmode="decimal" placeholder="enter backlog units" />
+                <label><span>IB Rodeo WIP (hourly)</span><span class="tag mono">IB Rodeo</span></label>
+                <input id="qWIP" inputmode="decimal" placeholder="enter IB Rodeo WIP units" />
               </div>
             </div>
 
@@ -933,7 +1039,7 @@
               <div class="field" style="grid-column:1 / -1">
                 <label><span>Action</span><span class="tag mono">apply</span></label>
                 <button class="btn primary" id="btnApplyHourly" style="width:100%">Apply Hourly Update</button>
-                <small class="muted">Copies into main inputs (KIPS / Transfer / Shift TI / Backlog + Stow/Decant/Injection snapshot) and marks hourly fields updated for this hour.</small>
+                <small class="muted">Copies into main inputs (AFT / Transfer / Shift TI / IB Rodeo WIP + Stow/Decant/Injection snapshot) and marks hourly fields updated for this hour.</small>
               </div>
             </div>
 
@@ -1039,19 +1145,19 @@
 
               <div class="note">
                 <strong>Actuals (today)</strong>
-                <div class="muted">KIPS Received = day total (since last midnight). Transfer In Total = day total processed in stow. These day totals reset after midnight.</div>
+                <div class="muted">AFT Received = day total (since last midnight). Transfer In Total = day total processed in stow. These day totals reset after midnight.</div>
               </div>
 
               <div class="row" style="margin-top:10px">
                 <div class="field">
                   <label>
-                    <span>KIPS Received (total day)</span>
+                    <span>AFT Received (total day)</span>
                     <span style="display:flex; gap:8px; align-items:center;">
                       <span class="tag mono">Rcv</span>
-                      <span id="bKips" class="badge">—</span>
+                      <span id="bAFT" class="badge">—</span>
                     </span>
                   </label>
-                  <input id="inKips" inputmode="decimal" />
+                  <input id="inAFT" inputmode="decimal" />
                   <small class="muted">Update hourly.</small>
                 </div>
                 <div class="field">
@@ -1071,26 +1177,26 @@
               <div class="row" style="margin-top:10px">
                 <div class="field">
                   <label>
-                    <span>Current Backlog (manual input)</span>
+                    <span>Current IB Rodeo WIP</span>
                     <span style="display:flex; gap:8px; align-items:center;">
-                      <span class="tag mono">BL</span>
-                      <span id="bBacklog" class="badge">—</span>
+                      <span class="tag mono">WIP</span>
+                      <span id="bWIP" class="badge">—</span>
                     </span>
                   </label>
-                  <input id="inBacklog" inputmode="decimal" placeholder="enter backlog units" />
+                  <input id="inWIP" inputmode="decimal" placeholder="enter IB Rodeo WIP units" />
                   <small class="muted">Update hourly @ :00. This value is used for HoW calculations (recommended).</small>
                 </div>
 
                 <div class="field">
-                  <label><span>Backlog source</span><span class="tag mono">toggle</span></label>
+                  <label><span>IB Rodeo WIP source</span><span class="tag mono">toggle</span></label>
                   <div style="display:flex; align-items:center; gap:10px; margin-top:6px; flex-wrap:wrap">
                     <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text);">
-                      <input id="inUseManualBacklog" type="checkbox" style="transform:scale(1.05)" />
-                      Use manual backlog
+                      <input id="inUseManualWIP" type="checkbox" style="transform:scale(1.05)" />
+                      Use IB Rodeo WIP
                     </label>
-                    <span class="pill mono" id="calcBacklogPill">Calc: —</span>
+                    <span class="pill mono" id="calcWIPPill">Calc WIP: —</span>
                   </div>
-                  <small class="muted">Calculated backlog = <span class="mono">KIPS − Transfer</span> (shown for reference only).</small>
+                  <small class="muted">Calculated WIP = <span class="mono">AFT − Transfer</span> (reference only).</small>
                 </div>
               </div>
 
@@ -1235,7 +1341,7 @@
                   <span class="tag mono">plan</span>
                 </label>
                 <input id="inPlanAdd" inputmode="decimal" />
-                <small class="muted">This updates projected totals + backlog.</small>
+                <small class="muted">This updates projected totals + IB Rodeo WIP.</small>
               </div>
 
               <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px">
@@ -1317,7 +1423,73 @@
               </tbody>
             </table>
             <div style="padding:8px 10px; color:rgba(155,176,209,.92); font-size:11px">
-              <span class="mono">Actual Stow</span> = Transfer In Total (day) • <span class="mono">Actual Receive</span> = KIPS Received (day)
+              <span class="mono">Actual Stow</span> = Transfer In Total (day) • <span class="mono">Actual Receive</span> = AFT Received (day)
+            </div>
+          </div>
+
+
+
+          <div class="smartSummary" aria-label="Smart Snapshot">
+            <div class="smartHead">
+              <div>
+                <strong>Smart Snapshot</strong>
+                <span class="muted">One-look status: goals, flow, and HoW.</span>
+              </div>
+              <span class="badge" id="smartRiskBadge">—</span>
+            </div>
+            <div class="smartGrid">
+              <div class="smartCard">
+                <div class="smartLabel"><span>Next best action</span><span class="badge" id="smartActionBadge">—</span></div>
+                <div class="smartActionText" id="smartActionText">—</div>
+                <div class="smartActionSub" id="smartActionSub">—</div>
+              </div>
+
+              <div class="smartCard">
+                <div class="smartLabel"><span>Goal progress</span><span id="smartGoalClock" class="mono">—</span></div>
+                <div class="smartMiniRow">
+                  <span class="name">S1</span>
+                  <span class="smartTrack" id="smartS1Track"><i id="smartS1Bar"></i></span>
+                  <span class="num" id="smartS1Num">—</span>
+                </div>
+                <div class="smartMiniRow">
+                  <span class="name">BG</span>
+                  <span class="smartTrack" id="smartBGTrack"><i id="smartBGBar"></i></span>
+                  <span class="num" id="smartBGNum">—</span>
+                </div>
+                <div class="smartMiniRow">
+                  <span class="name">ALPS</span>
+                  <span class="smartTrack" id="smartALPSTrack"><i id="smartALPSBar"></i></span>
+                  <span class="num" id="smartALPSNum">—</span>
+                </div>
+              </div>
+
+              <div class="smartCard">
+                <div class="smartLabel"><span>Flow balance</span><span class="mono" id="smartFlowStatus">—</span></div>
+                <div class="flowBars">
+                  <div class="flowBarLine">
+                    <span class="name">Build</span>
+                    <span class="flowTrack build"><i id="smartBuildBar"></i></span>
+                    <span class="num" id="smartBuildNum">—</span>
+                  </div>
+                  <div class="flowBarLine">
+                    <span class="name">Burn</span>
+                    <span class="flowTrack burn"><i id="smartBurnBar"></i></span>
+                    <span class="num" id="smartBurnNum">—</span>
+                  </div>
+                </div>
+                <div class="smartNet" id="smartNetText">—</div>
+              </div>
+
+              <div class="smartCard">
+                <div class="smartLabel"><span>HoW meter</span><span class="mono" id="smartHowText">—</span></div>
+                <div class="howMeter" aria-label="HoW meter">
+                  <span class="line"></span>
+                  <span class="target" title="2.5 HoW target"></span>
+                  <span class="marker" id="smartHowMarker"></span>
+                </div>
+                <div class="howScale"><span>0</span><span>2.5 target</span><span>4+</span></div>
+                <div class="smartActionSub" id="smartHowSub">—</div>
+              </div>
             </div>
           </div>
 
@@ -1343,9 +1515,9 @@
               <div class="bar"><i id="barALPS"></i></div>
             </div>
 
-            <div class="card card--backlog-simple">
-              <div class="k">Backlog</div>
-              <div class="v mono v--backlog" id="balValue">—</div>
+            <div class="card card--wip-simple">
+              <div class="k">IB Rodeo WIP</div>
+              <div class="v mono v--wip" id="balValue">—</div>
             </div>
           </div>
 
@@ -1368,16 +1540,16 @@
                 <table class="miniTable">
                   <thead><tr><th>Metric</th><th class="right">Value</th></tr></thead>
                   <tbody>
-                    <tr><td>Received now (KIPS)</td><td class="right mono" id="mRcv">—</td></tr>
+                    <tr><td>Received now (AFT)</td><td class="right mono" id="mRcv">—</td></tr>
                     <tr><td>Stow processed (Transfer In)</td><td class="right mono" id="mStow">—</td></tr>
-                    <tr><td>Current backlog (manual/used)</td><td class="right mono" id="mBacklog">—</td></tr>
-                    <tr><td>Calc backlog (KIPS−Transfer)</td><td class="right mono" id="mCalcBacklog">—</td></tr>
+                    <tr><td>Current IB Rodeo WIP (used)</td><td class="right mono" id="mWIP">—</td></tr>
+                    <tr><td>Calc IB Rodeo WIP (AFT−Transfer)</td><td class="right mono" id="mCalcWIP">—</td></tr>
 <tr><td>Night rate (ALPS/hr)</td><td class="right mono" id="mNightRate">—</td></tr>
-                    <tr><td>Night HoW (backlog ÷ night rate)</td><td class="right mono" id="mNightHow">—</td></tr>
+                    <tr><td>Night HoW (IB Rodeo WIP ÷ night rate)</td><td class="right mono" id="mNightHow">—</td></tr>
                     <tr><td>Day rate (ALPS/hr)</td><td class="right mono" id="mDayRate">—</td></tr>
                     <tr><td>Day HoW (leave them)</td><td class="right mono" id="mDayHow">—</td></tr>
                     <tr><td>Projected receive (with plan)</td><td class="right mono" id="mProjRcv">—</td></tr>
-                    <tr><td>Projected backlog (with plan)</td><td class="right mono" id="mProjBacklog">—</td></tr>
+                    <tr><td>Projected IB Rodeo WIP (with plan)</td><td class="right mono" id="mProjWIP">—</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -1408,7 +1580,7 @@
 
           <div class="footer">
             <div>Saved locally • No external libs • Works offline</div>
-            <div class="mono">v1.8 • ALPS full-width dashboard • Reminders (hourly / after midnight / per shift) • English</div>
+            <div class="mono">v1.9 • Guided Update locked checkpoint • ALPS full-width dashboard • Reminders • English</div>
           </div>
         </div>
       </div>
@@ -1431,21 +1603,21 @@
 
           <div class="row" style="margin-top:10px">
             <div class="field">
-              <label><span>Current Backlog (manual)</span><span class="tag mono">BL</span></label>
-              <input id="fwBacklog" inputmode="decimal" placeholder="enter backlog units" />
-              <small class="muted">If you type a value here, “Use manual backlog” turns ON automatically.</small>
+              <label><span>Current IB Rodeo WIP</span><span class="tag mono">WIP</span></label>
+              <input id="fwWIP" inputmode="decimal" placeholder="enter IB Rodeo WIP units" />
+              <small class="muted">If you type a value here, WIP source turns ON automatically.</small>
             </div>
 
             <div class="field">
-              <label><span>Backlog source</span><span class="tag mono">toggle</span></label>
+              <label><span>IB Rodeo WIP source</span><span class="tag mono">toggle</span></label>
               <div style="display:flex; align-items:center; gap:10px; margin-top:6px; flex-wrap:wrap">
                 <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text);">
-                  <input id="fwUseManualBacklog" type="checkbox" style="transform:scale(1.05)" />
-                  Use manual backlog
+                  <input id="fwUseManualWIP" type="checkbox" style="transform:scale(1.05)" />
+                  Use IB Rodeo WIP
                 </label>
-                <span class="pill mono" id="fwCalcBacklogPill">Calc: —</span>
+                <span class="pill mono" id="fwCalcWIPPill">Calc WIP: —</span>
               </div>
-              <small class="muted">Calculated backlog = <span class="mono">KIPS − Transfer</span> (reference only).</small>
+              <small class="muted">Calculated WIP = <span class="mono">AFT − Transfer</span> (reference only).</small>
             </div>
           </div>
 
@@ -1480,7 +1652,7 @@
             </div>
 
             <div class="alpsShotFoot">
-              <span class="pill ibr" id="dayPillIBRodeoBL"><span class="ibr-label">IB Rodeo BL</span><span class="ibr-value mono">—</span></span>
+              <span class="pill ibr" id="dayPillIBRodeoWIP"><span class="ibr-label">IB Rodeo WIP</span><span class="ibr-value mono">—</span></span>
 
               <div class="pill heroKpi how" id="pillHowNow">
                 <span class="hero-label">HoW now</span>
@@ -1623,7 +1795,7 @@
               <details>
                 <summary>What does Δ mean?</summary>
                 <div class="muted" style="margin-top:8px">
-                  <span class="mono">Δ</span> compares the target buffer (units) vs current backlog.
+                  <span class="mono">Δ</span> compares the target buffer (units) vs current IB Rodeo WIP.
                   Negative means you need to burn down. Positive means you are above the buffer.
                 </div>
               </details>
@@ -1641,8 +1813,8 @@
 (() => {
   const $ = (id) => document.getElementById(id);
 
-  const KEY = "receive_planner_v1_7_en";
-  const FALLBACK_KEYS = ["receive_planner_v1_6_en"]; // auto-migrate if you already used v1.7
+  const KEY = "receive_planner_v2_aft_wip";
+  const FALLBACK_KEYS = ["receive_planner_v1_7_en", "receive_planner_v1_6_en"]; // auto-migrate older saved planner data
   const MIN_HOW = 2.5;
 
   // User rules
@@ -1749,9 +1921,9 @@
     const h = Math.max(0.01, hours);
     return (alps > 0) ? (alps / h) : 0;
   }
-  function howRow(level, rate, backlog){
+  function howRow(level, rate, wip){
     const units = (rate > 0) ? (rate * level) : NaN;
-    const delta = (Number.isFinite(units)) ? (backlog - units) : NaN;
+    const delta = (Number.isFinite(units)) ? (wip - units) : NaN;
     return {units, delta};
   }
 
@@ -1762,7 +1934,7 @@
       date: today,
 bg: 0,
       s1: 0,
-      kips: 0,
+      aft: 0,
       transfer: 0,
       alps: 0,
       shiftTI: 0,
@@ -1771,8 +1943,8 @@ bg: 0,
       dayAlps: 0,
       dayHours: 10,
       planAdd: 0,
-      backlogManual: null,
-      useManualBacklog: true,
+      wipManual: null,
+      useManualWIP: true,
       compact: false,
       stacked: false,
       // Build/Burn model inputs (optional)
@@ -1785,6 +1957,27 @@ bg: 0,
       stowUPH: null,
       lu: {}
     };
+  }
+
+
+  function normalizeState(raw){
+    const s = {...(raw || {})};
+
+    // Legacy migration from older planner versions:
+    // old internal field names were kips / backlogManual / useManualBacklog.
+    // New internal field names are aft / wipManual / useManualWIP.
+    if (s.aft == null && s.kips != null) s.aft = s.kips;
+    if (s.wipManual == null && s.backlogManual != null) s.wipManual = s.backlogManual;
+    if (s.useManualWIP == null && s.useManualBacklog != null) s.useManualWIP = s.useManualBacklog;
+
+    if (s.lu){
+      const lu = {...s.lu};
+      if (lu.aft == null && lu.kips != null) lu.aft = lu.kips;
+      if (lu.wip == null && lu.backlog != null) lu.wip = lu.backlog;
+      s.lu = lu;
+    }
+
+    return s;
   }
 
 function safeJSONParse(raw){
@@ -1854,10 +2047,10 @@ function safeJSONParse(raw){
       date: $("inDate").value || "",
 bg: parseNum($("inBG").value),
       s1: parseNum($("inS1").value),
-      kips: parseNum($("inKips").value),
+      aft: parseNum($("inAFT").value),
       transfer: parseNum($("inTransfer").value),
-      backlogManual: ($("inBacklog").value.trim() ? parseNum($("inBacklog").value) : null),
-      useManualBacklog: !!$("inUseManualBacklog").checked,
+      wipManual: ($("inWIP").value.trim() ? parseNum($("inWIP").value) : null),
+      useManualWIP: !!$("inUseManualWIP").checked,
       alps: parseNum($("inAlps").value),
       shiftTI: parseNum($("inShiftTI").value),
       shiftStart: $("inShiftStart").value || "18:00",
@@ -1884,10 +2077,10 @@ bg: parseNum($("inBG").value),
     $("inDate").value = s.date || "";
 $("inBG").value = s.bg ?? 0;
     $("inS1").value = s.s1 ?? 0;
-    $("inKips").value = s.kips ?? 0;
+    $("inAFT").value = s.aft ?? 0;
     $("inTransfer").value = s.transfer ?? 0;
-    $("inBacklog").value = (s.backlogManual == null ? "" : s.backlogManual);
-    $("inUseManualBacklog").checked = (s.useManualBacklog !== false);
+    $("inWIP").value = (s.wipManual == null ? "" : s.wipManual);
+    $("inUseManualWIP").checked = (s.useManualWIP !== false);
 
     $("inAlps").value = s.alps ?? 0;
     $("inShiftTI").value = s.shiftTI ?? 0;
@@ -1907,8 +2100,8 @@ $("inBG").value = s.bg ?? 0;
     $("inStowUPH").value = (s.stowUPH == null ? "" : s.stowUPH);
 
     // Full-width ALPS dashboard mirrors (if present)
-    if (document.getElementById("fwBacklog")) document.getElementById("fwBacklog").value = (s.backlogManual == null ? "" : s.backlogManual);
-    if (document.getElementById("fwUseManualBacklog")) document.getElementById("fwUseManualBacklog").checked = (s.useManualBacklog !== false);
+    if (document.getElementById("fwWIP")) document.getElementById("fwWIP").value = (s.wipManual == null ? "" : s.wipManual);
+    if (document.getElementById("fwUseManualWIP")) document.getElementById("fwUseManualWIP").checked = (s.useManualWIP !== false);
     if (document.getElementById("fwStowHC")) document.getElementById("fwStowHC").value = (s.stowHC == null ? "" : s.stowHC);
     if (document.getElementById("fwStowUPH")) document.getElementById("fwStowUPH").value = (s.stowUPH == null ? "" : s.stowUPH);
     if (document.getElementById("shotStowHC")) document.getElementById("shotStowHC").value = (s.stowHC == null ? "" : s.stowHC);
@@ -1926,15 +2119,21 @@ $("inBG").value = s.bg ?? 0;
     el.textContent = text;
   }
 
-  function touch(fieldKey){
+  function touchAt(fieldKey, at){
     const st = readState();
-    const now = new Date();
+    const now = (at instanceof Date) ? new Date(at.getTime()) : new Date();
     const sk = sessionKey(now, st.shiftStart, st.shiftEnd);
     const dk = dayKey(now);
     const hk = hourKey(now);
     st.lu = st.lu || {};
+    // ts is the real save time; day/session/hourKey are the locked checkpoint time.
+    // This prevents Guided Update from switching fields if the clock rolls to the next hour mid-entry.
     st.lu[fieldKey] = { ts: Date.now(), day: dk, session: sk, hourKey: hk };
     save(st);
+  }
+
+  function touch(fieldKey){
+    touchAt(fieldKey, new Date());
   }
 
   function getHourlyStatus(fieldKey, st, now){
@@ -2029,9 +2228,9 @@ $("inBG").value = s.bg ?? 0;
       date: $("bDate"),
 bg: $("bBG"),
       s1: $("bS1"),
-      kips: $("bKips"),
+      aft: $("bAFT"),
       transfer: $("bTransfer"),
-      backlog: $("bBacklog"),
+      wip: $("bWIP"),
       dayAlps: $("bDayAlps"),
       alps: $("bNightAlps"),
       shiftTI: $("bShiftTI"),
@@ -2040,7 +2239,7 @@ bg: $("bBG"),
     };
 
     const friendly = {
-      kips: "KIPS Received (hourly @ :00)",
+      aft: "AFT Received (hourly @ :00)",
       transfer: "Transfer In Total (hourly @ :00)",
       shiftTI: "Shift Transfer In (hourly @ :00)",
       stowHC: "Stow headcount (hourly @ :00)",
@@ -2050,7 +2249,7 @@ bg: $("bBG"),
       injPer5: "Injection pallets/5 min (hourly @ :00)",
       injPallets: "Injection pallets available (hourly @ :00)",
       injItems: "Injection items total (hourly @ :00)",
-      backlog: "Manual Backlog (hourly @ :00)",
+      wip: "IB Rodeo WIP (hourly @ :00)",
       bg: "BG Goal (shift start + after midnight)",
       s1: "S1 Goal (shift start + after midnight)",
       date: "Date (shift start)",
@@ -2061,20 +2260,20 @@ bg: $("bBG"),
     let due = [];
     let warn = [];
 
-    for (const k of ["kips","transfer","shiftTI","stowHC","stowUPH","decantHC","decantUPH","injPer5","injPallets","injItems"]){
+    for (const k of ["aft","transfer","shiftTI","stowHC","stowUPH","decantHC","decantUPH","injPer5","injPallets","injItems"]){
       const r = getHourlyStatus(k, st, now);
       if (map[k]) badge(map[k], r.status === "ok" ? "ok" : r.status === "warn" ? "warn" : "bad", r.label);
       if (r.status === "bad") due.push(friendly[k] || k);
       if (r.status === "warn") warn.push(friendly[k] || k);
     }
-    // Manual backlog reminder only when enabled
-    if (st.useManualBacklog !== false){
-      const r = getHourlyStatus("backlog", st, now);
-      badge(map.backlog, r.status === "ok" ? "ok" : r.status === "warn" ? "warn" : "bad", r.label);
-      if (r.status === "bad") due.push(friendly.backlog);
-      if (r.status === "warn") warn.push(friendly.backlog);
+    // IB Rodeo WIP reminder only when enabled
+    if (st.useManualWIP !== false){
+      const r = getHourlyStatus("wip", st, now);
+      badge(map.wip, r.status === "ok" ? "ok" : r.status === "warn" ? "warn" : "bad", r.label);
+      if (r.status === "bad") due.push(friendly.wip);
+      if (r.status === "warn") warn.push(friendly.wip);
     } else {
-      badge(map.backlog, "ok", "calc");
+      badge(map.wip, "ok", "calc");
     }
 
     for (const k of ["bg","s1"]){
@@ -2175,7 +2374,7 @@ bg: $("bBG"),
     if (tone) el.classList.add(tone);
   }
 
-  function renderBuildBurn(bb, backlog){
+  function renderBuildBurn(bb, wip){
     setBBPill("pillBuildRate", `Build: ${bb.build > 0 ? fmt(bb.build) : "0"}/hr`, bb.build > 0 ? "warn" : null);
     setBBPill("pillBurnRate", `Burn: ${bb.burn > 0 ? fmt(bb.burn) : "0"}/hr`, bb.burn > 0 ? "good" : null);
 
@@ -2185,11 +2384,11 @@ bg: $("bBG"),
     else netTone = "warn";
     setBBPill("pillNetRate", `Net (burn-build): ${fmtSigned(bb.netDrain)}/hr`, netTone);
 
-    // HoW based on current IB Rodeo BL and actual Stow burn rate (backlog ÷ stow burn/hr)
+    // HoW based on current IB Rodeo WIP and actual Stow burn rate (IB Rodeo WIP ÷ stow burn/hr)
     let howTxt = "—";
     let howTone = "warn";
     if (bb.burn > 0){
-      const how = backlog / bb.burn;
+      const how = wip / bb.burn;
       howTxt = Number.isFinite(how) ? fmtHow(how) : "—";
       if (Number.isFinite(how)) howTone = (how >= MIN_HOW ? "good" : "bad");
     }
@@ -2203,6 +2402,92 @@ function howFromUnits(units, netDrain){
   }
 
 
+
+  function setBadgeTone(el, tone, text){
+    if (!el) return;
+    el.textContent = text || "—";
+    el.className = "badge " + (tone === "good" ? "b-ok" : tone === "warn" ? "b-warn" : tone === "bad" ? "b-bad" : "");
+  }
+
+  function setTrack(trackId, barId, ratio, tone){
+    const track = $(trackId), bar = $(barId);
+    if (!track || !bar) return;
+    track.classList.remove("good","warn","bad");
+    if (tone) track.classList.add(tone);
+    bar.style.width = (clamp(ratio || 0, 0, 1) * 100).toFixed(1) + "%";
+  }
+
+  function renderSmartSummary(x){
+    if (!$('smartRiskBadge')) return;
+
+    const s1Pct = x.s1 > 0 ? x.stow / x.s1 : NaN;
+    const bgPct = x.bg > 0 ? x.stow / x.bg : NaN;
+    const alpsPct = x.alps > 0 ? x.shiftTI / x.alps : NaN;
+    const howBurn = (x.bb.burn > 0 && Number.isFinite(x.wip)) ? x.wip / x.bb.burn : NaN;
+    const howNight = (x.nightRate > 0 && Number.isFinite(x.wip)) ? x.wip / x.nightRate : NaN;
+    const howForMeter = Number.isFinite(howBurn) ? howBurn : howNight;
+
+    const s1Tone = x.s1 <= 0 ? "warn" : (s1Pct >= 1 ? "good" : s1Pct >= .95 ? "warn" : "bad");
+    const bgTone = x.bg <= 0 ? "warn" : (bgPct >= 1 ? "good" : bgPct >= .95 ? "warn" : "bad");
+    const alpsTone = x.alps <= 0 ? "warn" : (alpsPct >= 1 ? "good" : alpsPct >= .90 ? "warn" : "bad");
+
+    setTrack("smartS1Track", "smartS1Bar", Number.isFinite(s1Pct) ? s1Pct : 0, s1Tone);
+    setTrack("smartBGTrack", "smartBGBar", Number.isFinite(bgPct) ? bgPct : 0, bgTone);
+    setTrack("smartALPSTrack", "smartALPSBar", Number.isFinite(alpsPct) ? alpsPct : 0, alpsTone);
+    if ($("smartS1Num")) $("smartS1Num").textContent = x.s1 > 0 ? `${(s1Pct*100).toFixed(0)}%` : "—";
+    if ($("smartBGNum")) $("smartBGNum").textContent = x.bg > 0 ? `${(bgPct*100).toFixed(0)}%` : "—";
+    if ($("smartALPSNum")) $("smartALPSNum").textContent = x.alps > 0 ? `${(alpsPct*100).toFixed(0)}%` : "—";
+    if ($("smartGoalClock")) $("smartGoalClock").textContent = `${x.hrsLeftDay.toFixed(1)}h to midnight`;
+
+    const maxFlow = Math.max(x.bb.build || 0, x.bb.burn || 0, 1);
+    if ($("smartBuildBar")) $("smartBuildBar").style.width = (clamp((x.bb.build || 0) / maxFlow, 0, 1) * 100).toFixed(1) + "%";
+    if ($("smartBurnBar")) $("smartBurnBar").style.width = (clamp((x.bb.burn || 0) / maxFlow, 0, 1) * 100).toFixed(1) + "%";
+    if ($("smartBuildNum")) $("smartBuildNum").textContent = `${fmt(x.bb.build || 0)}/hr`;
+    if ($("smartBurnNum")) $("smartBurnNum").textContent = `${fmt(x.bb.burn || 0)}/hr`;
+    const net = x.bb.netDrain || 0;
+    const netTone = net > 0 ? "good" : net < 0 ? "bad" : "warn";
+    if ($("smartFlowStatus")) $("smartFlowStatus").textContent = net > 0 ? "burning down" : net < 0 ? "building up" : "flat";
+    if ($("smartNetText")) $("smartNetText").innerHTML = `Net burn-build: <span class="mono">${fmtSigned(net)}/hr</span>` + (net > 0 ? ` • WIP drain ETA: <span class="mono">${fmtHow(x.wip / net)}h</span>` : ` • WIP may increase if this continues.`);
+
+    const markerPct = Number.isFinite(howForMeter) ? clamp(howForMeter / 4, 0, 1) * 100 : 0;
+    if ($("smartHowMarker")) $("smartHowMarker").style.left = markerPct.toFixed(1) + "%";
+    if ($("smartHowText")) $("smartHowText").textContent = Number.isFinite(howForMeter) ? `${fmtHow(howForMeter)} HoW` : "—";
+    if ($("smartHowSub")) $("smartHowSub").innerHTML = Number.isFinite(howForMeter)
+      ? (howForMeter >= MIN_HOW ? `At/above <span class="mono">2.5 HoW</span> target.` : `Below target by about <span class="mono">${fmtHow(MIN_HOW - howForMeter)} HoW</span>.`)
+      : `Enter Stow HC/UPH or Night ALPS to calculate HoW.`;
+
+    let riskTone = "good", riskText = "ON TRACK";
+    if (s1Tone === "bad" || alpsTone === "bad" || net < 0 || (Number.isFinite(howForMeter) && howForMeter < MIN_HOW)){
+      riskTone = "bad"; riskText = "WATCH NOW";
+    } else if (s1Tone === "warn" || bgTone === "warn" || alpsTone === "warn"){
+      riskTone = "warn"; riskText = "VERIFY";
+    }
+    setBadgeTone($('smartRiskBadge'), riskTone, riskText);
+
+    let actionTone = "good", action = "Keep current plan", sub = "Goals and flow look stable based on the numbers entered.";
+    if (Number.isFinite(howForMeter) && howForMeter < MIN_HOW){
+      actionTone = "bad";
+      action = "WIP is low for HoW target";
+      const needUnits = x.bb.burn > 0 ? Math.max(0, (MIN_HOW * x.bb.burn) - x.wip) : Math.max(0, (MIN_HOW * x.nightRate) - x.wip);
+      sub = `To reach 2.5 HoW, you need about <span class="mono">+${fmt(needUnits)}</span> WIP units or a lower burn plan.`;
+    } else if (net < 0){
+      actionTone = "bad";
+      action = "Build is higher than burn";
+      sub = `Burn is behind build by <span class="mono">${fmt(Math.abs(net))}/hr</span>. Add Stow support or slow Receive/Injection.`;
+    } else if (x.remainS1 > 0 && x.hrsLeftDay > 0 && x.bb.burn > 0 && x.rNeedS1 > x.bb.burn){
+      actionTone = "bad";
+      action = "S1 needs more burn rate";
+      sub = `Needed to midnight: <span class="mono">${fmt(x.rNeedS1)}/hr</span>; current modeled burn: <span class="mono">${fmt(x.bb.burn)}/hr</span>.`;
+    } else if (x.remainALPS > 0 && x.hrsLeftShift > 0){
+      actionTone = "warn";
+      action = "Watch Night ALPS pace";
+      sub = `Need <span class="mono">${fmt(x.rNeedALPS)}/hr</span> until shift end to hit Night ALPS.`;
+    }
+    setBadgeTone($('smartActionBadge'), actionTone, actionTone === "good" ? "OK" : actionTone === "warn" ? "VERIFY" : "ACTION");
+    if ($("smartActionText")) $("smartActionText").textContent = action;
+    if ($("smartActionSub")) $("smartActionSub").innerHTML = sub;
+  }
+
 function render(){
     const now = new Date();
     $("nowPill").textContent = now.toLocaleString();
@@ -2212,16 +2497,16 @@ function render(){
     const st = readState();
     $("datePill").textContent = st.date ? st.date : "—";
 
-    const rcv = st.kips;
+    const rcv = st.aft;
     const stow = st.transfer;
-    const calcBacklog = rcv - stow;
-    const useManual = (st.useManualBacklog !== false);
-    const backlog = (useManual && st.backlogManual != null) ? st.backlogManual : calcBacklog;
-    const backlogSrc = (useManual && st.backlogManual != null) ? "manual" : "calc";
+    const calcWIP = rcv - stow;
+    const useManual = (st.useManualWIP !== false);
+    const wip = (useManual && st.wipManual != null) ? st.wipManual : calcWIP;
+    const wipSrc = (useManual && st.wipManual != null) ? "manual" : "calc";
 
     // ----- Build/Burn model -----
     const bb = computeBuildBurn(st);
-    renderBuildBurn(bb, backlog);
+    renderBuildBurn(bb, wip);
 
 
     const bg = st.bg, s1 = st.s1;
@@ -2230,7 +2515,7 @@ function render(){
 
 
     // ----- M2M Summary (Midnight-to-Midnight) -----
-    const actualReceive = rcv;           // KIPS (day)
+    const actualReceive = rcv;           // AFT (day)
     const actualStow = stow;             // Transfer In Total (day)
     const r2s = actualStow - actualReceive;
 
@@ -2289,59 +2574,59 @@ function render(){
     const progALPS = (alps > 0) ? clamp(shiftTI / alps, 0, 1.25) : 0;
 const nightLenHrs = shiftLengthHours(st.shiftStart, st.shiftEnd);
     const nightRate = computeRate(alps, nightLenHrs);
-    const nightHoW = (nightRate > 0) ? (backlog / nightRate) : NaN;
+    const nightHoW = (nightRate > 0) ? (wip / nightRate) : NaN;
 
     const dayHrs = Math.max(0.01, st.dayHours || 10);
     const dayRate = computeRate(st.dayAlps, dayHrs);
-    const dayHoW = (dayRate > 0) ? (backlog / dayRate) : NaN;
+    const dayHoW = (dayRate > 0) ? (wip / dayRate) : NaN;
 
-    const d25 = howRow(2.5, dayRate, backlog);
-    const d30 = howRow(3.0, dayRate, backlog);
-    const d40 = howRow(4.0, dayRate, backlog);
+    const d25 = howRow(2.5, dayRate, wip);
+    const d30 = howRow(3.0, dayRate, wip);
+    const d40 = howRow(4.0, dayRate, wip);
     $("du25").textContent = Number.isFinite(d25.units) ? fmt(d25.units) : "—";
     $("du30").textContent = Number.isFinite(d30.units) ? fmt(d30.units) : "—";
     $("du40").textContent = Number.isFinite(d40.units) ? fmt(d40.units) : "—";
     $("dd25").textContent = Number.isFinite(d25.delta) ? fmtSigned(d25.delta) : "—";
     $("dd30").textContent = Number.isFinite(d30.delta) ? fmtSigned(d30.delta) : "—";
     $("dd40").textContent = Number.isFinite(d40.delta) ? fmtSigned(d40.delta) : "—";
-    // HoW based on current IB Rodeo BL and actual Stow burn rate (backlog ÷ stow burn/hr)
-    const howNow = (bb.burn > 0 && Number.isFinite(backlog) && backlog > 0) ? (backlog / bb.burn) : NaN;
+    // HoW based on current IB Rodeo WIP and actual Stow burn rate (IB Rodeo WIP ÷ stow burn/hr)
+    const howNow = (bb.burn > 0 && Number.isFinite(wip) && wip > 0) ? (wip / bb.burn) : NaN;
     const howTxt = Number.isFinite(howNow) ? fmtHow(howNow) : "N/A";
     const dHowEl = $("dHowOne");
     if (dHowEl) dHowEl.textContent = howTxt;
 
-    // Day-plan HoW (reference for Day Shift) = backlog ÷ DayRate
+    // Day-plan HoW (reference for Day Shift) = IB Rodeo WIP ÷ DayRate
     const dHowPlanEl = $("dHowDayPlan");
     if (dHowPlanEl) dHowPlanEl.textContent = Number.isFinite(dayHoW) ? fmtHow(dayHoW) : "N/A";
 
-const n25 = howRow(2.5, nightRate, backlog);
-    const n30 = howRow(3.0, nightRate, backlog);
-    const n40 = howRow(4.0, nightRate, backlog);
+const n25 = howRow(2.5, nightRate, wip);
+    const n30 = howRow(3.0, nightRate, wip);
+    const n40 = howRow(4.0, nightRate, wip);
     $("nu25").textContent = Number.isFinite(n25.units) ? fmt(n25.units) : "—";
     $("nu30").textContent = Number.isFinite(n30.units) ? fmt(n30.units) : "—";
     $("nu40").textContent = Number.isFinite(n40.units) ? fmt(n40.units) : "—";
     $("nd25").textContent = Number.isFinite(n25.delta) ? fmtSigned(n25.delta) : "—";
     $("nd30").textContent = Number.isFinite(n30.delta) ? fmtSigned(n30.delta) : "—";
     $("nd40").textContent = Number.isFinite(n40.delta) ? fmtSigned(n40.delta) : "—";
-    // HoW based on current IB Rodeo BL and actual Stow burn rate (backlog ÷ stow burn/hr)
-    const howNowN = (bb.burn > 0 && Number.isFinite(backlog) && backlog > 0) ? (backlog / bb.burn) : NaN;
+    // HoW based on current IB Rodeo WIP and actual Stow burn rate (IB Rodeo WIP ÷ stow burn/hr)
+    const howNowN = (bb.burn > 0 && Number.isFinite(wip) && wip > 0) ? (wip / bb.burn) : NaN;
     const howTxtN = Number.isFinite(howNowN) ? fmtHow(howNowN) : "N/A";
     const nHowEl = $("nHowOne");
     if (nHowEl) nHowEl.textContent = howTxtN;
 
     if (nightRate <= 0) {
-      $("nightHowStatusText").innerHTML = `Enter <b>Night ALPS</b> to calculate your shift HoW. Current backlog is <span class="mono">${fmtSigned(backlog)}</span>.`;
+      $("nightHowStatusText").innerHTML = `Enter <b>Night ALPS</b> to calculate your shift HoW. IB Rodeo WIP is <span class="mono">${fmtSigned(wip)}</span>.`;
       $("nightHowStatusBox").style.borderColor = "rgba(255,209,102,.28)";
     } else {
       const ok = Number.isFinite(nightHoW) && nightHoW >= MIN_HOW;
-      const need = Math.max(0, (n25.units || 0) - backlog);
+      const need = Math.max(0, (n25.units || 0) - wip);
       $("nightHowStatusText").innerHTML = `
-        <div>Shift length: <span class="mono">${nightLenHrs.toFixed(2)}</span> hrs • Night rate: <span class="mono">${fmt(nightRate)}</span>/hr • Current HoW: <span class="mono">${fmtHow(nightHoW)}</span> • Stow-only HoW: <span class="mono">${(bb.burn>0 ? fmtHow(backlog/bb.burn) : "—")}</span> • BB HoW: <span class="mono">${(bb.netDrain!==0 ? (fmtHow(backlog/bb.netDrain) + (bb.netDrain<0?" (building)":"")) : "—")}</span>
+        <div>Shift length: <span class="mono">${nightLenHrs.toFixed(2)}</span> hrs • Night rate: <span class="mono">${fmt(nightRate)}</span>/hr • Current HoW: <span class="mono">${fmtHow(nightHoW)}</span> • Stow-only HoW: <span class="mono">${(bb.burn>0 ? fmtHow(wip/bb.burn) : "—")}</span> • BB HoW: <span class="mono">${(bb.netDrain!==0 ? (fmtHow(wip/bb.netDrain) + (bb.netDrain<0?" (building)":"")) : "—")}</span>
           <span class="statusDot ${ok ? "dot-good" : "dot-bad"}" style="margin-left:8px"></span>
         </div>
         <div style="margin-top:8px" class="muted">
           Targets: <span class="mono">2.5 / 3 / 4</span>.
-          ${ok ? `You are <b>OK</b> (at/above 2.5).` : `You are <b>LOW</b>. Need about <span class="mono">+${fmt(need)}</span> backlog units to reach 2.5.`}
+          ${ok ? `You are <b>OK</b> (at/above 2.5).` : `You are <b>LOW</b>. Need about <span class="mono">+${fmt(need)}</span> IB Rodeo WIP units to reach 2.5.`}
         </div>`;
       $("nightHowStatusBox").style.borderColor = ok ? "rgba(60,255,180,.28)" : "rgba(255,77,109,.28)";
     }
@@ -2364,11 +2649,11 @@ const n25 = howRow(2.5, nightRate, backlog);
     $("barALPS").style.width = clamp(progALPS, 0, 1) * 100 + "%";
     setDot($("dotALPS"), statusForProgress(remainALPS, alps));
 
-    $("balValue").textContent = fmtAbs(backlog);
+    $("balValue").textContent = fmtAbs(wip);
     
     
     
-    $("calcBacklogPill").textContent = `Calc: ${fmtSigned(calcBacklog)}`;
+    $("calcWIPPill").textContent = `Calc WIP: ${fmtSigned(calcWIP)}`;
 
     // Full-width ALPS dashboard mirrors (keep in sync with main inputs)
     {
@@ -2384,8 +2669,8 @@ const n25 = howRow(2.5, nightRate, backlog);
         if (document.activeElement === el) return;
         el.checked = !!v;
       };
-      safeSet("fwBacklog", document.getElementById("inBacklog").value);
-      safeCheck("fwUseManualBacklog", document.getElementById("inUseManualBacklog").checked);
+      safeSet("fwWIP", document.getElementById("inWIP").value);
+      safeCheck("fwUseManualWIP", document.getElementById("inUseManualWIP").checked);
       safeSet("fwStowHC", document.getElementById("inStowHC").value);
       safeSet("fwStowUPH", document.getElementById("inStowUPH").value);
       safeSet("shotStowHC", document.getElementById("inStowHC").value);
@@ -2405,39 +2690,39 @@ const n25 = howRow(2.5, nightRate, backlog);
       copyBadge("bShiftStart","fwBShiftStart");
       copyBadge("bShiftEnd","fwBShiftEnd");
 
-      const c = document.getElementById("fwCalcBacklogPill");
-      if (c) c.textContent = `Calc: ${fmtSigned(calcBacklog)}`;
+      const c = document.getElementById("fwCalcWIPPill");
+      if (c) c.textContent = `Calc WIP: ${fmtSigned(calcWIP)}`;
       setBBPill("fwBurnPill", `Burn: ${bb.burn > 0 ? fmt(bb.burn) : "0"}/hr`, bb.burn > 0 ? "good" : null);
     }
 
-    // IB Rodeo BL focus pills (single source of truth for HoW backlog)
+    // IB Rodeo WIP focus pills (single source of truth for HoW WIP)
     const setIBRodeoPill = (el) => {
       if (!el) return;
-      const v = Number.isFinite(backlog) ? fmtSigned(backlog) : "—";
+      const v = Number.isFinite(wip) ? fmtSigned(wip) : "—";
       const valEl = el.querySelector(".ibr-value");
       if (valEl) valEl.textContent = v;
-      else el.textContent = `IB Rodeo BL: ${v}`;
+      else el.textContent = `IB Rodeo WIP: ${v}`;
     };
-    setIBRodeoPill(document.getElementById("dayPillIBRodeoBL"));
-    setIBRodeoPill(document.getElementById("nightPillIBRodeoBL"));
+    setIBRodeoPill(document.getElementById("dayPillIBRodeoWIP"));
+    setIBRodeoPill(document.getElementById("nightPillIBRodeoWIP"));
 
-const balStatus = (backlog <= 0) ? "good" : (backlog <= 5000 ? "warn" : "bad");
-const health = clamp(1 - (Math.max(0, backlog) / 15000), 0, 1);
+const balStatus = (wip <= 0) ? "good" : (wip <= 5000 ? "warn" : "bad");
+const health = clamp(1 - (Math.max(0, wip) / 15000), 0, 1);
 
 
 $("mRcv").textContent = fmt(rcv);
     $("mStow").textContent = fmt(stow);
-    $("mBacklog").textContent = fmtSigned(backlog);
-    $("mCalcBacklog").textContent = fmtSigned(calcBacklog);
+    $("mWIP").textContent = fmtSigned(wip);
+    $("mCalcWIP").textContent = fmtSigned(calcWIP);
 $("mNightRate").textContent = (nightRate > 0) ? fmt(nightRate) : "—";
     $("mNightHow").textContent = (nightRate > 0) ? fmtHow(nightHoW) : "—";
     $("mDayRate").textContent = (dayRate > 0) ? fmt(dayRate) : "—";
     $("mDayHow").textContent = (dayRate > 0) ? fmtHow(dayHoW) : "—";
 const planAdd = st.planAdd;
     const projRcv = rcv + planAdd;
-    const projBacklog = backlog + planAdd;
+    const projWIP = wip + planAdd;
     $("mProjRcv").textContent = fmt(projRcv);
-    $("mProjBacklog").textContent = fmtSigned(projBacklog);
+    $("mProjWIP").textContent = fmtSigned(projWIP);
 
     const endDay = nextMidnight(now);
     const hrsLeftDay = hoursBetween(now, endDay);
@@ -2448,6 +2733,13 @@ const planAdd = st.planAdd;
     const hrsLeftShift = hoursBetween(now, win.end);
     const rNeedALPS = (hrsLeftShift > 0) ? Math.max(0, remainALPS) / hrsLeftShift : 0;
 
+    renderSmartSummary({
+      st, bg, s1, rcv, stow, wip, alps, shiftTI, bb,
+      remainS1, remainBG, remainALPS,
+      nightRate, dayRate, hrsLeftDay, hrsLeftShift,
+      rNeedS1, rNeedBG, rNeedALPS
+    });
+
     $("rS1").textContent = (hrsLeftDay > 0) ? fmt(rNeedS1) : "—";
     $("rBG").textContent = (hrsLeftDay > 0) ? fmt(rNeedBG) : "—";
     $("rALPS").textContent = (hrsLeftShift > 0) ? fmt(rNeedALPS) : "—";
@@ -2457,32 +2749,32 @@ const planAdd = st.planAdd;
 
     let reco = "";
     if (balStatus === "bad") {
-      reco += `• <b>Backlog high</b>: current backlog is <span class="mono">${fmtSigned(backlog)}</span>. Consider increasing Transfer In or pausing extra Receive.<br/>`;
+      reco += `• <b>IB Rodeo WIP high</b>: IB Rodeo WIP is <span class="mono">${fmtSigned(wip)}</span>. Consider increasing Transfer In or pausing extra Receive.<br/>`;
     } else if (balStatus === "warn") {
-      reco += `• <b>Backlog rising</b>: backlog is <span class="mono">${fmtSigned(backlog)}</span>. Keep an eye on it.<br/>`;
+      reco += `• <b>IB Rodeo WIP rising</b>: IB Rodeo WIP is <span class="mono">${fmtSigned(wip)}</span>. Keep an eye on it.<br/>`;
     } else {
-      reco += `• <b>Backlog OK</b>: backlog is <span class="mono">${fmtSigned(backlog)}</span>.<br/>`;
+      reco += `• <b>IB Rodeo WIP OK</b>: IB Rodeo WIP is <span class="mono">${fmtSigned(wip)}</span>.<br/>`;
     }
     reco += `<br/>• <b>BG/S1 deadline</b>: remaining <span class="mono">${fmt(Math.max(0, remainS1))}</span> to S1 and <span class="mono">${fmt(Math.max(0, remainBG))}</span> to BG before midnight.`;
     if (dayRate > 0 && Number.isFinite(dayHoW)) {
-      reco += `<br/><br/>• <b>Day HoW (leave them)</b>: backlog equals <span class="mono">${fmtHow(dayHoW)}</span> HoW for day shift.`;
+      reco += `<br/><br/>• <b>Day HoW (leave them)</b>: IB Rodeo WIP equals <span class="mono">${fmtHow(dayHoW)}</span> HoW for day shift.`;
     }
     $("recoText").innerHTML = reco;
 
     let act = "";
         if (nightRate > 0 && Number.isFinite(nightHoW)) {
-      const need25 = Math.max(0, (n25.units || 0) - backlog);
-      const need30 = Math.max(0, (n30.units || 0) - backlog);
-      const need40 = Math.max(0, (n40.units || 0) - backlog);
+      const need25 = Math.max(0, (n25.units || 0) - wip);
+      const need30 = Math.max(0, (n30.units || 0) - wip);
+      const need40 = Math.max(0, (n40.units || 0) - wip);
       act += `• Night HoW targets:<br/>`;
-      act += `  - 2.5 HoW: need <span class="mono">+${fmt(need25)}</span> backlog units<br/>`;
-      act += `  - 3.0 HoW: need <span class="mono">+${fmt(need30)}</span> backlog units<br/>`;
-      act += `  - 4.0 HoW: need <span class="mono">+${fmt(need40)}</span> backlog units<br/>`;
+      act += `  - 2.5 HoW: need <span class="mono">+${fmt(need25)}</span> IB Rodeo WIP units<br/>`;
+      act += `  - 3.0 HoW: need <span class="mono">+${fmt(need30)}</span> IB Rodeo WIP units<br/>`;
+      act += `  - 4.0 HoW: need <span class="mono">+${fmt(need40)}</span> IB Rodeo WIP units<br/>`;
     }
     $("actionsNow").innerHTML = act;
 
     $("tipText").innerHTML = (nightRate > 0)
-      ? `NightRate = NightALPS ÷ shift length = <span class="mono">${fmt(nightRate)}</span>/hr. Night HoW = backlog ÷ NightRate.`
+      ? `NightRate = NightALPS ÷ shift length = <span class="mono">${fmt(nightRate)}</span>/hr. Night HoW = IB Rodeo WIP ÷ NightRate.`
       : `Set Night ALPS to calculate Night HoW automatically.`;
 
     renderBadgesAndReminders(st, now);
@@ -2493,9 +2785,9 @@ const planAdd = st.planAdd;
       inDate: "date",
       inBG: "bg",
       inS1: "s1",
-      inKips: "kips",
+      inAFT: "aft",
       inTransfer: "transfer",
-      inBacklog: "backlog",
+      inWIP: "wip",
       inDayAlps: "dayAlps",
       inAlps: "alps",
       inShiftTI: "shiftTI",
@@ -2509,7 +2801,7 @@ const planAdd = st.planAdd;
     };
 
     const ids = [
-      "inDate","inBG","inS1","inKips","inTransfer","inBacklog","inUseManualBacklog",
+      "inDate","inBG","inS1","inAFT","inTransfer","inWIP","inUseManualWIP",
       "inDayAlps","inDayHours",
       "inAlps","inShiftTI","inShiftStart","inShiftEnd",
       "inPlanAdd",
@@ -2536,13 +2828,13 @@ const planAdd = st.planAdd;
       if (!m || !main) return;
       const push = () => {
         main.value = m.value;
-        if (autoManual && m.value.trim()) document.getElementById("inUseManualBacklog").checked = true;
+        if (autoManual && m.value.trim()) document.getElementById("inUseManualWIP").checked = true;
         main.dispatchEvent(new Event("input", {bubbles:true}));
       };
       m.addEventListener("input", push);
       m.addEventListener("change", push);
     };
-    linkText("fwBacklog", "inBacklog", true);
+    linkText("fwWIP", "inWIP", true);
     linkText("fwStowHC", "inStowHC", false);
     linkText("fwStowUPH", "inStowUPH", false);
     linkText("shotStowHC", "inStowHC", false);
@@ -2551,8 +2843,8 @@ const planAdd = st.planAdd;
     linkText("fwShiftStart", "inShiftStart", false);
     linkText("fwShiftEnd", "inShiftEnd", false);
 
-    const mChk = document.getElementById("fwUseManualBacklog");
-    const mainChk = document.getElementById("inUseManualBacklog");
+    const mChk = document.getElementById("fwUseManualWIP");
+    const mainChk = document.getElementById("inUseManualWIP");
     if (mChk && mainChk){
       mChk.addEventListener("change", () => {
         mainChk.checked = mChk.checked;
@@ -2592,12 +2884,12 @@ if ($("btnAutoTest")) $("btnAutoTest").addEventListener("click", () => {
       d.s1 = 254574;
   
       // Example hourly totals
-      d.kips = 246315;
+      d.aft = 246315;
       d.transfer = 200128;
       d.shiftTI = 30889;
-      // Manual backlog used for HoW (you can test differences)
-      d.useManualBacklog = true;
-      d.backlogManual = 46187;
+      // IB Rodeo WIP used for HoW (you can test differences)
+      d.useManualWIP = true;
+      d.wipManual = 46187;
   
       // Shift targets
       d.alps = 101368;
@@ -2622,7 +2914,7 @@ if ($("btnAutoTest")) $("btnAutoTest").addEventListener("click", () => {
       const hk = hourKey(now);
   
       d.lu = d.lu || {};
-      ["kips","transfer","shiftTI","backlog","stowHC","stowUPH","decantHC","decantUPH","injPer5","injPallets","injItems"].forEach(k => d.lu[k] = {ts: Date.now(), day: dk, session: sk, hourKey: hk});
+      ["aft","transfer","shiftTI","wip","stowHC","stowUPH","decantHC","decantUPH","injPer5","injPallets","injItems"].forEach(k => d.lu[k] = {ts: Date.now(), day: dk, session: sk, hourKey: hk});
       ["bg","s1"].forEach(k => d.lu[k] = {ts: Date.now(), day: dk, session: sk});
       ["date","dayAlps","alps"].forEach(k => d.lu[k] = {ts: Date.now(), day: dk, session: sk});
   
@@ -2666,7 +2958,7 @@ if ($("btnAutoTest")) $("btnAutoTest").addEventListener("click", () => {
     writeState(d);
 
     // Clear Quick Console inputs too
-    ["qKips","qTransfer","qShiftTI","qBacklog","qStowHC","qStowUPH","qDecantHC","qDecantUPH","qInjPer5","qInjPallets","qInjItems","qDate","qNightAlps","qDayAlps","qBG","qS1"].forEach(id => {
+    ["qAFT","qTransfer","qShiftTI","qWIP","qStowHC","qStowUPH","qDecantHC","qDecantUPH","qInjPer5","qInjPallets","qInjItems","qDate","qNightAlps","qDayAlps","qBG","qS1"].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = "";
     });
@@ -2681,13 +2973,13 @@ if ($("btnAutoTest")) $("btnAutoTest").addEventListener("click", () => {
 
 $("btnPlanS1").addEventListener("click", () => {
     const st = readState();
-    $("inPlanAdd").value = Math.max(0, st.s1 - st.kips);
+    $("inPlanAdd").value = Math.max(0, st.s1 - st.aft);
     save(readState()); render();
   });
 
   $("btnPlanBG").addEventListener("click", () => {
     const st = readState();
-    $("inPlanAdd").value = Math.max(0, st.bg - st.kips);
+    $("inPlanAdd").value = Math.max(0, st.bg - st.aft);
     save(readState()); render();
   });
 $("btnPlanZero").addEventListener("click", () => {
@@ -2697,24 +2989,24 @@ $("btnPlanZero").addEventListener("click", () => {
 
   $("btnCopy").addEventListener("click", async () => {
     const st = readState();
-    const calcBacklog = st.kips - st.transfer;
-    const useManual = (st.useManualBacklog !== false);
-    const backlog = (useManual && st.backlogManual != null) ? st.backlogManual : calcBacklog;
+    const calcWIP = st.aft - st.transfer;
+    const useManual = (st.useManualWIP !== false);
+    const wip = (useManual && st.wipManual != null) ? st.wipManual : calcWIP;
     const bb = computeBuildBurn(st);
     const nightLenHrs = shiftLengthHours(st.shiftStart, st.shiftEnd);
     const nightRate = computeRate(st.alps, nightLenHrs);
-    const nightHoW = (nightRate > 0) ? (backlog / nightRate) : NaN;
+    const nightHoW = (nightRate > 0) ? (wip / nightRate) : NaN;
 
     const msg =
 `📥 Receive Planner | ${st.date || "—"}
-KIPS (day): ${fmt(st.kips)} | Transfer In Total (day): ${fmt(st.transfer)} | Backlog: ${fmtSigned(backlog)}
+AFT (day): ${fmt(st.aft)} | Transfer In Total (day): ${fmt(st.transfer)} | IB Rodeo WIP: ${fmtSigned(wip)}
 
 BG (day): ${fmt(st.bg)} | S1 (day): ${fmt(st.s1)}  (Deadline: midnight)
 Night ALPS (shift): ${fmt(st.alps)} | Shift Transfer In: ${fmt(st.shiftTI)}
 
 NightRate: ${nightRate>0?fmt(nightRate)+"/hr":"—"} | Night HoW: ${Number.isFinite(nightHoW)?nightHoW.toFixed(2):"—"}
-Stow burn/hr: ${bb.burn>0?fmt(bb.burn)+"/hr":"—"} | Stow-only HoW: ${(bb.burn>0 && Number.isFinite(backlog/bb.burn)) ? (backlog/bb.burn).toFixed(2) : "—"}
-Net (burn-build)/hr: ${bb.netDrain!==0?fmtSigned(bb.netDrain)+"/hr":"0/hr"} | BB HoW: ${(bb.netDrain!==0 && Number.isFinite(backlog/bb.netDrain)) ? (backlog/bb.netDrain).toFixed(2) + (bb.netDrain<0 ? " (building)" : "") : "—"}`;
+Stow burn/hr: ${bb.burn>0?fmt(bb.burn)+"/hr":"—"} | Stow-only HoW: ${(bb.burn>0 && Number.isFinite(wip/bb.burn)) ? (wip/bb.burn).toFixed(2) : "—"}
+Net (burn-build)/hr: ${bb.netDrain!==0?fmtSigned(bb.netDrain)+"/hr":"0/hr"} | BB HoW: ${(bb.netDrain!==0 && Number.isFinite(wip/bb.netDrain)) ? (wip/bb.netDrain).toFixed(2) + (bb.netDrain<0 ? " (building)" : "") : "—"}`;
 
     try{
       await navigator.clipboard.writeText(msg);
@@ -2725,13 +3017,16 @@ Net (burn-build)/hr: ${bb.netDrain!==0?fmtSigned(bb.netDrain)+"/hr":"0/hr"} | BB
 
   
   // Guided Update Wizard (asks only what is pending)
-  const wiz = { open:false, idx:0, list:[] };
+  // Important: lock the field list + hourly checkpoint when the wizard opens.
+  // Without this, if the clock rolls from 04:59 to 05:00 while the user is typing,
+  // the pending list can rebuild and the next value can be saved into the wrong field.
+  const wiz = { open:false, idx:0, list:[], lockedAt:null, activeItem:null };
 
   function fieldCatalog(){
     return [
-      {key:"kips",     label:"KIPS Received (day total)",          inputId:"inKips",     type:"number", placeholder:"e.g. 246315"},
+      {key:"aft",     label:"AFT Received (day total)",          inputId:"inAFT",     type:"number", placeholder:"e.g. 246315"},
       {key:"transfer", label:"Transfer In Total (day stowed)",     inputId:"inTransfer", type:"number", placeholder:"e.g. 200128"},
-      {key:"backlog",  label:"Current Backlog (manual)",          inputId:"inBacklog", type:"number", placeholder:"e.g. 45000"},
+      {key:"wip",  label:"Current IB Rodeo WIP",          inputId:"inWIP", type:"number", placeholder:"e.g. 45000"},
       {key:"shiftTI",  label:"Shift Transfer In (your shift)",     inputId:"inShiftTI",  type:"number", placeholder:"e.g. 30889"},
       {key:"stowHC",   label:"Stow headcount (hourly)",               inputId:"inStowHC",   type:"number", placeholder:"e.g. 150"},
       {key:"stowUPH",  label:"Stow rate UPH (hourly)",                inputId:"inStowUPH",  type:"number", placeholder:"e.g. 100"},
@@ -2748,16 +3043,15 @@ Net (burn-build)/hr: ${bb.netDrain!==0?fmtSigned(bb.netDrain)+"/hr":"0/hr"} | BB
     ].filter(x => document.getElementById(x.inputId));
   }
 
-  
   function wizardFieldStatus(key, st, now){
     // Use the same logic as the badges/reminders section
-    if (["kips","transfer","shiftTI","stowHC","stowUPH","decantHC","decantUPH","injPer5","injPallets","injItems"].includes(key)){
+    if (["aft","transfer","shiftTI","stowHC","stowUPH","decantHC","decantUPH","injPer5","injPallets","injItems"].includes(key)){
       return getHourlyStatus(key, st, now);
     }
-    if (key === "backlog"){
-      // Only required when manual backlog mode is enabled
-      if (st.useManualBacklog === false) return {status:"ok", label:"calc"};
-      return getHourlyStatus("backlog", st, now);
+    if (key === "wip"){
+      // Only required when IB Rodeo WIP mode is enabled
+      if (st.useManualWIP === false) return {status:"ok", label:"calc"};
+      return getHourlyStatus("wip", st, now);
     }
     if (["bg","s1"].includes(key)){
       return getDailyStatus(key, st, now);
@@ -2787,10 +3081,10 @@ Net (burn-build)/hr: ${bb.netDrain!==0?fmtSigned(bb.netDrain)+"/hr":"0/hr"} | BB
       return (
         k==="s1"?0:
         k==="bg"?1:
-        k==="kips"?2:
+        k==="aft"?2:
         k==="transfer"?3:
         k==="shiftTI"?4:
-        k==="backlog"?5:
+        k==="wip"?5:
         k==="stowHC"?6:
         k==="stowUPH"?7:
         k==="decantHC"?8:
@@ -2812,9 +3106,8 @@ Net (burn-build)/hr: ${bb.netDrain!==0?fmtSigned(bb.netDrain)+"/hr":"0/hr"} | BB
     el.textContent = label || status;
   }
 
-  
   function wizReason(key){
-    if (["kips","transfer","shiftTI","backlog","stowHC","stowUPH","decantHC","decantUPH","injPer5","injPallets","injItems"].includes(key)) return "Hourly snapshot: update at :00 (7:00, 8:00, 9:00…).";
+    if (["aft","transfer","shiftTI","wip","stowHC","stowUPH","decantHC","decantUPH","injPer5","injPallets","injItems"].includes(key)) return "Hourly snapshot: this wizard locks the checkpoint time when you open it. Finish this run, or close/reopen for the new hour.";
     if (["bg","s1"].includes(key)) return "BG/S1 must be verified at shift start and updated after midnight (new day).";
     if (key === "dayAlps") return "Day Shift ALPS: verify at shift start and again near end of your shift (it can change).";
     if (key === "alps") return "Night ALPS: verify at shift start and mid-shift (in case it changes).";
@@ -2822,55 +3115,74 @@ Net (burn-build)/hr: ${bb.netDrain!==0?fmtSigned(bb.netDrain)+"/hr":"0/hr"} | BB
     return "Update this field to keep the report accurate.";
   }
 
+  function wizLockedNow(){
+    return (wiz.lockedAt instanceof Date) ? new Date(wiz.lockedAt.getTime()) : new Date();
+  }
+
+  function resetWizardState(){
+    wiz.open = false;
+    wiz.idx = 0;
+    wiz.list = [];
+    wiz.lockedAt = null;
+    wiz.activeItem = null;
+  }
 
   function openWizard(){
     bindWizardControls();
     const st = readState();
     const now = new Date();
+    wiz.open = true;
+    wiz.idx = 0;
+    wiz.lockedAt = now;
+    wiz.activeItem = null;
     wiz.list = buildPendingList(st, now);
     if (!wiz.list.length){
+      resetWizardState();
       alert("Nothing pending ✅\nAll required fields are up to date.");
       return;
     }
-    wiz.idx = clamp(wiz.idx, 0, wiz.list.length-1);
     document.getElementById("wizOverlay").classList.add("show");
     renderWizard();
   }
 
   function closeWizard(){
-    document.getElementById("wizOverlay").classList.remove("show");
+    const ov = document.getElementById("wizOverlay");
+    if (ov) ov.classList.remove("show");
+    resetWizardState();
   }
 
   function renderWizard(){
-    const st = readState();
-    const now = new Date();
-    wiz.list = buildPendingList(st, now);
-
+    const lockedNow = wizLockedNow();
+    const realNow = new Date();
+    const hourChanged = hourKey(realNow) !== hourKey(lockedNow);
     const bar = document.getElementById("wizBar");
+
+    // Do not rebuild wiz.list while the wizard is open. That fixed the hour-change misalignment bug.
     if (!wiz.list.length){
       document.getElementById("wizMeta").textContent = "All done ✅";
       document.getElementById("wizLabel").textContent = "No pending fields";
       const input = document.getElementById("wizInput");
       input.value = ""; input.disabled = true;
-      document.getElementById("wizHelp").textContent = "Everything required is up to date.";
+      document.getElementById("wizHelp").textContent = "Everything required for this locked wizard run is complete.";
       document.getElementById("wizCurrent").textContent = "—";
       document.getElementById("wizStep").textContent = "Done";
       wizSetBadge(document.getElementById("wizStatus"), "ok", "OK");
       if (bar) bar.style.width = "100%";
-      // Auto-close when the wizard becomes "done" after the last entry.
-      // (Keeps a brief moment to show the confirmation.)
       setTimeout(() => {
         const ov = document.getElementById("wizOverlay");
         if (ov && ov.classList.contains("show")) closeWizard();
-      }, 800);
+      }, 700);
       return;
     }
 
     wiz.idx = clamp(wiz.idx, 0, wiz.list.length-1);
     const item = wiz.list[wiz.idx];
+    wiz.activeItem = item;
     const total = wiz.list.length;
+    const lockedText = hourPill(lockedNow);
+    const changedText = hourChanged ? ` • Clock is now ${hourPill(realNow)}; finish this locked run or close/reopen` : "";
 
-    document.getElementById("wizMeta").textContent = `Pending: ${total} • Current: ${item.status.status.toUpperCase()} (${item.status.label})`;
+    document.getElementById("wizMeta").textContent = `Locked checkpoint: ${lockedText} • Pending: ${total} • Current: ${item.status.status.toUpperCase()} (${item.status.label})${changedText}`;
     document.getElementById("wizStep").textContent = `Step ${wiz.idx+1} of ${total}`;
     if (bar) bar.style.width = `${((wiz.idx)/Math.max(1,total))*100}%`;
 
@@ -2890,13 +3202,11 @@ Net (burn-build)/hr: ${bb.netDrain!==0?fmtSigned(bb.netDrain)+"/hr":"0/hr"} | BB
   }
 
   function wizSaveNext(){
-    const st = readState();
-    const now = new Date();
-    wiz.list = buildPendingList(st, now);
-    if (!wiz.list.length) { renderWizard(); return; }
+    if (!wiz.open || !wiz.list.length) { renderWizard(); return; }
 
     wiz.idx = clamp(wiz.idx, 0, wiz.list.length-1);
-    const item = wiz.list[wiz.idx];
+    const item = wiz.activeItem || wiz.list[wiz.idx];
+    if (!item) { renderWizard(); return; }
 
     const input = document.getElementById("wizInput");
     const raw = (input.value || "").trim();
@@ -2906,24 +3216,47 @@ Net (burn-build)/hr: ${bb.netDrain!==0?fmtSigned(bb.netDrain)+"/hr":"0/hr"} | BB
     if (!real) return;
     real.value = raw;
 
-    // mark updated + refresh
-    touch(item.key);
+    // If WIP is entered here, keep IB Rodeo WIP mode enabled.
+    if (item.key === "wip" && raw){
+      const chk = document.getElementById("inUseManualWIP");
+      if (chk) chk.checked = true;
+    }
+
+    // Mark the field against the locked wizard checkpoint, not the rolling live clock.
+    touchAt(item.key, wizLockedNow());
     save(readState());
     render();
 
-    wiz.idx = Math.min(wiz.idx + 1, Math.max(0, wiz.list.length-1));
+    // Remove the saved item from this frozen run so the next value cannot shift into another field.
+    const currentIndex = wiz.list.findIndex(x => x.key === item.key && x.inputId === item.inputId);
+    if (currentIndex >= 0){
+      wiz.list.splice(currentIndex, 1);
+      if (currentIndex < wiz.idx) wiz.idx -= 1;
+    } else {
+      wiz.list.splice(wiz.idx, 1);
+    }
+
+    if (wiz.idx >= wiz.list.length) wiz.idx = Math.max(0, wiz.list.length - 1);
+    wiz.activeItem = null;
     renderWizard();
-    // If that was the last required field, close the wizard now.
-    if (!buildPendingList(readState(), new Date()).length) closeWizard();
   }
 
   function wizSkip(){
-    wiz.idx = Math.min(wiz.idx + 1, Math.max(0, wiz.list.length-1));
+    if (!wiz.open) return;
+    // Skip means “do not update this field in this run”; remove it from the locked list
+    // so the wizard can continue/finish without reordering.
+    if (wiz.list.length){
+      wiz.list.splice(clamp(wiz.idx, 0, wiz.list.length-1), 1);
+      if (wiz.idx >= wiz.list.length) wiz.idx = Math.max(0, wiz.list.length - 1);
+    }
+    wiz.activeItem = null;
     renderWizard();
   }
 
   function wizBack(){
+    if (!wiz.open) return;
     wiz.idx = Math.max(0, wiz.idx - 1);
+    wiz.activeItem = null;
     renderWizard();
   }
 
@@ -2996,7 +3329,8 @@ function download(filename, text){
       const txt = await f.text();
       try{
         const obj = JSON.parse(txt);
-        const merged = {...defaultsToday(), ...obj};
+        const migrated = normalizeState(obj);
+        const merged = {...defaultsToday(), ...migrated};
         merged.lu = merged.lu || {};
         writeState(merged);
         save(merged);
@@ -3009,11 +3343,11 @@ function download(filename, text){
   // Quick Console buttons
   if ($("btnApplyHourly")) $("btnApplyHourly").addEventListener("click", () => {
     // Core hourly totals
-    applyIfProvided("qKips", "inKips", "kips");
+    applyIfProvided("qAFT", "inAFT", "aft");
     applyIfProvided("qTransfer", "inTransfer", "transfer");
     applyIfProvided("qShiftTI", "inShiftTI", "shiftTI");
-    applyIfProvided("qBacklog", "inBacklog", "backlog");
-    if ($("inBacklog").value.trim()) { $("inUseManualBacklog").checked = true; }
+    applyIfProvided("qWIP", "inWIP", "wip");
+    if ($("inWIP").value.trim()) { $("inUseManualWIP").checked = true; }
 
     // Hourly staffing/rates snapshot (used for HoW + build/burn context)
     applyIfProvided("qStowHC", "inStowHC", "stowHC");
@@ -3025,7 +3359,7 @@ function download(filename, text){
     applyIfProvided("qInjItems", "inInjItems", "injItems");
 
     // Clear console fields after apply
-    ["qKips","qTransfer","qShiftTI","qBacklog","qStowHC","qStowUPH","qDecantHC","qDecantUPH","qInjPer5","qInjPallets","qInjItems"].forEach(id => {
+    ["qAFT","qTransfer","qShiftTI","qWIP","qStowHC","qStowUPH","qDecantHC","qDecantUPH","qInjPer5","qInjPallets","qInjItems"].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = "";
     });
@@ -3047,10 +3381,10 @@ function download(filename, text){
   });
 
   if ($("btnCopyFromMain")) $("btnCopyFromMain").addEventListener("click", () => {
-    $("qKips").value = $("inKips").value;
+    $("qAFT").value = $("inAFT").value;
     $("qTransfer").value = $("inTransfer").value;
     $("qShiftTI").value = $("inShiftTI").value;
-    if ($("qBacklog")) $("qBacklog").value = $("inBacklog").value;
+    if ($("qWIP")) $("qWIP").value = $("inWIP").value;
 
     // Hourly staffing/rates snapshot
     if (document.getElementById("qStowHC")) $("qStowHC").value = $("inStowHC").value;
@@ -3072,7 +3406,8 @@ function download(filename, text){
   });
 
   const loaded = loadAny();
-  const initial = loaded.data ? {...defaultsToday(), ...loaded.data, lu: (loaded.data.lu || {})} : defaultsToday();
+  const migratedInitial = loaded.data ? normalizeState(loaded.data) : null;
+  const initial = migratedInitial ? {...defaultsToday(), ...migratedInitial, lu: (migratedInitial.lu || {})} : defaultsToday();
   writeState(initial);
 
   hookInputs();
