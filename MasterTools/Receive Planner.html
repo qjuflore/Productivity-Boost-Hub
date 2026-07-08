@@ -882,10 +882,10 @@
       position:absolute; left:0; right:0; top:10px; height:10px;
       border-radius:999px;
       border:1px solid rgba(144,179,255,.14);
-      background: linear-gradient(90deg, rgba(255,77,109,.32), rgba(255,209,102,.30) 62.5%, rgba(60,255,180,.34));
+      background: linear-gradient(90deg, rgba(255,77,109,.32), rgba(255,209,102,.30) 75%, rgba(60,255,180,.34));
     }
     .howMeter .target{
-      position:absolute; top:3px; bottom:0; width:2px; left:62.5%;
+      position:absolute; top:3px; bottom:0; width:2px; left:75%;
       background:rgba(255,255,255,.55);
       box-shadow:0 0 10px rgba(255,255,255,.22);
     }
@@ -898,6 +898,32 @@
       transition:left .25s ease;
     }
     .howScale{display:flex; justify-content:space-between; font-size:10px; color:rgba(155,176,209,.88); font-family:var(--mono);}
+    .howScaleTarget3{
+      position:relative;
+      display:block;
+      height:14px;
+    }
+    .howScaleTarget3 .scaleZero{position:absolute; left:0;}
+    .howScaleTarget3 .scaleTarget{position:absolute; left:75%; transform:translateX(-50%);}
+    .howScaleTarget3 .scaleMax{position:absolute; right:0;}
+    .smartHowDual .howBlock{
+      padding-top:2px;
+      margin-top:8px;
+      border-top:1px solid rgba(144,179,255,.10);
+    }
+    .smartHowDual .howBlock:first-of-type{
+      margin-top:0;
+      border-top:0;
+      padding-top:0;
+    }
+    .smartHowDual .miniHowLabel{
+      margin-bottom:2px;
+      letter-spacing:.05em;
+    }
+    .smartHowDual .smartActionSub{
+      margin-top:4px;
+      font-size:11px;
+    }
     .dashPngExport #dashboardPanel .smartSummary,
     .dashPngExport #dashboardPanel .smartCard,
     .dashPngExport #dashboardPanel .smartTrack,
@@ -1480,15 +1506,30 @@
                 <div class="smartNet" id="smartNetText">—</div>
               </div>
 
-              <div class="smartCard">
-                <div class="smartLabel"><span>HoW meter</span><span class="mono" id="smartHowText">—</span></div>
-                <div class="howMeter" aria-label="HoW meter">
-                  <span class="line"></span>
-                  <span class="target" title="2.5 HoW target"></span>
-                  <span class="marker" id="smartHowMarker"></span>
+              <div class="smartCard smartHowDual">
+                <div class="smartLabel"><span>HoW meters</span><span class="mono">Target 3.0</span></div>
+
+                <div class="howBlock">
+                  <div class="smartLabel miniHowLabel"><span>Day Plan</span><span class="mono" id="smartDayHowText">—</span></div>
+                  <div class="howMeter" aria-label="Day Plan HoW meter">
+                    <span class="line"></span>
+                    <span class="target" title="3.0 HoW target"></span>
+                    <span class="marker" id="smartDayHowMarker"></span>
+                  </div>
+                  <div class="howScale howScaleTarget3"><span class="scaleZero">0</span><span class="scaleTarget">3.0 target</span><span class="scaleMax">4+</span></div>
+                  <div class="smartActionSub" id="smartDayHowSub">—</div>
                 </div>
-                <div class="howScale"><span>0</span><span>2.5 target</span><span>4+</span></div>
-                <div class="smartActionSub" id="smartHowSub">—</div>
+
+                <div class="howBlock">
+                  <div class="smartLabel miniHowLabel"><span>Our Shift</span><span class="mono" id="smartNightHowText">—</span></div>
+                  <div class="howMeter" aria-label="Our Shift HoW meter">
+                    <span class="line"></span>
+                    <span class="target" title="3.0 HoW target"></span>
+                    <span class="marker" id="smartNightHowMarker"></span>
+                  </div>
+                  <div class="howScale howScaleTarget3"><span class="scaleZero">0</span><span class="scaleTarget">3.0 target</span><span class="scaleMax">4+</span></div>
+                  <div class="smartActionSub" id="smartNightHowSub">—</div>
+                </div>
               </div>
             </div>
           </div>
@@ -1769,13 +1810,6 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td class="mono">2.5</td>
-                    <td class="right mono" id="du25">—</td>
-                    <td class="right mono" id="dd25">—</td>
-                    <td class="right mono" id="nu25">—</td>
-                    <td class="right mono" id="nd25">—</td>
-                  </tr>
-                  <tr>
                     <td class="mono">3.0</td>
                     <td class="right mono" id="du30">—</td>
                     <td class="right mono" id="dd30">—</td>
@@ -1815,7 +1849,7 @@
 
   const KEY = "receive_planner_v2_aft_wip";
   const FALLBACK_KEYS = ["receive_planner_v1_7_en", "receive_planner_v1_6_en"]; // auto-migrate older saved planner data
-  const MIN_HOW = 2.5;
+  const MIN_HOW = 3.0;
 
   // User rules
   const RULES = {
@@ -2423,9 +2457,8 @@ function howFromUnits(units, netDrain){
     const s1Pct = x.s1 > 0 ? x.stow / x.s1 : NaN;
     const bgPct = x.bg > 0 ? x.stow / x.bg : NaN;
     const alpsPct = x.alps > 0 ? x.shiftTI / x.alps : NaN;
-    const howBurn = (x.bb.burn > 0 && Number.isFinite(x.wip)) ? x.wip / x.bb.burn : NaN;
-    const howNight = (x.nightRate > 0 && Number.isFinite(x.wip)) ? x.wip / x.nightRate : NaN;
-    const howForMeter = Number.isFinite(howBurn) ? howBurn : howNight;
+    const dayHoW = (x.dayRate > 0 && Number.isFinite(x.wip)) ? x.wip / x.dayRate : NaN;
+    const nightHoW = (x.nightRate > 0 && Number.isFinite(x.wip)) ? x.wip / x.nightRate : NaN;
 
     const s1Tone = x.s1 <= 0 ? "warn" : (s1Pct >= 1 ? "good" : s1Pct >= .95 ? "warn" : "bad");
     const bgTone = x.bg <= 0 ? "warn" : (bgPct >= 1 ? "good" : bgPct >= .95 ? "warn" : "bad");
@@ -2445,19 +2478,33 @@ function howFromUnits(units, netDrain){
     if ($("smartBuildNum")) $("smartBuildNum").textContent = `${fmt(x.bb.build || 0)}/hr`;
     if ($("smartBurnNum")) $("smartBurnNum").textContent = `${fmt(x.bb.burn || 0)}/hr`;
     const net = x.bb.netDrain || 0;
-    const netTone = net > 0 ? "good" : net < 0 ? "bad" : "warn";
     if ($("smartFlowStatus")) $("smartFlowStatus").textContent = net > 0 ? "burning down" : net < 0 ? "building up" : "flat";
     if ($("smartNetText")) $("smartNetText").innerHTML = `Net burn-build: <span class="mono">${fmtSigned(net)}/hr</span>` + (net > 0 ? ` • WIP drain ETA: <span class="mono">${fmtHow(x.wip / net)}h</span>` : ` • WIP may increase if this continues.`);
 
-    const markerPct = Number.isFinite(howForMeter) ? clamp(howForMeter / 4, 0, 1) * 100 : 0;
-    if ($("smartHowMarker")) $("smartHowMarker").style.left = markerPct.toFixed(1) + "%";
-    if ($("smartHowText")) $("smartHowText").textContent = Number.isFinite(howForMeter) ? `${fmtHow(howForMeter)} HoW` : "—";
-    if ($("smartHowSub")) $("smartHowSub").innerHTML = Number.isFinite(howForMeter)
-      ? (howForMeter >= MIN_HOW ? `At/above <span class="mono">2.5 HoW</span> target.` : `Below target by about <span class="mono">${fmtHow(MIN_HOW - howForMeter)} HoW</span>.`)
-      : `Enter Stow HC/UPH or Night ALPS to calculate HoW.`;
+    function setHowMeter(markerId, textId, subId, howValue, rate, label){
+      const markerPct = Number.isFinite(howValue) ? clamp(howValue / 4, 0, 1) * 100 : 0;
+      if ($(markerId)) $(markerId).style.left = markerPct.toFixed(1) + "%";
+      if ($(textId)) $(textId).textContent = Number.isFinite(howValue) ? `${fmtHow(howValue)} HoW` : "—";
+      if ($(subId)) {
+        if (Number.isFinite(howValue)) {
+          const needUnits = rate > 0 ? Math.max(0, (MIN_HOW * rate) - x.wip) : 0;
+          $(subId).innerHTML = howValue >= MIN_HOW
+            ? `OK: at/above <span class="mono">${fmtHow(MIN_HOW)} HoW</span>.`
+            : `Low by <span class="mono">${fmtHow(MIN_HOW - howValue)} HoW</span> • need <span class="mono">+${fmt(needUnits)}</span> WIP.`;
+        } else {
+          $(subId).innerHTML = `Enter ${label} target/rate to calculate.`;
+        }
+      }
+    }
+
+    setHowMeter("smartDayHowMarker", "smartDayHowText", "smartDayHowSub", dayHoW, x.dayRate, "Day ALPS");
+    setHowMeter("smartNightHowMarker", "smartNightHowText", "smartNightHowSub", nightHoW, x.nightRate, "Night ALPS");
+
+    const dayLow = Number.isFinite(dayHoW) && dayHoW < MIN_HOW;
+    const nightLow = Number.isFinite(nightHoW) && nightHoW < MIN_HOW;
 
     let riskTone = "good", riskText = "ON TRACK";
-    if (s1Tone === "bad" || alpsTone === "bad" || net < 0 || (Number.isFinite(howForMeter) && howForMeter < MIN_HOW)){
+    if (s1Tone === "bad" || alpsTone === "bad" || net < 0 || dayLow || nightLow){
       riskTone = "bad"; riskText = "WATCH NOW";
     } else if (s1Tone === "warn" || bgTone === "warn" || alpsTone === "warn"){
       riskTone = "warn"; riskText = "VERIFY";
@@ -2465,11 +2512,16 @@ function howFromUnits(units, netDrain){
     setBadgeTone($('smartRiskBadge'), riskTone, riskText);
 
     let actionTone = "good", action = "Keep current plan", sub = "Goals and flow look stable based on the numbers entered.";
-    if (Number.isFinite(howForMeter) && howForMeter < MIN_HOW){
+    if (nightLow){
       actionTone = "bad";
-      action = "WIP is low for HoW target";
-      const needUnits = x.bb.burn > 0 ? Math.max(0, (MIN_HOW * x.bb.burn) - x.wip) : Math.max(0, (MIN_HOW * x.nightRate) - x.wip);
-      sub = `To reach 2.5 HoW, you need about <span class="mono">+${fmt(needUnits)}</span> WIP units or a lower burn plan.`;
+      action = "Our Shift HoW is low";
+      const needUnits = Math.max(0, (MIN_HOW * x.nightRate) - x.wip);
+      sub = `To reach ${fmtHow(MIN_HOW)} HoW for our shift, you need about <span class="mono">+${fmt(needUnits)}</span> WIP units or a lower Night ALPS burn plan.`;
+    } else if (dayLow){
+      actionTone = "warn";
+      action = "Day Plan HoW is low";
+      const needUnits = Math.max(0, (MIN_HOW * x.dayRate) - x.wip);
+      sub = `To leave ${fmtHow(MIN_HOW)} HoW for day plan, you need about <span class="mono">+${fmt(needUnits)}</span> WIP units.`;
     } else if (net < 0){
       actionTone = "bad";
       action = "Build is higher than burn";
@@ -2580,13 +2632,10 @@ const nightLenHrs = shiftLengthHours(st.shiftStart, st.shiftEnd);
     const dayRate = computeRate(st.dayAlps, dayHrs);
     const dayHoW = (dayRate > 0) ? (wip / dayRate) : NaN;
 
-    const d25 = howRow(2.5, dayRate, wip);
     const d30 = howRow(3.0, dayRate, wip);
     const d40 = howRow(4.0, dayRate, wip);
-    $("du25").textContent = Number.isFinite(d25.units) ? fmt(d25.units) : "—";
     $("du30").textContent = Number.isFinite(d30.units) ? fmt(d30.units) : "—";
     $("du40").textContent = Number.isFinite(d40.units) ? fmt(d40.units) : "—";
-    $("dd25").textContent = Number.isFinite(d25.delta) ? fmtSigned(d25.delta) : "—";
     $("dd30").textContent = Number.isFinite(d30.delta) ? fmtSigned(d30.delta) : "—";
     $("dd40").textContent = Number.isFinite(d40.delta) ? fmtSigned(d40.delta) : "—";
     // HoW based on current IB Rodeo WIP and actual Stow burn rate (IB Rodeo WIP ÷ stow burn/hr)
@@ -2599,13 +2648,10 @@ const nightLenHrs = shiftLengthHours(st.shiftStart, st.shiftEnd);
     const dHowPlanEl = $("dHowDayPlan");
     if (dHowPlanEl) dHowPlanEl.textContent = Number.isFinite(dayHoW) ? fmtHow(dayHoW) : "N/A";
 
-const n25 = howRow(2.5, nightRate, wip);
-    const n30 = howRow(3.0, nightRate, wip);
+const n30 = howRow(3.0, nightRate, wip);
     const n40 = howRow(4.0, nightRate, wip);
-    $("nu25").textContent = Number.isFinite(n25.units) ? fmt(n25.units) : "—";
     $("nu30").textContent = Number.isFinite(n30.units) ? fmt(n30.units) : "—";
     $("nu40").textContent = Number.isFinite(n40.units) ? fmt(n40.units) : "—";
-    $("nd25").textContent = Number.isFinite(n25.delta) ? fmtSigned(n25.delta) : "—";
     $("nd30").textContent = Number.isFinite(n30.delta) ? fmtSigned(n30.delta) : "—";
     $("nd40").textContent = Number.isFinite(n40.delta) ? fmtSigned(n40.delta) : "—";
     // HoW based on current IB Rodeo WIP and actual Stow burn rate (IB Rodeo WIP ÷ stow burn/hr)
@@ -2619,14 +2665,14 @@ const n25 = howRow(2.5, nightRate, wip);
       $("nightHowStatusBox").style.borderColor = "rgba(255,209,102,.28)";
     } else {
       const ok = Number.isFinite(nightHoW) && nightHoW >= MIN_HOW;
-      const need = Math.max(0, (n25.units || 0) - wip);
+      const need = Math.max(0, ((MIN_HOW * nightRate) || 0) - wip);
       $("nightHowStatusText").innerHTML = `
         <div>Shift length: <span class="mono">${nightLenHrs.toFixed(2)}</span> hrs • Night rate: <span class="mono">${fmt(nightRate)}</span>/hr • Current HoW: <span class="mono">${fmtHow(nightHoW)}</span> • Stow-only HoW: <span class="mono">${(bb.burn>0 ? fmtHow(wip/bb.burn) : "—")}</span> • BB HoW: <span class="mono">${(bb.netDrain!==0 ? (fmtHow(wip/bb.netDrain) + (bb.netDrain<0?" (building)":"")) : "—")}</span>
           <span class="statusDot ${ok ? "dot-good" : "dot-bad"}" style="margin-left:8px"></span>
         </div>
         <div style="margin-top:8px" class="muted">
-          Targets: <span class="mono">2.5 / 3 / 4</span>.
-          ${ok ? `You are <b>OK</b> (at/above 2.5).` : `You are <b>LOW</b>. Need about <span class="mono">+${fmt(need)}</span> IB Rodeo WIP units to reach 2.5.`}
+          Target: <span class="mono">3.0 HoW</span> • Optional buffer: <span class="mono">4.0 HoW</span>.
+          ${ok ? `You are <b>OK</b> (at/above 3.0).` : `You are <b>LOW</b>. Need about <span class="mono">+${fmt(need)}</span> IB Rodeo WIP units to reach 3.0.`}
         </div>`;
       $("nightHowStatusBox").style.borderColor = ok ? "rgba(60,255,180,.28)" : "rgba(255,77,109,.28)";
     }
@@ -2763,13 +2809,11 @@ const planAdd = st.planAdd;
 
     let act = "";
         if (nightRate > 0 && Number.isFinite(nightHoW)) {
-      const need25 = Math.max(0, (n25.units || 0) - wip);
       const need30 = Math.max(0, (n30.units || 0) - wip);
       const need40 = Math.max(0, (n40.units || 0) - wip);
-      act += `• Night HoW targets:<br/>`;
-      act += `  - 2.5 HoW: need <span class="mono">+${fmt(need25)}</span> IB Rodeo WIP units<br/>`;
-      act += `  - 3.0 HoW: need <span class="mono">+${fmt(need30)}</span> IB Rodeo WIP units<br/>`;
-      act += `  - 4.0 HoW: need <span class="mono">+${fmt(need40)}</span> IB Rodeo WIP units<br/>`;
+      act += `• Night HoW target:<br/>`;
+      act += `  - 3.0 HoW target: need <span class="mono">+${fmt(need30)}</span> IB Rodeo WIP units<br/>`;
+      act += `  - 4.0 HoW buffer: need <span class="mono">+${fmt(need40)}</span> IB Rodeo WIP units<br/>`;
     }
     $("actionsNow").innerHTML = act;
 
