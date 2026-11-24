@@ -26,6 +26,9 @@
       --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
     *{box-sizing:border-box}
+    [hidden]{display:none !important}
+    input[type="time"],input[type="date"]{color-scheme:dark;color:var(--text);background:rgba(0,0,0,.25);border:1px solid var(--border);border-radius:12px;padding:9px;}
+    [hidden]{display:none !important;}
     body{
       margin:0; padding:20px;
       font-family:var(--sans);
@@ -67,7 +70,7 @@
     }
     label{font-size:12px; color:var(--muted)}
     input[type="file"]{color:var(--muted)}
-    select,input[type="text"],input[type="number"]{
+    select,input[type="text"],input[type="number"],input[type="time"]{
       width:100%;
       border-radius: 12px;
       border:1px solid var(--border);
@@ -928,6 +931,9 @@
       font-size: 11px;
     }
 
+
+    .field[hidden]{display:none !important;}
+    input[type="time"]{color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:8px;color-scheme:dark;}
 </style>
 </head>
 <body>
@@ -973,11 +979,31 @@
     <label>Flow / Timing</label>
     <select id="quickFlow">
       <option value="IB">Inbound (IB) — base times</option>
-      <option value="OB">Outbound (OB) — +30 min later</option>
+      <option value="OB">Outbound (OB) — configurable timing</option>
     </select>
   </div>
 
   
+  <div class="field" style="min-width:200px">
+    <label for="quickSchedule">Schedule</label>
+    <select id="quickSchedule">
+      <option value="REGULAR">Regular (10.5 hours) — original schedule</option>
+      <option value="EXTENDED">Extra / Peak (12 hours) — IB 5:30 / OB 6:00</option>
+      <option value="CUSTOM">Custom hours</option>
+    </select>
+  </div>
+  <div class="field" style="min-width:160px" id="quickCustomStartWrap" hidden>
+    <label for="quickCustomStart">Custom start (selected flow)</label>
+    <input id="quickCustomStart" type="time" step="60"/>
+  </div>
+  <div class="field" style="min-width:160px" id="quickCustomEndWrap" hidden>
+    <label for="quickCustomEnd">Custom end (selected flow)</label>
+    <input id="quickCustomEnd" type="time" step="60"/>
+  </div>
+  <div class="field" style="min-width:180px" id="quickOffsetWrap">
+    <label for="quickOffset">OB timing (regular only)</label>
+    <select id="quickOffset"><option value="30">OB +30 min (original)</option><option value="0">Same as IB</option></select>
+  </div>
   <div class="field" style="min-width:190px">
     <label>Shift start date</label>
     <input id="quickShiftDate" type="date"/>
@@ -3134,6 +3160,55 @@ updateGalaxyCacheUI();
    - Uses Pacific Time (America/Los_Angeles) regardless of device TZ
    - Allows picking the *shift start date* (the day the shift begins)
    ========================================================== */
+// Shared schedule settings for manual PPR and real-time refresh.
+const shiftSchedule = (() => {
+  const get = id => document.getElementById(id);
+  const mode = get("quickSchedule"), offset = get("quickOffset");
+  const start = get("quickCustomStart"), end = get("quickCustomEnd");
+  const key = "qjuflore.report.quickLinks.schedule.v1";
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(key) || "{}") || {}; } catch(e) {}
+  mode.value = ["REGULAR","EXTENDED","CUSTOM"].includes(saved.mode) ? saved.mode : "REGULAR";
+  offset.value = saved.offset === "0" ? "0" : "30";
+  const custom = saved.custom && typeof saved.custom === "object" ? saved.custom : {};
+  const valid = v => /^([01]\d|2[0-3]):[0-5]\d$/.test(v || "");
+  const slot = (shift, flow) => shift + "_" + flow;
+  function preset(shift, extended){
+    return extended ? (shift === "DAY" ? ["05:30","17:30"] : ["17:30","05:30"])
+      : (shift === "DAY" ? ["07:00","17:30"] : ["18:00","04:30"]);
+  }
+  function times(shift, flow){
+    const pair = custom[slot(shift,flow)];
+    const base = mode.value === "CUSTOM" && Array.isArray(pair) && pair.every(valid) && pair.length === 2 && pair[0] !== pair[1]
+      ? pair : (mode.value === "CUSTOM" && flow === "OB" ? (shift === "DAY" ? ["06:00","18:00"] : ["18:00","06:00"]) : preset(shift, mode.value !== "REGULAR"));
+    const [startH,startM] = base[0].split(":").map(Number);
+    const [endH,endM] = base[1].split(":").map(Number);
+    return {startH,startM,endH,endM,shiftLabel:shift === "DAY" ? "Day" : "Night"};
+  }
+  function minutes(flow){ return flow === "OB" && mode.value !== "CUSTOM" ? (mode.value === "EXTENDED" ? 30 : Number(offset.value)) : 0; }
+  function label(flow){return flow === "OB" ? `Outbound (OB${minutes(flow) ? ", +30m" : ""})` : "Inbound (IB)";}
+  function persist(){try{localStorage.setItem(key,JSON.stringify({mode:mode.value,offset:offset.value,custom}));}catch(e){}}
+  function sync(){
+    const isCustom = mode.value === "CUSTOM";
+    get("quickCustomStartWrap").hidden = get("quickCustomEndWrap").hidden = !isCustom;
+    offset.disabled = mode.value !== "REGULAR";
+    get("quickOffsetWrap").hidden = offset.disabled;
+    if(isCustom){
+      const t = times(get("quickShift").value,get("quickFlow").value);
+      const fmt = (h,m) => `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+      start.value = fmt(t.startH,t.startM); end.value = fmt(t.endH,t.endM);
+    }
+    persist();
+  }
+  function saveCustom(){
+    if(!valid(start.value) || !valid(end.value) || start.value === end.value){
+      alert("Enter valid, different start and end times."); sync(); return;
+    }
+    custom[slot(get("quickShift").value,get("quickFlow").value)] = [start.value,end.value]; persist();
+  }
+  return {times,minutes,label,sync,saveCustom,mode,offset,start,end};
+})();
+
 (function initQuickLinks(){
   const elShift = document.getElementById("quickShift");
   const elFlow  = document.getElementById("quickFlow");
@@ -3182,7 +3257,7 @@ updateGalaxyCacheUI();
     timeZone: PT_TZ,
     year:"numeric", month:"2-digit", day:"2-digit",
     hour:"2-digit", minute:"2-digit", second:"2-digit",
-    hour12:false
+    hourCycle:"h23"
   });
   function nowPacific(){
     const parts = Object.fromEntries(
@@ -3231,25 +3306,25 @@ updateGalaxyCacheUI();
   }
 
   function getShiftTimeLabel(shiftKey, flowKey){
-    const t = getShiftBaseTimes(shiftKey);
-    const offset = (flowKey==="OB") ? 30 : 0;
+    const t = getShiftBaseTimes(shiftKey, flowKey);
+    const offset = shiftSchedule.minutes(flowKey);
     const s = addMinutesToHM(t.startH, t.startM, offset);
     const e = addMinutesToHM(t.endH, t.endM, offset);
     return `${t.shiftLabel}: ${fmtHM12(s.h,s.m)} → ${fmtHM12(e.h,e.m)}`;
   }
 
   function refreshShiftOptionLabels(flowKey){
-    const off = (flowKey==="OB") ? 30 : 0;
+    const off = shiftSchedule.minutes(flowKey);
     const optN = elShift.querySelector('option[value="NIGHT"]');
     const optD = elShift.querySelector('option[value="DAY"]');
     if(optN){
-      const t = getShiftBaseTimes("NIGHT");
+      const t = getShiftBaseTimes("NIGHT", flowKey);
       const s = addMinutesToHM(t.startH, t.startM, off);
       const e = addMinutesToHM(t.endH, t.endM, off);
       optN.textContent = `Night: ${fmtHM12(s.h,s.m)} → ${fmtHM12(e.h,e.m)}`;
     }
     if(optD){
-      const t = getShiftBaseTimes("DAY");
+      const t = getShiftBaseTimes("DAY", flowKey);
       const s = addMinutesToHM(t.startH, t.startM, off);
       const e = addMinutesToHM(t.endH, t.endM, off);
       optD.textContent = `Day: ${fmtHM12(s.h,s.m)} → ${fmtHM12(e.h,e.m)}`;
@@ -3264,17 +3339,13 @@ updateGalaxyCacheUI();
     return {h: Math.floor(total/60), m: total%60, dayDelta};
   }
 
-  function getShiftBaseTimes(shiftKey){
-    // Base IB times (shiftKey in {"NIGHT","DAY"})
-    if(shiftKey==="DAY"){
-      return {startH:7, startM:0, endH:17, endM:30, shiftLabel:"Day"};
-    }
-    return {startH:18, startM:0, endH:4, endM:30, shiftLabel:"Night"};
+  function getShiftBaseTimes(shiftKey, flowKey){
+    return shiftSchedule.times(shiftKey, flowKey);
   }
 
   function autoShiftStartDate(nowPT, shiftKey, flowKey){
-    const t = getShiftBaseTimes(shiftKey);
-    const offset = (flowKey==="OB") ? 30 : 0;
+    const t = getShiftBaseTimes(shiftKey, flowKey);
+    const offset = shiftSchedule.minutes(flowKey);
     const startAdj = addMinutesToHM(t.startH, t.startM, offset);
 
     const startToday = new Date(
@@ -3292,8 +3363,8 @@ updateGalaxyCacheUI();
   }
 
   function buildRangeFromShiftStart(shiftStartDate, shiftKey, flowKey){
-    const t = getShiftBaseTimes(shiftKey);
-    const offset = (flowKey==="OB") ? 30 : 0;
+    const t = getShiftBaseTimes(shiftKey, flowKey);
+    const offset = shiftSchedule.minutes(flowKey);
 
     const startAdj = addMinutesToHM(t.startH, t.startM, offset);
     const endAdj   = addMinutesToHM(t.endH, t.endM, offset);
@@ -3308,10 +3379,10 @@ updateGalaxyCacheUI();
       shiftStartDate.getFullYear(), shiftStartDate.getMonth(), shiftStartDate.getDate(),
       endAdj.h, endAdj.m, 0, 0
     );
-    if(endAdj.dayDelta) end.setDate(end.getDate() + endAdj.dayDelta);
+    end.setDate(end.getDate() + endAdj.dayDelta + (t.endH*60+t.endM <= t.startH*60+t.startM ? 1 : 0));
 
     if(end <= start) end.setDate(end.getDate()+1); // overnight safety
-    const flowLabel = (flowKey==="OB") ? "Outbound (OB, +30m)" : "Inbound (IB)";
+    const flowLabel = shiftSchedule.label(flowKey);
     return {start, end, shiftLabel: t.shiftLabel, flowLabel};
   }
 
@@ -3408,13 +3479,16 @@ updateGalaxyCacheUI();
   }
 
   // Auto-update on changes
-  elShift.addEventListener("change", () => update(true));
-  elFlow.addEventListener("change",  () => update(true));
+  shiftSchedule.sync();
+  elShift.addEventListener("change", () => { shiftSchedule.sync(); update(false); });
+  elFlow.addEventListener("change",  () => { shiftSchedule.sync(); update(true); });
+  shiftSchedule.mode.addEventListener("change", () => { shiftSchedule.sync(); nudgeLatestDateSuggestion(); });
+  shiftSchedule.offset.addEventListener("change", () => { shiftSchedule.sync(); update(true); });
+  [shiftSchedule.start,shiftSchedule.end].forEach(el => el.addEventListener("change", () => { shiftSchedule.saveCustom(); update(true); }));
   if(elDate){
     elDate.addEventListener("change", () => update(true));
     // When you click/focus the date box, suggest the latest shift-start date first.
-    elDate.addEventListener("mousedown", nudgeLatestDateSuggestion);
-    elDate.addEventListener("focus", nudgeLatestDateSuggestion);
+
   }
   if(btnUpd) btnUpd.addEventListener("click", () => {
     // Apply selections and trigger a SINGLE auto-import cycle (no double-open).
@@ -3543,7 +3617,7 @@ updateGalaxyCacheUI();
     timeZone: PT_TZ,
     year:"numeric", month:"2-digit", day:"2-digit",
     hour:"2-digit", minute:"2-digit", second:"2-digit",
-    hour12:false
+    hourCycle:"h23"
   });
 
   function nowPacific(){
@@ -3580,10 +3654,8 @@ updateGalaxyCacheUI();
     return {h: Math.floor(total/60), m: total%60, dayDelta};
   }
 
-  function getShiftBaseTimes(shiftKey){
-    // Base IB times
-    if(shiftKey==="DAY") return {startH:7, startM:0, endH:17, endM:30, shiftLabel:"Day"};
-    return {startH:18, startM:0, endH:4, endM:30, shiftLabel:"Night"};
+  function getShiftBaseTimes(shiftKey, flowKey){
+    return shiftSchedule.times(shiftKey, flowKey);
   }
 
   function parseDateInput(val){
@@ -3594,8 +3666,8 @@ updateGalaxyCacheUI();
   }
 
   function buildRangeFromShiftStart(shiftStartDate, shiftKey, flowKey){
-    const t = getShiftBaseTimes(shiftKey);
-    const offset = (flowKey==="OB") ? 30 : 0;
+    const t = getShiftBaseTimes(shiftKey, flowKey);
+    const offset = shiftSchedule.minutes(flowKey);
     const startAdj = addMinutesToHM(t.startH, t.startM, offset);
     const endAdj   = addMinutesToHM(t.endH, t.endM, offset);
 
@@ -3609,10 +3681,10 @@ updateGalaxyCacheUI();
       shiftStartDate.getFullYear(), shiftStartDate.getMonth(), shiftStartDate.getDate(),
       endAdj.h, endAdj.m, 0, 0
     );
-    if(endAdj.dayDelta) end.setDate(end.getDate() + endAdj.dayDelta);
+    end.setDate(end.getDate() + endAdj.dayDelta + (t.endH*60+t.endM <= t.startH*60+t.startM ? 1 : 0));
 
     if(end <= start) end.setDate(end.getDate()+1);
-    const flowLabel = (flowKey==="OB") ? "Outbound (OB, +30m)" : "Inbound (IB)";
+    const flowLabel = shiftSchedule.label(flowKey);
     return {start, end, shiftLabel: t.shiftLabel, flowLabel};
   }
 
@@ -3652,8 +3724,8 @@ updateGalaxyCacheUI();
     let baseDate = (elDate.value) ? parseDateInput(elDate.value) : null;
     if(!baseDate){
       const nowPT = nowPacific();
-      const t = getShiftBaseTimes(shiftKey);
-      const offset = (flowKey==="OB") ? 30 : 0;
+      const t = getShiftBaseTimes(shiftKey, flowKey);
+      const offset = shiftSchedule.minutes(flowKey);
       const startAdj = addMinutesToHM(t.startH, t.startM, offset);
       const startToday = new Date(nowPT.getFullYear(), nowPT.getMonth(), nowPT.getDate(), startAdj.h, startAdj.m, 0, 0);
       const startYesterday = new Date(startToday); startYesterday.setDate(startYesterday.getDate()-1);
